@@ -46,12 +46,16 @@ class Question(ipw.VBox):
 
 class Quiz(ipw.VBox):
     def __init__(self, questions: list=None) -> None:
+        """A Quiz widget.
+            
+            questions: A list of Question widgets.
+        """
         self.questions = questions
 
-        self.verify_button = ipw.Button(description='Verify')
+        self.verify_button = ipw.Button(description='Verify', button_style='success')
         self.verify_button.on_click(self.verify)
 
-        self.clear_button = ipw.Button(description='Clear')
+        self.clear_button = ipw.Button(description='Clear', button_style='danger')
         self.clear_button.on_click(self.clear)
 
         self.output = ipw.HTML()
@@ -64,6 +68,8 @@ class Quiz(ipw.VBox):
         self.children = self.questions + [question] + self.aux
     
     def all_answers_given(self):
+
+        # Todo, this will not clean "please select an answer" warning emmited before, even if the answer is given.
         to_return = True
         for question in self.questions:
             if not question.answer_is_given():
