@@ -276,7 +276,7 @@ Even though you can access and modify variables from different scope, it's not c
 ---
 
 
-## Practicals
+## Exercises
 
 <!-- #region tags=[] -->
 ### Longest consecutive sequence 🌶️🌶️
@@ -287,17 +287,6 @@ Given an **unsorted** set of $N$ random integers, write a function that returns 
 - Example 1: given the list `nums = [100, 4, 200, 1, 3, 2]`, the longest sequence is `[1, 2, 3, 4]` of length *4*.
 
 - Example 2: given the list `nums = [0, 3, 7, 2, 5, 8, 4, 6, 0, 1]`, the longest sequence contains all the numbers from 0 to 8, so its length is **9**.
-
-```python
-def longest_sequence(numbers: list):
-    """Function"""
-    # Write your solution here
-    return None
-```
-
-```python
-longest_sequence_test(longest_sequence)
-```
 
 <!-- #region tags=[] -->
 ### Password validator
@@ -319,7 +308,11 @@ For example, the following are true:
 - `223450` does **not** meet these criteria (`50` is a decreasing pair of digits)
 - `123789` does **not** meet these criteria (no double digit)
 
-Write a function named `count_valid()` that returns the number of valid password in your range.
+Write a function named `count_valid_p1()` that determines if a password is valid according to the criteria above.
+
+<div class="alert alert-block alert-warning">
+<b>Question:</b> How many valid password are there in your range?
+</div>
 
 <!-- #region tags=[] -->
 #### Part 2 🌶️🌶️
@@ -331,7 +324,11 @@ You have a new rule: the two adjacent matching digits **must not be part of a la
 - `123444` **doesn't** meet the criteria (the repeated `44` is part of a larger group of `444`)
 - `111122` meets the criteria (even though `1` is repeated more than twice, it still contains a double `22`)
 
-How could you modify/extend your `count_valid()` function to return the correct number of valid passwords including this last rule?
+Write a new function `count_valid_p2()` function to account for the new rule. You can copy and extend the code from your `count_valid_p1()` function, but **do create** a new function for this part.
+
+<div class="alert alert-block alert-warning">
+<b>Question:</b> How many valid password does your range contain now?
+</div>
 
 <!-- #region tags=[] -->
 ### Buckets reorganization
