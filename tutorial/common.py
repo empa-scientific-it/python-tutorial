@@ -115,13 +115,13 @@ class Quiz(ipw.VBox):
         # Dealing with unanswered questions.
         not_answered = self.questions_not_answered()
         if not_answered:
-            self.output.value = f"""<p style="color:Tomato;">Not answerred questions: {", ".join(map(str, not_answered))}!</p>"""
+            self.output.value = f"""<p style="color:Tomato;">You didn't answer the following questions: {", ".join(map(str, not_answered))}!</p>"""
             return
 
         # Dealing with erroneous responses.
         errors = self.erroneous_responses()
         if errors:
-            self.output.value = f"""<p style="color:Tomato;">Incorrect answers: {", ".join(map(str, errors))}!</p>"""
+            self.output.value = f"""<p style="color:Tomato;">Your answers to the following questions are <strong>incorrect</strong>: {", ".join(map(str, errors))}!</p>"""
         else:
             self.output.value = f"""<p style="color:MediumSeaGreen;">All correct!</p>"""
     
