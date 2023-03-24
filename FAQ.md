@@ -6,7 +6,7 @@ Each tutorial session lasts 4 half-days, from 9:00 to 13:00 (breaks included). D
 
 ## Which operating system should I use?
 
-There is no specific requirement for the operating system. The training will be conducted using Jupyter notebooks, which are browser-based, so an updated browser is the only requirement. Chrome-based or Firefox usually work better with Jupyter notebooks, but this is only a suggestion.
+There is no specific requirement for the operating system. The training will be conducted on [binder](https://mybinder.org/) using Jupyter notebooks, which are browser-based, so an updated browser is the only requirement. Chrome-based or Firefox usually work better with Jupyter notebooks, but this is only a suggestion.
 
 ## Do I have to install any software beforehand?
 
