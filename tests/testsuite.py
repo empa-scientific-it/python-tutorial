@@ -1,36 +1,29 @@
-import unittest
-from typing import Any, Callable, List, Type, Dict
-from types import ModuleType
-import inspect
-from IPython.core import guarded_eval
-import functools
-from IPython.core.magic import (
-    Magics,
-    cell_magic,
-    line_cell_magic,
-    line_magic,
-    magics_class,
-    needs_local_scope,
-)
-from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
-from IPython.core.interactiveshell import InteractiveShell
-from IPython.display import DisplayHandle
-import importlib
-
 import io
+import unittest
+from types import ModuleType
+from typing import Any, Callable, Dict, List, Type
 
-from IPython.display import HTML, display
+from IPython.core import guarded_eval
+from IPython.core.interactiveshell import InteractiveShell
+from IPython.core.magic import (Magics, cell_magic, line_cell_magic,
+                                line_magic, magics_class, needs_local_scope)
+from IPython.core.magic_arguments import (argument, magic_arguments,
+                                          parse_argstring)
+from IPython.display import HTML, DisplayHandle, display
+
 
 def find_class(ns: ModuleType, name: str) -> Type:
     """
     Recursively find a class in a local namespace by name
     """
+
     def find_rec(current: dict, components: List[str]) -> Type:
         if len(components) == 1:
             return getattr(current, components[0])
         elif len(components) > 1:
             module = getattr(current, components[0])
             return find_rec(module, components[1::])
+
     components = name.split(".")
     return find_rec(ns, components)
 
@@ -40,33 +33,26 @@ class SubmissionTest(unittest.TestCase):
     Base class for submission testing.
     To implement your problems just subclass this one
     and add your own test cases.
-    If possible, do not override `__init__` and just add 
+    If possible, do not override `__init__` and just add
     your test methods.
     """
 
-    def __init__(self, fun: Callable, testName: str, ) -> None:
+    def __init__(
+        self,
+        fun: Callable,
+        testName: str,
+    ) -> None:
         super().__init__(testName)
         self.fun = fun
-
-
-
-class Exercise1Test(SubmissionTest):
-    
-    def test_one(self):
-        self.assertEqual(self.fun(2), 1, msg="f(2) should return 1")
-
-    def test_two(self):
-        with self.assertRaises(TypeError):
-            self.fun()
-
 
 
 def format_failures(result: unittest.TestResult) -> DisplayHandle:
     result_text = "\n".join([res for case, res in result.failures if res is not None])
     return display(
-        HTML(f"""<font color=red>The solution is not correct, following tests failed:<div style="white-space:pre">{result_text}</div></font>""")
+        HTML(
+            f"""<font color=red>The solution is not correct, following tests failed:<div style="white-space:pre">{result_text}</div></font>"""
         )
-
+    )
 
 
 @magics_class
@@ -78,7 +64,9 @@ class TestMagic(Magics):
     For this to work, you need to import your test case in the notebook for the class to be available
     to the local notebook scope.
     """
+
     shell: InteractiveShell
+
     @line_magic
     def lmagic(self, line):
         return line
@@ -91,37 +79,30 @@ class TestMagic(Magics):
     def celltest(self, line, cell, local_ns):
         args = parse_argstring(self.celltest, line)
         # Find the class in the current module
-        current_class = find_class(self.shell.user_module, args.test)
+        test_class = find_class(self.shell.user_module, args.test)
         # Run cell
         function_def = self.shell.ex(cell)
         # Extract the definition from the environment
         fun = self.shell.user_ns[args.fun]
         if fun is None:
             raise ValueError(f"There is no function called {fun} in the scope")
-        # Setup test suite
-        #testcase = lambda x: type("a", (unittest.TestCase), current_class(x, fun).__dict__)
-        testcase = current_class
         # #Load the test suite
-        case_names = unittest.TestLoader().getTestCaseNames(testcase)
-        cases = [current_class(fun, name) for name in case_names]
+        case_names = unittest.TestLoader().getTestCaseNames(test_class)
+        cases = [test_class(fun, name) for name in case_names]
         suite = unittest.TestSuite(cases)
         with io.StringIO() as stream:
             runner = unittest.TextTestRunner(stream=stream)
             result = runner.run(suite)
         if result.wasSuccessful():
-            return display(HTML("<font color=green>Congratulations, your solution was correct</font>"))
+            return display(
+                HTML(
+                    "<font color=green>Congratulations, your solution was correct</font>"
+                )
+            )
         else:
             return format_failures(result)
 
-    @line_cell_magic
-    def lcmagic(self, line, cell=None):
-        "Magic that works both as %lcmagic and as %%lcmagic"
-        if cell is None:
-            print("Called as line magic")
-            return line
-        else:
-            print("Called as cell magic")
-            return line, cell
+
 
 
 def load_ipython_extension(ipython):
