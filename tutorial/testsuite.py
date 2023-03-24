@@ -1,69 +1,71 @@
 import unittest
 from typing import Any, Callable, List, Type
 
-from IPython.core.magic import (register_line_magic, register_cell_magic,
-                                register_line_cell_magic, Magics, magics_class, line_magic, cell_magic, line_cell_magic, needs_local_scope)
-
-from IPython.core.magic_arguments import (argument, magic_arguments,
-                                          parse_argstring)
+from IPython.core import guarded_eval
+from IPython.core.magic import (
+    Magics,
+    cell_magic,
+    line_cell_magic,
+    line_magic,
+    magics_class,
+    needs_local_scope,
+)
+from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 
 
 class SubmissionTest(unittest.TestCase):
+    """
+    Base class for submission testing.
+    To implement your problems just subclass this one
+    and add your own test cases
+    """
 
-    def __init__(self, fun: Callable, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
+    def __init__(self, fun: Callable) -> None:
+        super().__init__()
         self.fun = fun
 
-
-    def runTest(self):
-        self.assertEqual(1, 1)
-
-
-def input_output_test(f: Callable):
-
-    suite = unittest.TestSuite()
-    case = SubmissionTest(f)
-    suite.addTest(case)
-    runner = unittest.TextTestRunner()
-    def run(*args, **kwargs):
-        runner.run(suite)
-        return f(*args, **kwargs)
-    return run
-
-
-
-@input_output_test
-def a():
-    return 1
-
-
+    def test_one(self):
+        self.assertEqual(self.fun(2), 1, msg="f(2) should return 1")
 
 
 @magics_class
-class MyMagics(Magics):
+class TestMagic(Magics):
+    """
+    Implements a Ipython cell magic
+    that can be used to automatically run a test case with class `TestCase` on the function `function_name` on cells
+    marked with `%%celltest function_name TestCase`.
+    For this to work, you need to import your test case in the notebook for the class to be available
+    to the local notebook scope.
+    """
 
     @line_magic
     def lmagic(self, line):
-        "my line magic"
-        print("Full access to the main IPython object:", self.shell)
-        print("Variables in the user namespace:",
-              list(self.shell.user_ns.keys()))
         return line
-    
-    @needs_local_scope 
+
+    @needs_local_scope
     @magic_arguments()
-    @argument('test', type=str, help='An integer positional argument.')
-    @argument('input', type=str, help='An integer positional argument.')
-    @argument('output', type=str, help='An integer positional argument.')
+    @argument("fun", type=str, help="The function to test in the following cell")
+    @argument("test", type=str, help="The test case class")
     @cell_magic
     def celltest(self, line, cell, local_ns):
         args = parse_argstring(self.celltest, line)
-        self.shell.run_cell(cell)
-        self.shell.run_cell(args.input)
-        self.shell.run_cell(args.output)
-        result = self.shell.user_ns[args.test](self.shell.user_ns["input"])
-        assert result == self.shell.user_ns["output"]
-        return result
+        # Load the class by name by evaluating
+        # its name in the notebook environment
+        current_class = self.shell.run_cell(args.test).result
+        # Run cell
+        function_def = self.shell.run_cell(cell)
+        # Extract the definition from the environment
+        fun = self.shell.user_ns[args.fun]
+        if fun is None:
+            raise ValueError(f"There is no function called {fun} in the scope")
+        # Setup test suite
+        testcase = current_class(fun)
+        print(testcase)
+        # uite = unittest.TestSuite()
+        suite = unittest.TestLoader().loadTestsFromTestCase(testcase)
+        print(suite)
+        runner = unittest.TextTestRunner()
+        runner.run(suite)
 
     @line_cell_magic
     def lcmagic(self, line, cell=None):
@@ -74,7 +76,7 @@ class MyMagics(Magics):
         else:
             print("Called as cell magic")
             return line, cell
-        
+
 
 def load_ipython_extension(ipython):
     """
@@ -84,6 +86,5 @@ def load_ipython_extension(ipython):
     """
     # This class must then be registered with a manually created instance,
     # since its constructor has different arguments from the default:
-    magics = MyMagics(ipython)
+    magics = TestMagic(ipython)
     ipython.register_magics(magics)
-
