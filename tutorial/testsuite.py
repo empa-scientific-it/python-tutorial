@@ -48,12 +48,17 @@ class SubmissionTest(unittest.TestCase):
         super().__init__(testName)
         self.fun = fun
 
+
+
+class Exercise1Test(SubmissionTest):
+    
     def test_one(self):
         self.assertEqual(self.fun(2), 1, msg="f(2) should return 1")
 
     def test_two(self):
         with self.assertRaises(TypeError):
             self.fun()
+
 
 
 def format_failures(result: unittest.TestResult) -> DisplayHandle:
