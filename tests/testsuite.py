@@ -1,6 +1,9 @@
-# pylint: disable=missing-docstring, unused-argument, wrong-import-position, invalid-name
+# pylint: disable=missing-docstring, unused-argument, wrong-import-position, invalid-name, line-too-long
+import html
 import io
+import re
 import unittest
+from importlib import import_module
 from types import ModuleType
 from typing import Callable, List, Type
 
@@ -49,10 +52,22 @@ class SubmissionTest(unittest.TestCase):
 
 def format_failures(result: unittest.TestResult) -> DisplayHandle:
     """Format results upon failures"""
-    result_text = "\n".join([res for _, res in result.failures if res is not None])
+    # result_text = "\n".join([res for _, res in result.failures if res is not None])
+    # return display(
+    #     HTML(
+    #         f"""<font color=red>The solution is not correct, the following tests failed:<div style="white-space:pre">{result_text}</div></font>"""
+    #     )
+    # )
+    result_text = []
+    for _, tb_string in result.failures:
+        if match := re.search(r"([A-Za-z]+Error): (.+)", tb_string, re.MULTILINE):
+            result_text.append(f"{match.group(1).strip()}: {match.group(2).strip()}")
+
+    result_text = "\n".join([f"<li>{html.escape(line)}</li>" for line in result_text])
+
     return display(
         HTML(
-            f"""<font color=red>The solution is not correct, the following tests failed:<div style="white-space:pre">{result_text}</div></font>"""
+            f"""<font color=red>The solution is not correct! &#x1F631 The following tests failed:<div style="white-space:pre"><ul>{result_text}</ul></div></font>"""
         )
     )
 
@@ -80,17 +95,25 @@ class TestMagic(Magics):
     @cell_magic
     def celltest(self, line, cell, local_ns):
         args = parse_argstring(self.celltest, line)
+
         # Find the class in the current module
-        test_class = find_class(self.shell.user_module, args.test)
+        module_name, class_name = args.test.split(".")
+        test_module = import_module(f"tests.{module_name}")
+        # test_class = find_class(self.shell.user_module, args.test)
+        test_class = getattr(test_module, class_name)
+
         # Run cell
         self.shell.ex(cell)
+
         # Extract the definition from the environment
         if (fun := self.shell.user_ns.get(args.fun)) is None:
             raise ValueError(f"There is no function called '{args.fun}' in the scope")
+
         # Load the test suite
         case_names = unittest.TestLoader().getTestCaseNames(test_class)
         cases = [test_class(fun, name) for name in case_names]
         suite = unittest.TestSuite(cases)
+
         # Run the test suite and print results
         with io.StringIO() as stream:
             runner = unittest.TextTestRunner(stream=stream)
@@ -98,7 +121,7 @@ class TestMagic(Magics):
         if result.wasSuccessful():
             return display(
                 HTML(
-                    "<font color=green>Congratulations, your solution was correct</font>"
+                    "<font color=green>Congratulations, your solution was correct! &#x1F64C</font>"
                 )
             )
         return format_failures(result)
