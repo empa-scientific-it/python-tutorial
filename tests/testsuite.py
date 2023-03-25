@@ -13,7 +13,6 @@ from IPython.core.magic import (
     cell_magic,
     line_magic,
     magics_class,
-    needs_local_scope,
 )
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import HTML, DisplayHandle, display
@@ -75,11 +74,9 @@ def format_failures(result: unittest.TestResult) -> DisplayHandle:
 @magics_class
 class TestMagic(Magics):
     """
-    Implements a Ipython cell magic
-    that can be used to automatically run a test case with class `TestCase` on the function `function_name` on cells
-    marked with `%%celltest function_name TestCase`.
-    For this to work, you need to import your test case in the notebook for the class to be available
-    to the local notebook scope.
+    Implements an IPython cell magic that can be used to automatically run a test case
+    The test is defined by the class `TestCase` and applied to the function `function_name`
+    on cells marked with `%%celltest function_name test_module.TestCase`
     """
 
     shell: InteractiveShell
@@ -88,12 +85,11 @@ class TestMagic(Magics):
     def lmagic(self, line):
         return line
 
-    @needs_local_scope
     @magic_arguments()
     @argument("fun", type=str, help="The function to test in the following cell")
     @argument("test", type=str, help="The test case class")
     @cell_magic
-    def celltest(self, line, cell, local_ns):
+    def celltest(self, line, cell):
         args = parse_argstring(self.celltest, line)
 
         # Find the class in the current module
@@ -111,20 +107,22 @@ class TestMagic(Magics):
 
         # Load the test suite
         case_names = unittest.TestLoader().getTestCaseNames(test_class)
-        cases = [test_class(fun, name) for name in case_names]
-        suite = unittest.TestSuite(cases)
+        suite = unittest.TestSuite([test_class(fun, name) for name in case_names])
 
         # Run the test suite and print results
         with io.StringIO() as stream:
             runner = unittest.TextTestRunner(stream=stream)
             result = runner.run(suite)
-        if result.wasSuccessful():
-            return display(
+
+        return (
+            display(
                 HTML(
                     "<font color=green>Congratulations, your solution was correct! &#x1F64C</font>"
                 )
             )
-        return format_failures(result)
+            if result.wasSuccessful()
+            else format_failures(result)
+        )
 
 
 def load_ipython_extension(ipython):
