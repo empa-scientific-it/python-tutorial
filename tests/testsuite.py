@@ -16,7 +16,8 @@ from IPython.core.magic import (
 )
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import HTML, DisplayHandle, display
-
+from IPython.utils.capture import capture_output, CapturedIO
+from contextlib import redirect_stdout, redirect_stderr
 
 def find_class(namespace: ModuleType, name: str) -> Type:
     """
@@ -49,26 +50,33 @@ class SubmissionTest(unittest.TestCase):
         self.fun = fun
 
 
-def format_failures(result: unittest.TestResult) -> DisplayHandle:
+def format_execution(cell_output: CapturedIO, test_output: str, tests:  unittest.TestResult) -> DisplayHandle:
+    """
+    Formats the result of executing a cell with potential test failures
+    """
+    cr = f"""Function definition output: <div style="white-space:pre">{cell_output.stdout}</div> Test execution output:<div style="white-space:pre">{test_output}</div> Test result:"""
+    if tests.wasSuccessful():
+        display(
+            HTML(f"{cr}<div><font color=green>Congratulations, your solution was correct! &#x1F64C</font></div>")
+        )
+    else:
+        result_text = format_failures(tests)
+        return display(
+            HTML(
+                f"""{cr}<div><font color=red>The solution is not correct! &#x1F631 The following tests failed:<div style="white-space:pre"><ul>{result_text}</ul></div></font></div>"""
+            )
+        )
+
+def format_failures(result: unittest.TestResult) -> str:
     """Format results upon failures"""
-    # result_text = "\n".join([res for _, res in result.failures if res is not None])
-    # return display(
-    #     HTML(
-    #         f"""<font color=red>The solution is not correct, the following tests failed:<div style="white-space:pre">{result_text}</div></font>"""
-    #     )
-    # )
     result_text = []
     for _, tb_string in result.failures:
         if match := re.search(r"([A-Za-z]+Error): (.+)", tb_string, re.MULTILINE):
             result_text.append(f"{match.group(1).strip()}: {match.group(2).strip()}")
 
     result_text = "\n".join([f"<li>{html.escape(line)}</li>" for line in result_text])
+    return result_text
 
-    return display(
-        HTML(
-            f"""<font color=red>The solution is not correct! &#x1F631 The following tests failed:<div style="white-space:pre"><ul>{result_text}</ul></div></font>"""
-        )
-    )
 
 
 @magics_class
@@ -89,7 +97,7 @@ class TestMagic(Magics):
     @argument("fun", type=str, help="The function to test in the following cell")
     @argument("test", type=str, help="The test case class")
     @cell_magic
-    def celltest(self, line, cell):
+    def celltest(self, line, cell) -> DisplayHandle:
         args = parse_argstring(self.celltest, line)
 
         # Find the class in the current module
@@ -99,7 +107,8 @@ class TestMagic(Magics):
         test_class = getattr(test_module, class_name)
 
         # Run cell
-        self.shell.ex(cell)
+        with capture_output() as co:
+            cell_result = self.shell.run_cell(cell)
 
         # Extract the definition from the environment
         if (fun := self.shell.user_ns.get(args.fun)) is None:
@@ -110,20 +119,13 @@ class TestMagic(Magics):
         suite = unittest.TestSuite([test_class(fun, name) for name in case_names])
 
         # Run the test suite and print results
-        with io.StringIO() as stream:
-            runner = unittest.TextTestRunner(stream=stream)
-            result = runner.run(suite)
-
-        return (
-            display(
-                HTML(
-                    "<font color=green>Congratulations, your solution was correct! &#x1F64C</font>"
-                )
-            )
-            if result.wasSuccessful()
-            else format_failures(result)
-        )
-
+        with io.StringIO() as err_stream, io.StringIO() as out_stream:
+            with redirect_stdout(out_stream):
+                runner = unittest.TextTestRunner(stream=err_stream)
+                result = runner.run(suite)
+                test_text = out_stream.getvalue()
+        print(test_text)
+        return format_execution(co, test_text, result)
 
 def load_ipython_extension(ipython):
     """
