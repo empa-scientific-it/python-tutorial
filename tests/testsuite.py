@@ -2,20 +2,16 @@
 import html
 import io
 import re
+import sys
 import unittest
 from importlib import import_module
 from types import ModuleType
 from typing import Callable, List, Type
 
 from IPython.core.interactiveshell import InteractiveShell
-from IPython.core.magic import (
-    Magics,
-    cell_magic,
-    line_magic,
-    magics_class,
-)
+from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
-from IPython.display import HTML, DisplayHandle, display
+from IPython.display import HTML, display
 
 
 def find_class(namespace: ModuleType, name: str) -> Type:
@@ -46,28 +42,39 @@ class SubmissionTest(unittest.TestCase):
         testName: str,
     ) -> None:
         super().__init__(testName)
-        self.fun = fun
+        self.fun = self._suppress_output(fun)
+
+    def setUp(self) -> None:
+        self.original_stdout = sys.stdout
+
+    def tearDown(self) -> None:
+        sys.stdout = self.original_stdout
+
+    def _suppress_output(self, fun: Callable) -> Callable:
+        """Suppress a `fun` stdout when running tests"""
+
+        def wrapper(*args, **kwargs):
+            output = io.StringIO()
+            sys.stdout = output
+            result = fun(*args, **kwargs)
+            sys.stdout = self.original_stdout
+
+            return result
+
+        return wrapper
 
 
-def format_failures(result: unittest.TestResult) -> DisplayHandle:
+def format_failures(result: unittest.TestResult) -> str:
     """Format results upon failures"""
-    # result_text = "\n".join([res for _, res in result.failures if res is not None])
-    # return display(
-    #     HTML(
-    #         f"""<font color=red>The solution is not correct, the following tests failed:<div style="white-space:pre">{result_text}</div></font>"""
-    #     )
-    # )
     result_text = []
     for _, tb_string in result.failures:
         if match := re.search(r"([A-Za-z]+Error): (.+)", tb_string, re.MULTILINE):
             result_text.append(f"{match.group(1).strip()}: {match.group(2).strip()}")
 
-    result_text = "\n".join([f"<li>{html.escape(line)}</li>" for line in result_text])
-
-    return display(
-        HTML(
-            f"""<font color=red>The solution is not correct! &#x1F631 The following tests failed:<div style="white-space:pre"><ul>{result_text}</ul></div></font>"""
-        )
+    return (
+        "<ul>\n"
+        + "\n".join([f"<li>{html.escape(line)}</li>" for line in result_text])
+        + "\n</ul>"
     )
 
 
@@ -81,10 +88,6 @@ class TestMagic(Magics):
 
     shell: InteractiveShell
 
-    @line_magic
-    def lmagic(self, line):
-        return line
-
     @magic_arguments()
     @argument("fun", type=str, help="The function to test in the following cell")
     @argument("test", type=str, help="The test case class")
@@ -95,11 +98,10 @@ class TestMagic(Magics):
         # Find the class in the current module
         module_name, class_name = args.test.split(".")
         test_module = import_module(f"tests.{module_name}")
-        # test_class = find_class(self.shell.user_module, args.test)
         test_class = getattr(test_module, class_name)
 
         # Run cell
-        self.shell.ex(cell)
+        self.shell.run_cell(cell)
 
         # Extract the definition from the environment
         if (fun := self.shell.user_ns.get(args.fun)) is None:
@@ -111,17 +113,25 @@ class TestMagic(Magics):
 
         # Run the test suite and print results
         with io.StringIO() as stream:
-            runner = unittest.TextTestRunner(stream=stream)
-            result = runner.run(suite)
+            result = unittest.TextTestRunner(stream=stream).run(suite)
 
-        return (
-            display(
-                HTML(
-                    "<font color=green>Congratulations, your solution was correct! &#x1F64C</font>"
-                )
+        if result.wasSuccessful():
+            color, title, test_result = (
+                "alert-success",
+                "Tests <strong>PASSED</strong>",
+                "&#x1F64C Congratulations, your solution was correct!",
             )
-            if result.wasSuccessful()
-            else format_failures(result)
+        else:
+            color, title, test_result = (
+                "alert-danger",
+                "Tests <strong>FAILED</strong>",
+                "&#x1F631 Your solution was not correct!\n" + format_failures(result),
+            )
+
+        display(
+            HTML(
+                f"""<div class="alert alert-box {color}"><h4>{title}</h4>{test_result}</div>"""
+            )
         )
 
 
