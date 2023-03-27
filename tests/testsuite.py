@@ -2,22 +2,17 @@
 import html
 import io
 import re
+import sys
 import unittest
 from importlib import import_module
 from types import ModuleType
 from typing import Callable, List, Type
 
 from IPython.core.interactiveshell import InteractiveShell
-from IPython.core.magic import (
-    Magics,
-    cell_magic,
-    line_magic,
-    magics_class,
-)
+from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
-from IPython.display import HTML, DisplayHandle, display
-from IPython.utils.capture import capture_output, CapturedIO
-from contextlib import redirect_stdout, redirect_stderr
+from IPython.display import HTML, display
+
 
 def find_class(namespace: ModuleType, name: str) -> Type:
     """
@@ -47,25 +42,27 @@ class SubmissionTest(unittest.TestCase):
         testName: str,
     ) -> None:
         super().__init__(testName)
-        self.fun = fun
+        self.fun = self._suppress_output(fun)
 
+    def setUp(self) -> None:
+        self.original_stdout = sys.stdout
 
-def format_execution(cell_output: CapturedIO, test_output: str, tests:  unittest.TestResult) -> DisplayHandle:
-    """
-    Formats the result of executing a cell with potential test failures
-    """
-    cr = f"""Function definition output: <div style="white-space:pre">{cell_output.stdout}</div> Test execution output:<div style="white-space:pre">{test_output}</div> Test result:"""
-    if tests.wasSuccessful():
-        display(
-            HTML(f"{cr}<div><font color=green>Congratulations, your solution was correct! &#x1F64C</font></div>")
-        )
-    else:
-        result_text = format_failures(tests)
-        return display(
-            HTML(
-                f"""{cr}<div><font color=red>The solution is not correct! &#x1F631 The following tests failed:<div style="white-space:pre"><ul>{result_text}</ul></div></font></div>"""
-            )
-        )
+    def tearDown(self) -> None:
+        sys.stdout = self.original_stdout
+
+    def _suppress_output(self, fun: Callable) -> Callable:
+        """Suppress a `fun` stdout when running tests"""
+
+        def wrapper(*args, **kwargs):
+            output = io.StringIO()
+            sys.stdout = output
+            result = fun(*args, **kwargs)
+            sys.stdout = self.original_stdout
+
+            return result
+
+        return wrapper
+
 
 def format_failures(result: unittest.TestResult) -> str:
     """Format results upon failures"""
@@ -74,9 +71,11 @@ def format_failures(result: unittest.TestResult) -> str:
         if match := re.search(r"([A-Za-z]+Error): (.+)", tb_string, re.MULTILINE):
             result_text.append(f"{match.group(1).strip()}: {match.group(2).strip()}")
 
-    result_text = "\n".join([f"<li>{html.escape(line)}</li>" for line in result_text])
-    return result_text
-
+    return (
+        "<ul>\n"
+        + "\n".join([f"<li>{html.escape(line)}</li>" for line in result_text])
+        + "\n</ul>"
+    )
 
 
 @magics_class
@@ -89,26 +88,20 @@ class TestMagic(Magics):
 
     shell: InteractiveShell
 
-    @line_magic
-    def lmagic(self, line):
-        return line
-
     @magic_arguments()
     @argument("fun", type=str, help="The function to test in the following cell")
     @argument("test", type=str, help="The test case class")
     @cell_magic
-    def celltest(self, line, cell) -> DisplayHandle:
+    def celltest(self, line, cell) -> None:
         args = parse_argstring(self.celltest, line)
 
         # Find the class in the current module
         module_name, class_name = args.test.split(".")
         test_module = import_module(f"tests.{module_name}")
-        # test_class = find_class(self.shell.user_module, args.test)
         test_class = getattr(test_module, class_name)
 
         # Run cell
-        with capture_output() as co:
-            cell_result = self.shell.run_cell(cell)
+        self.shell.run_cell(cell)
 
         # Extract the definition from the environment
         if (fun := self.shell.user_ns.get(args.fun)) is None:
@@ -119,13 +112,28 @@ class TestMagic(Magics):
         suite = unittest.TestSuite([test_class(fun, name) for name in case_names])
 
         # Run the test suite and print results
-        with io.StringIO() as err_stream, io.StringIO() as out_stream:
-            with redirect_stdout(out_stream):
-                runner = unittest.TextTestRunner(stream=err_stream)
-                result = runner.run(suite)
-                test_text = out_stream.getvalue()
-        print(test_text)
-        return format_execution(co, test_text, result)
+        with io.StringIO() as stream:
+            result = unittest.TextTestRunner(stream=stream).run(suite)
+
+        if result.wasSuccessful():
+            color, title, test_result = (
+                "alert-success",
+                "Tests <strong>PASSED</strong>",
+                "&#x1F64C Congratulations, your solution was correct!",
+            )
+        else:
+            color, title, test_result = (
+                "alert-danger",
+                "Tests <strong>FAILED</strong>",
+                "&#x1F631 Your solution was not correct!\n" + format_failures(result),
+            )
+
+        display(
+            HTML(
+                f"""<div class="alert alert-box {color}"><h4>{title}</h4>{test_result}</div>"""
+            )
+        )
+
 
 def load_ipython_extension(ipython):
     """
