@@ -7,3 +7,7 @@ ipykernel
 pytest
 black
 autoflake
+numpy
+matplotlib
+pandas
+ipywidgets
