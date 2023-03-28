@@ -13,10 +13,15 @@ conda env create -f environment.yml
 
 Then activate the environment with
 ```console
-conda activate aiidalab-docker-stack
+conda activate python-tutorial
 ```
 
 Finally, launch JupyterLab with
 ```console
 jupyter lab
+```
+
+To update the existing environment, run
+```console
+conda env update -f environment.yml
 ```
