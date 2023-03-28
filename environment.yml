@@ -2,8 +2,11 @@ name: python-tutorial
 channels:
   - conda-forge
 dependencies:
-  - numpy
-  - matplotlib
-  - pandas
-  - ipywidgets
-  - jupyterlab
+  - python
+  - pip
+  - pip:
+    - numpy
+    - matplotlib
+    - pandas
+    - ipywidgets
+    - jupyterlab
