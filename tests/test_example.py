@@ -1,18 +1,21 @@
-# pylint: disable=missing-docstring, unused-argument, wrong-import-position, invalid-name
-from tests.testsuite import SubmissionTest
+import pytest
 
 
-class Exercise1Test(SubmissionTest):
-    def setUp(self) -> None:
-        super().setUp()
-        self.input = 0
-        self.output = 1
+@pytest.fixture
+def func_to_test():
+    """Function to test, overriden by the cell magic"""
+    pass
 
-    def test_one(self):
-        self.assertEqual(
-            self.fun(self.input), self.output, msg=f"Expected result is {self.output}"
-        )
 
-    def test_two(self):
-        with self.assertRaises(TypeError):
-            self.fun()
+@pytest.mark.parametrize(
+    "input_arg, expected_output",
+    [
+        (2, 4),
+        (3, 9),
+        (4, 16),
+        (32, 1024),
+    ],
+)
+def test_function(input_arg, expected_output, func_to_test):
+    """The test case(s)"""
+    assert func_to_test(input_arg) == expected_output
