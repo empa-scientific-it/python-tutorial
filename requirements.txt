@@ -1,9 +1,0 @@
-numpy
-matplotlib
-pandas
-ipywidgets
-IPython
-ipykernel
-pytest
-black
-autoflake
