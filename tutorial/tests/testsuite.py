@@ -1,7 +1,6 @@
 import io
-import sys
 from typing import Callable
-import importlib
+from contextlib import redirect_stdout
 
 import pytest
 from IPython.core.interactiveshell import InteractiveShell
@@ -9,66 +8,17 @@ from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import HTML, display
 
-# class SubmissionTest(unittest.TestCase):
-#     """
-#     Base class for submission testing.
-#     To implement your problems just subclass this one
-#     and add your own test cases.
-#     If possible, do not override `__init__` and just add
-#     your test methods.
-#     """
-
-#     def __init__(
-#         self,
-#         fun: Callable,
-#         testName: str,
-#     ) -> None:
-#         super().__init__(testName)
-#         self.fun = self._suppress_output(fun)
-
-#     def setUp(self) -> None:
-#         self.original_stdout = sys.stdout
-
-#     def tearDown(self) -> None:
-#         sys.stdout = self.original_stdout
-
-#     def _suppress_output(self, fun: Callable) -> Callable:
-#         """Suppress a `fun` stdout when running tests"""
-
-#         def wrapper(*args, **kwargs):
-#             output = io.StringIO()
-#             sys.stdout = output
-#             result = fun(*args, **kwargs)
-#             sys.stdout = self.original_stdout
-
-#             return result
-
-#         return wrapper
-
-
-# def format_failures(result: unittest.TestResult) -> str:
-#     """Format results upon failures"""
-#     result_text = []
-#     for _, tb_string in result.failures:
-#         if match := re.search(r"([A-Za-z]+Error): (.+)", tb_string, re.MULTILINE):
-#             result_text.append(f"{match.group(1).strip()}: {match.group(2).strip()}")
-
-#     return (
-#         "<ul>\n"
-#         + "\n".join([f"<li>{html.escape(line)}</li>" for line in result_text])
-#         + "\n</ul>"
-#     )
-
 
 class FunctionInjectionPlugin:
-    """A class to inject a generic test function"""
+    """A class to inject a function to test"""
 
-    def __init__(self, func_to_test: Callable) -> None:
-        self.func_to_test = func_to_test
+    def __init__(self, function_to_test: Callable) -> None:
+        self.function_to_test = function_to_test
 
     def pytest_generate_tests(self, metafunc: pytest.Metafunc) -> None:
-        if "func_to_test" in metafunc.fixturenames:
-            metafunc.parametrize("func_to_test", [self.func_to_test])
+        """Override the abstract `function_to_test` fixture function"""
+        if "function_to_test" in metafunc.fixturenames:
+            metafunc.parametrize("function_to_test", [self.function_to_test])
 
 
 @magics_class
@@ -88,12 +38,9 @@ class TestMagic(Magics):
     @argument("test", type=str, help="The test case class")
     @cell_magic
     def pytest_cell(self, line, cell) -> None:
+        """The %%pytest_cell magic"""
         # Parse magic's arguments
         args = parse_argstring(self.pytest_cell, line)
-
-        # Save current stdout
-        old_stdout = sys.stdout
-        sys.stdout = io.StringIO()
 
         # Run cell
         self.shell.run_cell(cell)
@@ -104,19 +51,16 @@ class TestMagic(Magics):
                 f"There is no function called '{args.test_function}' in the scope"
             )
 
-        # Import the module
-        test_module = importlib.import_module(f"tests.{args.test}")
-
         # Run the test
-        result = pytest.main(
-            ["-q", f"tests/{args.test}.py"],
-            plugins=[FunctionInjectionPlugin(test_function)],
-        )
+        test_module, test_class = args.test.split("::")
+        with redirect_stdout(io.StringIO()) as pytest_stdout:
+            result = pytest.main(
+                ["-q", f"tutorial/tests/{test_module}.py::{test_class}"],
+                plugins=[FunctionInjectionPlugin(test_function)],
+            )
 
-        # Restore stdout
-        sys.stdout.seek(0)
-        pytest_output = sys.stdout.read()
-        sys.stdout = old_stdout
+        # Read pytest output
+        pytest_output = pytest_stdout.getvalue()
 
         if result == pytest.ExitCode.OK:
             color, title, test_result = (
@@ -128,8 +72,18 @@ class TestMagic(Magics):
             color, title, test_result = (
                 "alert-danger",
                 "Tests <strong>FAILED</strong>",
-                f"&#x1F631 Your solution was not correct!\n{pytest_output}",
+                "&#x1F631 Your solution was not correct!",
             )
+
+            # Print all pytest output
+            print(pytest_output)
+
+            # Print only a summary
+            # lines = pytest_output.split("\n")
+            # summary_start = next(
+            #     i for i, line in enumerate(lines) if "short test summary info" in line
+            # )
+            # print(f"{lines[0]}\n" + "\n".join(lines[summary_start:]))
 
         display(
             HTML(
