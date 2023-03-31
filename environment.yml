@@ -9,5 +9,6 @@ dependencies:
     - matplotlib
     - pandas
     - ipywidgets
+    - ipynbname
     - jupyterlab
     - pytest

@@ -3,11 +3,9 @@ from typing import Callable
 from contextlib import redirect_stdout
 
 import pytest
-from IPython.core.interactiveshell import InteractiveShell
-from IPython.core.magic import Magics, cell_magic, magics_class
-from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
+import ipynbname
+from IPython.core.magic import register_cell_magic
 from IPython.display import HTML, display
-
 
 class FunctionInjectionPlugin:
     """A class to inject a function to test"""
@@ -21,57 +19,42 @@ class FunctionInjectionPlugin:
             metafunc.parametrize("function_to_test", [self.function_to_test])
 
 
-@magics_class
-class TestMagic(Magics):
-    """
-    Implements an IPython cell magic that can be used to automatically run a test case
-    The test is defined by the class `TestCase` and applied to the function `function_name`
-    on cells marked with `%%celltest function_name test_module.TestCase`
-    """
+@register_cell_magic
+def test_functions_from_cell(line, cell):
+    # Execute the cell code in a new namespace
 
-    shell: InteractiveShell
+    # Get the path to the current notebook file
+    nbname = ipynbname.name()
 
-    @magic_arguments()
-    @argument(
-        "test_function", type=str, help="The function to test in the following cell"
-    )
-    @argument("test", type=str, help="The test case class")
-    @cell_magic
-    def pytest_cell(self, line, cell) -> None:
-        """The %%pytest_cell magic"""
-        # Parse magic's arguments
-        args = parse_argstring(self.pytest_cell, line)
+    local_ns = {}
+    exec(cell, local_ns)
 
-        # Run cell
-        self.shell.run_cell(cell)
+    # Retrieve the names defined in the namespace
+    function_names = [name for name in local_ns if callable(local_ns[name])]
 
-        # Extract the function definition from the environment
-        if (test_function := self.shell.user_ns.get(args.test_function)) is None:
-            raise ValueError(
-                f"There is no function called '{args.test_function}' in the scope"
-            )
-
-        # Run the test
-        test_module, test_class = args.test.split("::")
+    if not function_names:
+        raise ValueError("No function defined in the cell")
+    
+    # Run the test
+    for function_to_test in function_names:
         with redirect_stdout(io.StringIO()) as pytest_stdout:
             result = pytest.main(
-                ["-q", f"tutorial/tests/{test_module}.py::{test_class}"],
-                plugins=[FunctionInjectionPlugin(test_function)],
-            )
-
+                ["-q", f"tutorial/tests/test_example.py::test_{function_to_test}"],
+                plugins=[FunctionInjectionPlugin(local_ns[function_to_test])],
+            )    
         # Read pytest output
         pytest_output = pytest_stdout.getvalue()
 
         if result == pytest.ExitCode.OK:
             color, title, test_result = (
                 "alert-success",
-                "Tests <strong>PASSED</strong>",
+                f"Tests <strong>PASSED</strong> for function <code>{function_to_test}</code>",
                 "&#x1F64C Congratulations, your solution was correct!",
             )
         else:
             color, title, test_result = (
                 "alert-danger",
-                "Tests <strong>FAILED</strong>",
+                f"Tests <strong>FAILED</strong> for function <code>{function_to_test}</code>",
                 "&#x1F631 Your solution was not correct!",
             )
 
@@ -91,14 +74,3 @@ class TestMagic(Magics):
             )
         )
 
-
-def load_ipython_extension(ipython):
-    """
-    Any module file that define a function named `load_ipython_extension`
-    can be loaded via `%load_ext module.path` or be configured to be
-    autoloaded by IPython at startup time.
-    """
-    # This class must then be registered with a manually created instance,
-    # since its constructor has different arguments from the default:
-    magics = TestMagic(ipython)
-    ipython.register_magics(magics)
