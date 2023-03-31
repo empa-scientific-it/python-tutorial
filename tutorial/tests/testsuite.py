@@ -36,7 +36,7 @@ class TestMagic(Magics):
     def test_functions_from_cell(self, line, cell):
         """The `%%test_functions_from_cell` magic"""
         # Get the path to the current notebook file
-        nbname = ipynbname.name()
+        notebook_name = ipynbname.name()
 
         # Run the cell through IPython
         self.shell.run_cell(cell)
@@ -57,7 +57,7 @@ class TestMagic(Magics):
                 result = pytest.main(
                     [
                         "-q",
-                        f"tutorial/tests/test_{nbname}.py::test_{name}",
+                        f"tutorial/tests/test_{notebook_name}.py::test_{name}",
                     ],
                     plugins=[FunctionInjectionPlugin(function)],
                 )
@@ -68,13 +68,13 @@ class TestMagic(Magics):
             if result == pytest.ExitCode.OK:
                 color, title, test_result = (
                     "alert-success",
-                    f"Tests <strong>PASSED</strong> for function <code>{name}</code>",
+                    f"Tests <strong>PASSED</strong> for the function <code>{name}</code>",
                     "&#x1F64C Congratulations, your solution was correct!",
                 )
             else:
                 color, title, test_result = (
                     "alert-danger",
-                    f"Tests <strong>FAILED</strong> for function <code>{name}</code>",
+                    f"Tests <strong>FAILED</strong> for the function <code>{name}</code>",
                     "&#x1F631 Your solution was not correct!",
                 )
 
