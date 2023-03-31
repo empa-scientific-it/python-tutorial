@@ -1,6 +1,6 @@
 import io
-from typing import Callable
 from contextlib import redirect_stdout
+from typing import Callable
 
 import pytest
 from IPython.core.interactiveshell import InteractiveShell
@@ -19,6 +19,11 @@ class FunctionInjectionPlugin:
         """Override the abstract `function_to_test` fixture function"""
         if "function_to_test" in metafunc.fixturenames:
             metafunc.parametrize("function_to_test", [self.function_to_test])
+
+
+@pytest.fixture
+def function_to_test():
+    """Function to test, overriden at runtime by the cell magic"""
 
 
 @magics_class
