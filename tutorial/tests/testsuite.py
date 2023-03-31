@@ -1,6 +1,6 @@
 import io
-from typing import Callable
 from contextlib import redirect_stdout
+from typing import Callable
 
 import pytest
 import ipynbname
@@ -18,6 +18,9 @@ class FunctionInjectionPlugin:
         if "function_to_test" in metafunc.fixturenames:
             metafunc.parametrize("function_to_test", [self.function_to_test])
 
+@pytest.fixture
+def function_to_test():
+    """Function to test, overriden at runtime by the cell magic"""
 
 @register_cell_magic
 def test_functions_from_cell(line, cell):

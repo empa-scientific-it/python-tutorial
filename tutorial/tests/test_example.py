@@ -1,10 +1,5 @@
 import pytest
 
-
-@pytest.fixture
-def function_to_test():
-    """Function to test, always overriden by the cell magic"""
-
 @pytest.mark.parametrize(
     "input_arg, expected_output",
     [
