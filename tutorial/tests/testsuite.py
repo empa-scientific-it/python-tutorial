@@ -42,7 +42,7 @@ def test_functions_from_cell(line, cell):
     for function_to_test in function_names:
         with redirect_stdout(io.StringIO()) as pytest_stdout:
             result = pytest.main(
-                ["-q", f"tutorial/tests/test_example.py::test_{function_to_test}"],
+                ["-q", f"tutorial/tests/test_{nbname}.py::test_{function_to_test}"],
                 plugins=[FunctionInjectionPlugin(local_ns[function_to_test])],
             )    
         # Read pytest output
