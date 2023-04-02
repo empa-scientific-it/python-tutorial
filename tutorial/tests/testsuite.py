@@ -33,8 +33,8 @@ class TestMagic(Magics):
     shell: InteractiveShell
 
     @cell_magic
-    def test_functions_from_cell(self, line, cell):
-        """The `%%test_functions_from_cell` magic"""
+    def ipytest(self, line, cell):
+        """The `%%ipytest` cell magic"""
         # Get the path to the current notebook file
         notebook_name = ipynbname.name()
 
