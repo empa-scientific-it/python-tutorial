@@ -91,7 +91,6 @@ class TestMagic(Magics):
 
     @cell_magic
     def ipytest(self, line: str, cell: str):
-    def ipytest(self, line: str, cell: str):
         """The `%%ipytest` cell magic"""
         # Get the module containing the test(s)
         module_name = get_module_name(line)
