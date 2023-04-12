@@ -1,12 +1,41 @@
 import io
+import pathlib
 from contextlib import redirect_stdout
 from typing import Callable
 
-import pytest
 import ipynbname
+import pytest
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, magics_class, cell_magic
 from IPython.display import HTML, display
+
+
+def _name_from_line(line: str = None):
+    return line.strip().removesuffix(".py") if line else None
+
+
+def _name_from_ipynbname() -> str | None:
+    try:
+        return ipynbname.name()
+    except FileNotFoundError:
+        return None
+
+
+def _name_from_globals() -> str | None:
+    module_path = globals().get('__vsc_ipynb_file__')
+    if module_path:
+        return pathlib.Path(module_path).stem
+    return None
+
+
+def get_module_name(line: str) -> str:
+    """Fetch the test module name"""
+    module_name = _name_from_line(line) or _name_from_ipynbname() or _name_from_globals()
+
+    if not module_name:
+        raise RuntimeError("Test module is undefined. Did you provide an argument to %%ipytest?")
+
+    return module_name
 
 
 class FunctionInjectionPlugin:
@@ -32,10 +61,15 @@ class TestMagic(Magics):
     shell: InteractiveShell
 
     @cell_magic
-    def ipytest(self, line, cell):
+    def ipytest(self, line: str, cell: str):
         """The `%%ipytest` cell magic"""
-        # Get the path to the current notebook file
-        notebook_name = ipynbname.name()
+        # Get the module containing the test(s)
+        module_name = get_module_name(line)
+
+        # Check that the test module file exists
+        module_file = pathlib.Path(f"tutorial/tests/test_{module_name}.py")
+        if not module_file.exists():
+            raise FileNotFoundError(f"Module file '{module_file}' does not exist")
 
         # Run the cell through IPython
         self.shell.run_cell(cell)
@@ -45,7 +79,7 @@ class TestMagic(Magics):
         function_names = {}
         for name, function in self.shell.user_ns.items():
             if name.startswith("solution_") and callable(function):
-                function_names[name[9:]] = function  # Remove the `solution_` prefix
+                function_names[name.removeprefix("solution_")] = function
 
         if not function_names:
             raise ValueError("No function to test defined in the cell")
@@ -56,7 +90,7 @@ class TestMagic(Magics):
                 result = pytest.main(
                     [
                         "-q",
-                        f"tutorial/tests/test_{notebook_name}.py::test_{name}",
+                        f"{module_file}::test_{name}",
                     ],
                     plugins=[FunctionInjectionPlugin(function)],
                 )
