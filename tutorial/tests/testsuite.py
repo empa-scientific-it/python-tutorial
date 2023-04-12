@@ -49,7 +49,6 @@ class FunctionInjectionPlugin:
         if "function_to_test" in metafunc.fixturenames:
             metafunc.parametrize("function_to_test", [self.function_to_test])
 
-
 @pytest.fixture
 def function_to_test():
     """Function to test, overriden at runtime by the cell magic"""
@@ -80,7 +79,7 @@ class TestMagic(Magics):
         function_names = {}
         for name, function in self.shell.user_ns.items():
             if name.startswith("solution_") and callable(function):
-                function_names[name.lstrip("solution_")] = function
+                function_names[name.removeprefix("solution_")] = function
 
         if not function_names:
             raise ValueError("No function to test defined in the cell")
