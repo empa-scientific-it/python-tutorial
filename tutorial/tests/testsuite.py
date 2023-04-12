@@ -45,7 +45,7 @@ class TestMagic(Magics):
         function_names = {}
         for name, function in self.shell.user_ns.items():
             if name.startswith("solution_") and callable(function):
-                function_names[name[9:]] = function  # Remove the `solution_` prefix
+                function_names[name.removeprefix("solution_")] = function
 
         if not function_names:
             raise ValueError("No function to test defined in the cell")
