@@ -13,7 +13,7 @@ def _name_from_line(line: str = None):
     return line.strip().removesuffix(".py") if line else None
 
 
-def _name_from_ipynbname():
+def _name_from_ipynbname() -> str | None:
     try:
         import ipynbname
         return ipynbname.name()
@@ -21,14 +21,14 @@ def _name_from_ipynbname():
         return None
 
 
-def _name_from_globals():
+def _name_from_globals() -> str | None:
     module_path = globals().get('__vsc_ipynb_file__')
     if module_path:
         return pathlib.Path(module_path).stem
     return None
 
 
-def get_module_name(line: str):
+def get_module_name(line: str) -> str:
     """Fetch the test module name"""
     module_name = _name_from_line(line) or _name_from_ipynbname() or _name_from_globals()
 
@@ -70,7 +70,7 @@ class TestMagic(Magics):
         # Check that the test module file exists
         module_file = pathlib.Path(f"tutorial/tests/test_{module_name}.py")
         if not module_file.exists():
-            raise FileNotFoundError(f"Module file '{module_file}' doesn't exist")
+            raise FileNotFoundError(f"Module file '{module_file}' does not exist")
 
         # Run the cell through IPython
         self.shell.run_cell(cell)
