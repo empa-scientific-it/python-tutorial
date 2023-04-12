@@ -3,6 +3,7 @@ import pathlib
 from contextlib import redirect_stdout
 from typing import Callable
 
+import ipynbname
 import pytest
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, magics_class, cell_magic
@@ -15,7 +16,6 @@ def _name_from_line(line: str = None):
 
 def _name_from_ipynbname() -> str | None:
     try:
-        import ipynbname
         return ipynbname.name()
     except FileNotFoundError:
         return None
