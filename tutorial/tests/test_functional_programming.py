@@ -72,3 +72,21 @@ def reference_solution_exercise5(w: list[str]) -> list[(str, int)]:
 def test_exercise5(function_to_test: Callable[[list[str]], list[(str, int)]]):
     data = get_data_exercise5()
     assert function_to_test(data) == reference_solution_exercise5(data)
+
+
+
+def reference_solution_exercise6(l: list[(str, int)]) -> list[(str, float)]:
+    total = sum(map(lambda x: x[1], l))
+    return [(letter, freq/total) for letter, freq in l] 
+
+def test_exercise6(function_to_test: Callable[[list[(str, int)]], list[(str, float)]]):
+    input_data = reference_solution_exercise5(get_data_exercise5())
+    assert function_to_test(input_data) == reference_solution_exercise6(input_data)
+
+
+def reference_function_exercise7(l: list[str]) -> list[str]:
+    return list(filter(lambda x: x == x[::-1], l))
+
+def test_exercise7(function_to_test: Callable[[list[str]], list[str]]):
+    data = get_data_exercise5()
+    assert function_to_test(data) == reference_function_exercise7(data)
