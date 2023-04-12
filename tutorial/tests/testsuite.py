@@ -1,5 +1,6 @@
 import io
 import pathlib
+import pathlib
 from contextlib import redirect_stdout
 from typing import Callable
 
@@ -38,6 +39,34 @@ def get_module_name(line: str):
     return module_name
 
 
+def _name_from_line(line: str = None):
+    return line.strip().removesuffix(".py") if line else None
+
+
+def _name_from_ipynbname() -> str | None:
+    try:
+        return ipynbname.name()
+    except FileNotFoundError:
+        return None
+
+
+def _name_from_globals() -> str | None:
+    module_path = globals().get('__vsc_ipynb_file__')
+    if module_path:
+        return pathlib.Path(module_path).stem
+    return None
+
+
+def get_module_name(line: str) -> str:
+    """Fetch the test module name"""
+    module_name = _name_from_line(line) or _name_from_ipynbname() or _name_from_globals()
+
+    if not module_name:
+        raise RuntimeError("Test module is undefined. Did you provide an argument to %%ipytest?")
+
+    return module_name
+
+
 class FunctionInjectionPlugin:
     """A class to inject a function to test"""
 
@@ -62,6 +91,7 @@ class TestMagic(Magics):
 
     @cell_magic
     def ipytest(self, line: str, cell: str):
+    def ipytest(self, line: str, cell: str):
         """The `%%ipytest` cell magic"""
         # Get the module containing the test(s)
         module_name = get_module_name(line)
@@ -69,7 +99,7 @@ class TestMagic(Magics):
         # Check that the test module file exists
         module_file = pathlib.Path(f"tutorial/tests/test_{module_name}.py")
         if not module_file.exists():
-            raise FileNotFoundError(f"Module file '{module_file}' doesn't exist")
+            raise FileNotFoundError(f"Module file '{module_file}' does not exist")
 
         # Run the cell through IPython
         self.shell.run_cell(cell)
@@ -90,6 +120,7 @@ class TestMagic(Magics):
                 result = pytest.main(
                     [
                         "-q",
+                        f"{module_file}::test_{name}",
                         f"{module_file}::test_{name}",
                     ],
                     plugins=[FunctionInjectionPlugin(function)],
