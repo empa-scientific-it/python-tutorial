@@ -1,42 +1,14 @@
 import io
 import pathlib
-import pathlib
+import re
 from contextlib import redirect_stdout
 from typing import Callable
 
+import ipynbname
 import pytest
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, magics_class, cell_magic
 from IPython.display import HTML, display
-
-
-def _name_from_line(line: str = None):
-    return line.strip().removesuffix(".py") if line else None
-
-
-def _name_from_ipynbname():
-    try:
-        import ipynbname
-        return ipynbname.name()
-    except FileNotFoundError:
-        return None
-
-
-def _name_from_globals():
-    module_path = globals().get('__vsc_ipynb_file__')
-    if module_path:
-        return pathlib.Path(module_path).stem
-    return None
-
-
-def get_module_name(line: str):
-    """Fetch the test module name"""
-    module_name = _name_from_line(line) or _name_from_ipynbname() or _name_from_globals()
-
-    if not module_name:
-        raise RuntimeError("Test module is undefined. Did you provide an argument to %%ipytest?")
-
-    return module_name
 
 
 def _name_from_line(line: str = None):
@@ -78,6 +50,7 @@ class FunctionInjectionPlugin:
         if "function_to_test" in metafunc.fixturenames:
             metafunc.parametrize("function_to_test", [self.function_to_test])
 
+
 @pytest.fixture
 def function_to_test():
     """Function to test, overriden at runtime by the cell magic"""
@@ -103,23 +76,25 @@ class TestMagic(Magics):
         # Run the cell through IPython
         self.shell.run_cell(cell)
 
-        # Retrieve the names defined in the namespace
+        # Retrieve the functions names defined in the current cell
         # Only functions with names starting with `solution_` will be candidates for tests
-        function_names = {}
-        for name, function in self.shell.user_ns.items():
-            if name.startswith("solution_") and callable(function):
-                function_names[name.removeprefix("solution_")] = function
+        functions_names = re.findall(r"^def\s+(solution_.*?)\s*\(", cell, re.M)
 
-        if not function_names:
+        # Get the functions objects from user namespace
+        functions_to_run = {}
+        for name, function in self.shell.user_ns.items():
+            if name in functions_names and callable(function):
+                functions_to_run[name.removeprefix("solution_")] = function
+
+        if not functions_to_run:
             raise ValueError("No function to test defined in the cell")
 
         # Run the tests
-        for name, function in function_names.items():
+        for name, function in functions_to_run.items():
             with redirect_stdout(io.StringIO()) as pytest_stdout:
                 result = pytest.main(
                     [
                         "-q",
-                        f"{module_file}::test_{name}",
                         f"{module_file}::test_{name}",
                     ],
                     plugins=[FunctionInjectionPlugin(function)],
