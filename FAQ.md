@@ -42,3 +42,25 @@ A couple of things worth reminding about Slack:
 2. **Always** reply within [threads](https://slack.com/help/articles/115000769927-Use-threads-to-organize-discussions-) (or open a new one) when you want to join a conversation. The [purpose](https://slack.com/resources/using-slack/tips-on-how-best-to-use-threaded-messages) is to avoid too many unrelated messages that are difficult to navigate in the long run.
 
 For a few more tips about using Slack effectively, check out [this link](https://slack.com/blog/collaboration/etiquette-tips-in-slack).
+
+## How do I test my solutions?
+
+Each section contains a number of exercises for you to solve. The skeleton of the solution is already provided in the form of a function having the name `solution_exercise*`. These cells are easy to spot because they look like this:
+
+```ipython
+%%ipytest functional_programming
+def solution_exercise5(w: list[str]) -> list[(str, int)]:
+    """
+    Write your solution here
+    """
+    pass
+
+```
+
+the first line `%%ipytest` tells IPython to run the cell in a special manner: instead of just running the cell, the cell is executed in a special environment
+where a test verifies if your solution is correct. Your function will automatically receive the needed input as shown by the signature. In this case, we    know that the function will receive a list of strings called `w`,
+
+All you have to do is to work on your solution inside of the function definition `solution_exercise5`. If you need to load modules or define helper functions, you can do it in the same cell.
+To avoid breaking the solution testing mechanism, **DO NOT** rename the function and **DO NOT** remove the first line from the cell.
+
+To run the cell and test your solution, select it and press `CTRL + enter` or the `run cell` command of Jupyter. If your solution is correct, you will receive a congratulations message, if it is not, you will receive an error message along with the output of the failed tests.
