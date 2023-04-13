@@ -2,6 +2,10 @@ import pytest
 import math
 
 
+
+def reference_addition_multiplication(a, b, c):
+    return (a + b) * c
+
 @pytest.mark.parametrize("a, b, c",
                          [
     (1, 2, 3),
@@ -14,8 +18,14 @@ import math
     ]
     )
 def test_addition_multiplication(a, b, c, function_to_test):
-    assert math.isclose(function_to_test(a, b, c), (a + b) * c)
+    assert math.isclose(function_to_test(a, b, c), reference_addition_multiplication(a, b, c))
 
+
+def reference_circle_area(r):
+    return math.pi * r ** 2
+
+
+reference_circle_area = lambda r: math.pi * r ** 2
 @pytest.mark.parametrize("r",
                             [
     1,
@@ -28,9 +38,15 @@ def test_addition_multiplication(a, b, c, function_to_test):
     ]
     )
 def test_circle_area(r, function_to_test):
-    assert math.isclose(function_to_test(r), math.pi * r ** 2, rel_tol=1e-4)
+    assert math.isclose(function_to_test(r), reference_circle_area(r), rel_tol=1e-4)
 
 
+
+def reference_quadratic_equation(a, b, c):
+    d = b ** 2 - 4 * a * c
+    solution1 = (-b + math.sqrt(d)) / (2 * a)
+    solution2 = (-b - math.sqrt(d)) / (2 * a)
+    return solution1, solution2
 
 @pytest.mark.parametrize("a, b, c",                      [
     (1, 3, 2),
@@ -42,9 +58,7 @@ def test_circle_area(r, function_to_test):
     (1e-3, 1, 1.5),
     ])
 def test_quadratic_equation(a, b, c, function_to_test):
-    d = b ** 2 - 4 * a * c
-    solution1 = (-b + math.sqrt(d)) / (2 * a)
-    solution2 = (-b - math.sqrt(d)) / (2 * a)
+    solution1, solution2 = reference_quadratic_equation(a, b, c)
     provided_solution1, provided_solution2 = function_to_test(a, b, c)
 
     assert (math.isclose(provided_solution1, solution1) and math.isclose(provided_solution2, solution2)) or (math.isclose(provided_solution1, solution2) and math.isclose(provided_solution2, solution1))
