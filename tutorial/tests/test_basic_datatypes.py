@@ -108,6 +108,83 @@ def reference_number_is_lower_than_0_or_greater_than_100(number):
 def test_number_is_lower_than_0_or_greater_than_100(number, function_to_test):
     assert function_to_test(number) == reference_number_is_lower_than_0_or_greater_than_100(number)
 
+
+LISTS = [
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    [1, 2, 3, 4, 5, 6, 7, 8],
+    [1, 2, 3, 4, 5, 6, 7],
+    [1, 2, 3, 4, 5, 6],
+    [1, 2, 3, 4, 5],
+    [1, 2, 3, 4],
+    [1, 2, 3],
+    [1, 2],
+    [1],
+    ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
+    ['j', 'i', 'h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'],
+    ['a', 1, 'b', 2, 'c', 3, 'd', 4, 'e', 5],
+    ]
+
+LIST1 = ['x', 'y', 'z']
+
+
+LIST1_2 = [
+    ([], []),
+    ([1, 2, 3], [1, 2, 3]),
+    ([1, 2, 3], [3, 2, 1]),
+    ([1, 2, 3], [1, 2, 3, 4]),
+    ([1, 2, 3], [1, 2]),
+    ([1, 2, 3], [4, 5, 6]),
+    ([], [1, 2, 3]),
+    ([1, 2, 3], []),
+    (LIST1, LIST1),
+    (LIST1, LIST1.copy()),
+]
+
+def reference_remove_every_second_element_from_list(my_list):
+    return my_list[::2]
+
+@pytest.mark.parametrize("my_list", LISTS)
+def test_remove_every_second_element_from_list(my_list, function_to_test):
+    assert function_to_test(my_list) == reference_remove_every_second_element_from_list(my_list)
+
+
+def reference_return_first_and_last_element_from_list(list):
+    return list[0], list[-1]
+
+@pytest.mark.parametrize("my_list", LISTS)
+def test_return_first_and_last_element_from_list(my_list, function_to_test):
+    assert function_to_test(my_list) == reference_return_first_and_last_element_from_list(my_list)
+
+def reference_first_and_last_element_are_equal(list):
+    return list[0] == list[-1]
+
+@pytest.mark.parametrize("my_list", LISTS)
+def test_first_and_last_element_are_equal(my_list, function_to_test):
+    assert function_to_test(my_list) == reference_first_and_last_element_are_equal(my_list)
+
+
+def reference_lists_are_equal(list1, list2):
+    return list1 == list2
+
+@pytest.mark.parametrize("list1, list2", LIST1_2)
+def test_lists_are_equal(list1, list2, function_to_test):
+    assert function_to_test(list1, list2) == reference_lists_are_equal(list1, list2)
+
+def reference_lists_are_equal_but_not_same(list1, list2):
+    return list1 == list2 and list1 is not list2
+
+@pytest.mark.parametrize("list1, list2", LIST1_2)
+def test_lists_are_equal_but_not_same(list1, list2, function_to_test):
+    assert function_to_test(list1, list2) == reference_lists_are_equal_but_not_same(list1, list2)
+
+def reference_greater_or_equal(list1, list2):
+    return list1 >= list2
+
+@pytest.mark.parametrize("list1, list2", LIST1_2)
+def test_greater_or_equal(list1, list2, function_to_test):
+    assert function_to_test(list1, list2) == reference_greater_or_equal(list1, list2)
+
 SET1_2 = [
     (set(), set()),
     ({1, 2, 3}, {1, 2, 3}),
