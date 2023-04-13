@@ -32,6 +32,27 @@ We have created dedicated channels on Slack for each topic.
 
 Due to time constraints, we couldn't fit all the requests, and we will mainly focus on the fundamentals of the language. However, you will see some practical use cases during the exercise sessions. If you have any questions or are interested in a specific topic that is not covered in the workshop, you can open a discussion on the `#extra` channel on Slack.
 
+## How do I test my solutions?
+
+Each section contains a number of exercises for you to solve. The skeleton of the solution is already provided in the form of a function whose name starts with `solution_`. These cells are easy to spot because they look like this:
+
+```python
+%%ipytest functional_programming
+def solution_exercise5(input_arg: list[str]) -> list[(str, int)]:
+    """
+    Write your solution here
+    """
+    pass
+```
+
+The first line `%%ipytest` tells IPython to run the cell in a special manner: instead of just running the cell, the cell is executed in a special environment that tests whether your solution is correct. Your function will automatically receive the needed input as shown by the signature. In this case, we know that the function will receive a list of strings called `input_arg`.
+
+All you have to do is to work on your solution inside the function definition `solution_exercise5`. If you need to load modules or define other functions, you can do it in the same cell.
+To avoid breaking the solution testing mechanism, **do not rename** the function and **do not remove the first line** from the cell.
+
+To run the cell and test your solution, select it and press `Shift + Enter`  or the `Run cell` command of Jupyter. The output will tell you whether your solution is correct. If it is not, you will receive an error message along with the output of the failed tests.
+
+
 ## I have another question. Where should I ask?
 
 For any other question you might have about the workshop, feel free to post a message in the `#help` channel on Slack.
