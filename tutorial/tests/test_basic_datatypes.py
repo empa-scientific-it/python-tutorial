@@ -63,6 +63,51 @@ def test_quadratic_equation(a, b, c, function_to_test):
 
     assert (math.isclose(provided_solution1, solution1) and math.isclose(provided_solution2, solution2)) or (math.isclose(provided_solution1, solution2) and math.isclose(provided_solution2, solution1))
 
+
+def reference_a_plus_b_equals_c(a, b, c):
+    return a + b == c
+
+@pytest.mark.parametrize("a, b, c", [
+    (1, 2, 3),
+    (4, 5, 9),
+    (10, 11, 21),
+    (-5, 1, 2),
+    (23.1, 1.8, 14.2),
+    (-10.5, 7.4, 84),
+    (1e-5, 3.5e-5, 2.5),
+    ])
+def test_a_plus_b_equals_c(a, b, c, function_to_test):
+    assert function_to_test(a, b, c) == reference_a_plus_b_equals_c(a, b, c)
+
+def reference_number_is_even(number):
+    return number % 2 == 0
+
+@pytest.mark.parametrize("number", [1, 2, 3, 4])
+def test_number_is_even(number, function_to_test):
+    assert function_to_test(number) == reference_number_is_even(number)
+
+def reference_number_is_greater_than_zero(number):
+    return number > 0
+
+@pytest.mark.parametrize("number", [1, 2, 3, 4])
+def test_number_is_greater_than_zero(number, function_to_test):
+    assert function_to_test(number) == reference_number_is_greater_than_zero(number)
+
+
+def reference_number_is_positive_and_even(number):
+    return number % 2 == 0 and number > 0
+
+@pytest.mark.parametrize("number", [1, 2, 3, 4, -1, -2, -3, -4])
+def test_number_is_positive_and_even(number, function_to_test):
+    assert function_to_test(number) == reference_number_is_positive_and_even(number)
+
+def reference_number_is_lower_than_0_or_greater_than_100(number):
+    return number < 0 or number >= 100
+
+@pytest.mark.parametrize("number", [1, 2, 3, 4, -1, -2, -3, -4, 0, 100, 101, 102, 103])
+def test_number_is_lower_than_0_or_greater_than_100(number, function_to_test):
+    assert function_to_test(number) == reference_number_is_lower_than_0_or_greater_than_100(number)
+
 SET1_2 = [
     (set(), set()),
     ({1, 2, 3}, {1, 2, 3}),
