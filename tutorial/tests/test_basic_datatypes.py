@@ -1,6 +1,6 @@
 import pytest
 import math
-
+import copy
 
 
 def reference_addition_multiplication(a, b, c):
@@ -231,3 +231,60 @@ def test_sets_disjoint(set1, set2, function_to_test):
     """The test case(s)"""
     assert function_to_test(set1, set2) == set1.isdisjoint(set2)
 
+
+DICTS1 = [
+    {},
+    {'a': 1},
+    {'a': 1, 'b': 2},
+    {'a': 1, 'b': 2, 'c': 3},
+    {'a': 1, 'b': 2, 'c': 3, 'd': 4},
+    {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5},
+]
+
+DICTS2 = [
+    {'a': 10, 'b': 20, 'c': 30, 'd': 40, 'e': 50},
+    {'a': 10, 'b': 20, 'c': 30, 'd': 40},
+    {'a': 10, 'b': 20, 'c': 30},
+    {'a': 10, 'b': 20},
+    {'a': 10},
+    {},
+]
+
+
+
+def reference_dict_return_value(my_dict, key):
+    return my_dict.get(key)
+
+@pytest.mark.parametrize("my_dict, key", list(zip(copy.deepcopy(DICTS1), ['b']*len(DICTS1))))
+def test_dict_return_value(my_dict, key, function_to_test):
+    my_dict_to_try = my_dict.copy()
+    assert function_to_test(my_dict_to_try, key) == reference_dict_return_value(my_dict, key)
+    # Check that the original dict is not modified
+    assert my_dict == my_dict_to_try
+
+
+def reference_dict_return_value_delete(my_dict, key):
+    return my_dict.pop(key, None)
+
+@pytest.mark.parametrize("my_dict, key", list(zip(copy.deepcopy(DICTS1), ['b']*len(DICTS1))))
+def test_dict_return_value_delete(my_dict, key, function_to_test):
+    my_dict_original1 = my_dict.copy()
+    my_dict_original2 = my_dict.copy()
+    assert function_to_test(my_dict_original1, key) == reference_dict_return_value_delete(my_dict_original2, key)
+
+    assert my_dict_original1 == my_dict_original2
+
+
+
+def reference_update_one_dict_with_another(dict1, dict2):
+    return dict1.update(dict2)
+
+
+@pytest.mark.parametrize("my_dict1, my_dict2", list(zip(copy.deepcopy(DICTS1),copy.deepcopy(DICTS2))))
+def test_update_one_dict_with_another(my_dict1, my_dict2, function_to_test):
+    my_dict1_original1 = my_dict1.copy()
+    my_dict1_original2 = my_dict1.copy()
+    function_to_test(my_dict1_original1, my_dict2)
+    reference_update_one_dict_with_another(my_dict1_original2, my_dict2)
+
+    assert my_dict1_original1 == my_dict1_original2
