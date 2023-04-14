@@ -57,36 +57,36 @@ def test_exercise4(
 
 
 @functools.lru_cache
-def get_data_exercise5() -> list[str]:
+def get_data_exercise5() -> List[str]:
     words = requests.get("https://www.mit.edu/~ecprice/wordlist.10000").text
     return words.splitlines()
 
 
-def reference_solution_exercise5(w: list[str]) -> list[(str, int)]:
+def reference_solution_exercise5(w: List[str]) -> List[(str, int)]:
     return [
         (k, len(list(v)))
         for k, v in itertools.groupby(sorted(w, key=lambda x: x[0]), key=lambda x: x[0])
     ]
 
 
-def test_exercise5(function_to_test: Callable[[list[str]], list[(str, int)]]):
+def test_exercise5(function_to_test: Callable[[List[str]], List[(str, int)]]):
     data = get_data_exercise5()
     assert function_to_test(data) == reference_solution_exercise5(data)
 
 
 
-def reference_solution_exercise6(l: list[(str, int)]) -> list[(str, float)]:
+def reference_solution_exercise6(l: List[(str, int)]) -> List[(str, float)]:
     total = sum(map(lambda x: x[1], l))
     return [(letter, freq/total) for letter, freq in l] 
 
-def test_exercise6(function_to_test: Callable[[list[(str, int)]], list[(str, float)]]):
+def test_exercise6(function_to_test: Callable[[List[(str, int)]], List[(str, float)]]):
     input_data = reference_solution_exercise5(get_data_exercise5())
     assert function_to_test(input_data) == reference_solution_exercise6(input_data)
 
 
-def reference_function_exercise7(l: list[str]) -> list[str]:
-    return list(filter(lambda x: x == x[::-1], l))
+def reference_function_exercise7(l: List[str]) -> List[str]:
+    return list(filter(lambda x: x == x[::-1] and len(x) > 1, l))
 
-def test_exercise7(function_to_test: Callable[[list[str]], list[str]]):
+def test_exercise7(function_to_test: Callable[[List[str]], List[str]]):
     data = get_data_exercise5()
-    assert function_to_test(data) == reference_function_exercise7(data)
+    assert function_to_test(data) == reference_function_exercise7(data)po
