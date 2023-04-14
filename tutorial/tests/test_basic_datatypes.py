@@ -288,3 +288,58 @@ def test_update_one_dict_with_another(my_dict1, my_dict2, function_to_test):
     reference_update_one_dict_with_another(my_dict1_original2, my_dict2)
 
     assert my_dict1_original1 == my_dict1_original2
+
+
+STRINGS = [
+    '',
+    'a',
+    'ab',
+    'abc',
+    'abcd',
+    'a b c d e'
+    'One two three four five six seven eight nine ten',
+    'Hello world',
+    'How are you?',
+]
+
+def reference_string_capitalize(my_string):
+    return my_string.capitalize()
+
+@pytest.mark.parametrize("my_string", STRINGS)
+def test_string_capitalize(my_string, function_to_test):
+    assert function_to_test(my_string) == reference_string_capitalize(my_string)
+
+
+def reference_string_lower_case(my_string):
+    return my_string.lower()
+
+@pytest.mark.parametrize("my_string", STRINGS)
+def test_string_lower_case(my_string, function_to_test):
+    assert function_to_test(my_string) == reference_string_lower_case(my_string)
+
+def reference_string_word_split(my_string):
+    return my_string.split()
+
+@pytest.mark.parametrize("my_string", STRINGS)
+def test_string_word_split(my_string, function_to_test):
+    assert function_to_test(my_string) == reference_string_word_split(my_string)
+
+
+def reference_string_join_commas(my_string):
+    return ','.join(my_string)
+
+@pytest.mark.parametrize("my_string", STRINGS)
+def test_string_join_commas(my_string, function_to_test):
+    my_string_splitted = my_string.split()
+    print(my_string_splitted)
+    print(reference_string_join_commas(my_string_splitted))
+    assert function_to_test(my_string_splitted) == reference_string_join_commas(my_string_splitted)
+
+
+def reference_string_split_lines(my_string):
+    return my_string.splitlines()
+
+def test_string_split_lines(function_to_test):
+    my_string = '\n'.join(STRINGS)
+    assert function_to_test(my_string) == STRINGS
+    assert function_to_test(my_string) == reference_string_split_lines(my_string)
