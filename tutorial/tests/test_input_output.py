@@ -4,6 +4,14 @@ import csv
 import itertools 
 from .testsuite import get_module_name
 from .. import prepare_magic_file
+import sys
+
+
+
+def get_data(name: str, data_dir:str="data") -> pl.Path:
+    current_module  = sys.modules[__name__]
+    print(current_module.__file__)
+    return (pl.Path(current_module.__file__).parent / pl.Path(f"{data_dir}/{name}")).resolve()
 
 def reference_solution_exercise1(f: pl.Path) -> "dict[str, list[int]]":
     with open(f) as lines:
@@ -14,7 +22,7 @@ def reference_solution_exercise1(f: pl.Path) -> "dict[str, list[int]]":
 
 
 def test_exercise1(function_to_test):
-    f = pl.Path("data/example.csv")
+    f = get_data("example.csv")
     assert function_to_test(f) == reference_solution_exercise1(f)
 
 
@@ -23,7 +31,7 @@ def reference_solution_exercise2(f: pl.Path)-> int:
         return len(lines.readlines())
 
 def test_exercise2(function_to_test):
-    f = pl.Path("data/example.csv")
+    f = get_data("example.csv")
     assert function_to_test(f) == reference_solution_exercise2(f)
 
 
@@ -33,7 +41,7 @@ def reference_solution_exercise3(f: pl.Path) -> "dict[str, int]":
     return res
 
 def test_exercise3(function_to_test):
-    f = pl.Path("data/lines.txt")
+    f = get_data("lines.txt")
     assert function_to_test(f) == reference_solution_exercise3(f)
 
 
@@ -48,8 +56,8 @@ def reference_solution_exercise4(english: pl.Path, dictionary: pl.Path) -> "list
     return [(e, translations[e]) for e in english_words if e in translations.keys()]
 
 def test_exercise4(function_to_test):
-    words = pl.Path("data/english.csv")
-    dictionary = pl.Path("data/dict.csv")
+    words = get_data("english.csv")
+    dictionary = get_data("dict.csv")
     assert function_to_test(words, dictionary) == reference_solution_exercise4(words, dictionary)
 
 
@@ -58,6 +66,6 @@ def reference_solution_exercise5(secret_file: pl.Path) -> str:
 
 
 def test_exercise5(function_to_test):
-    message = pl.Path("data/secret_message.dat")
+    message = get_data("secret_message.dat")
     assert function_to_test(message) == reference_solution_exercise5(message)
 
