@@ -1,8 +1,10 @@
 import io
 import pathlib
+import re
 from contextlib import redirect_stdout
 from typing import Callable
 
+import ipynbname
 import pytest
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, magics_class, cell_magic
@@ -13,22 +15,21 @@ def _name_from_line(line: str = None):
     return line.strip().removesuffix(".py") if line else None
 
 
-def _name_from_ipynbname():
+def _name_from_ipynbname() -> str | None:
     try:
-        import ipynbname
         return ipynbname.name()
     except FileNotFoundError:
         return None
 
 
-def _name_from_globals():
+def _name_from_globals() -> str | None:
     module_path = globals().get('__vsc_ipynb_file__')
     if module_path:
         return pathlib.Path(module_path).stem
     return None
 
 
-def get_module_name(line: str):
+def get_module_name(line: str) -> str:
     """Fetch the test module name"""
     module_name = _name_from_line(line) or _name_from_ipynbname() or _name_from_globals()
 
@@ -70,23 +71,26 @@ class TestMagic(Magics):
         # Check that the test module file exists
         module_file = pathlib.Path(f"tutorial/tests/test_{module_name}.py")
         if not module_file.exists():
-            raise FileNotFoundError(f"Module file '{module_file}' doesn't exist")
+            raise FileNotFoundError(f"Module file '{module_file}' does not exist")
 
         # Run the cell through IPython
         self.shell.run_cell(cell)
 
-        # Retrieve the names defined in the namespace
+        # Retrieve the functions names defined in the current cell
         # Only functions with names starting with `solution_` will be candidates for tests
-        function_names = {}
-        for name, function in self.shell.user_ns.items():
-            if name.startswith("solution_") and callable(function):
-                function_names[name.lstrip("solution_")] = function
+        functions_names = re.findall(r"^def\s+(solution_.*?)\s*\(", cell, re.M)
 
-        if not function_names:
+        # Get the functions objects from user namespace
+        functions_to_run = {}
+        for name, function in self.shell.user_ns.items():
+            if name in functions_names and callable(function):
+                functions_to_run[name.removeprefix("solution_")] = function
+
+        if not functions_to_run:
             raise ValueError("No function to test defined in the cell")
 
         # Run the tests
-        for name, function in function_names.items():
+        for name, function in functions_to_run.items():
             with redirect_stdout(io.StringIO()) as pytest_stdout:
                 result = pytest.main(
                     [
