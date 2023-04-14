@@ -89,4 +89,4 @@ def reference_function_exercise7(l: List[str]) -> List[str]:
 
 def test_exercise7(function_to_test: Callable[[List[str]], List[str]]):
     data = get_data_exercise5()
-    assert function_to_test(data) == reference_function_exercise7(data)po
+    assert function_to_test(data) == reference_function_exercise7(data)
