@@ -1,5 +1,5 @@
 import pytest
-from typing import Callable, List, Any
+from typing import Callable, List, Any, Tuple
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 import functools
@@ -12,20 +12,23 @@ def reference_solution_exercise2(l: List[int], k: int):
 
 
 @pytest.mark.parametrize(
-    "l, k, reference_func",
+    "l, k",
     [
-        ([1, 2, 3, 4], 1, reference_solution_exercise2),
-        (list(range(100)), 5, reference_solution_exercise2),
+        ([1, 2, 3, 4], 1),
+        (list(range(100)), 5),
     ],
 )
 def test_exercise2(
     function_to_test: Callable[[int, int], int],
     l: List[int],
     k: int,
-    reference_func: Callable,
 ):
-    assert function_to_test(l, k) == reference_func(l, k)
+    assert function_to_test(l, k) == reference_solution_exercise2(l, k)
 
+
+
+def reference_solution_exercise3(x: List[List[int]]) -> List[List[int]]:
+    return [list(i) for i in zip(*x)]
 
 @pytest.mark.parametrize(
     "input",
@@ -34,7 +37,8 @@ def test_exercise2(
 def test_exercise3(
     function_to_test: Callable[[List[List[int]]], List[List[int]]], input: NDArray
 ):
-    assert function_to_test(input.tolist()) == input.transpose().tolist()
+    res = function_to_test(input.tolist())
+    assert res == reference_solution_exercise3(input.tolist()) and res == input.transpose().tolist()
 
 
 def reference_solution_exercise4(l: List[List[Any]]) -> List[Any]:
@@ -62,24 +66,24 @@ def get_data_exercise5() -> List[str]:
     return words.splitlines()
 
 
-def reference_solution_exercise5(w: List[str]) -> List[(str, int)]:
+def reference_solution_exercise5(w: List[str]) -> List[Tuple[str, int]]:
     return [
         (k, len(list(v)))
         for k, v in itertools.groupby(sorted(w, key=lambda x: x[0]), key=lambda x: x[0])
     ]
 
 
-def test_exercise5(function_to_test: Callable[[List[str]], List[(str, int)]]):
+def test_exercise5(function_to_test: Callable[[List[str]], List[Tuple[str, int]]]):
     data = get_data_exercise5()
     assert function_to_test(data) == reference_solution_exercise5(data)
 
 
 
-def reference_solution_exercise6(l: List[(str, int)]) -> List[(str, float)]:
+def reference_solution_exercise6(l: List[Tuple[str, int]]) -> List[Tuple[str, float]]:
     total = sum(map(lambda x: x[1], l))
     return [(letter, freq/total) for letter, freq in l] 
 
-def test_exercise6(function_to_test: Callable[[List[(str, int)]], List[(str, float)]]):
+def test_exercise6(function_to_test: Callable[[List[Tuple[str, int]]], List[Tuple[str, float]]]):
     input_data = reference_solution_exercise5(get_data_exercise5())
     assert function_to_test(input_data) == reference_solution_exercise6(input_data)
 
