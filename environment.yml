@@ -12,3 +12,4 @@ dependencies:
     - ipynbname
     - jupyterlab
     - pytest
+    - pytest-timeout
