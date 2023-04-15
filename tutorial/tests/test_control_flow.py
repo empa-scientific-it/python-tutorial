@@ -1,4 +1,5 @@
 import pathlib
+import sys
 from collections import Counter
 from math import factorial
 from typing import List, Tuple
@@ -6,10 +7,16 @@ from typing import List, Tuple
 import pytest
 
 
-def read_data(filename: str) -> str:
+# def read_data(filename: str) -> str:
+#     """Read input data"""
+#     # NOTE: the path is relative to the IPython notebook's dir
+#     return pathlib.Path(f"tutorial/tests/data/{filename}").read_text()
+
+
+def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     """Read input data"""
-    # NOTE: the path is relative to the IPython notebook's dir
-    return pathlib.Path(f"tutorial/tests/data/{filename}").read_text()
+    current_module = sys.modules[__name__]
+    return (pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}").resolve()
 
 
 #
@@ -62,30 +69,47 @@ def test_cats_with_hats(function_to_test) -> None:
 
 def parse_data(filename: str) -> List[List[int]]:
     """Parse a map of trees"""
-    input_data = read_data(filename)
+    input_data = read_data(filename).read_text()
     return [[1 if pos == "#" else 0 for pos in line] for line in input_data.splitlines()]
 
 
 trees_1, trees_2 = [parse_data(f"trees_{num}.txt") for num in (1, 2)]
 
 
-@pytest.mark.parametrize(
-    "trees_map, right, down, trees",
-    [
-        (trees_1, 3, 1, 292),
-        (trees_2, 3, 1, 209),
-    ]
-)
-def test_toboggan_p1(trees_map: List[List[int]], right: int, down: int, trees: int, function_to_test) -> None:
-    assert function_to_test(trees_map, right, down) == trees
+def reference_solution_toboggan_p1(trees_map: List[List[int]], right: int, down: int) -> int:
+    """Reference solution (part 1)"""
+    start, trees, depth, width = [0, 0], 0, len(trees_map), len(trees_map[0])
+    while start[0] < depth:
+        trees += trees_map[start[0]][start[1]]
+        start = [start[0] + down, (start[1] + right) % width]
+    return trees
 
 
 @pytest.mark.parametrize(
-    "trees_map, slopes, total",
+    "trees_map, right, down",
     [
-        (trees_1, ((1, 1), (3, 1), (5, 1), (7, 1), (1, 2)), 9354744432),
-        (trees_2, ((1, 1), (3, 1), (5, 1), (7, 1), (1, 2)), 1574890240),
+        (trees_1, 3, 1),
+        (trees_2, 3, 1),
     ]
 )
-def test_toboggan_p2(trees_map: List[List[int]], slopes: Tuple[Tuple[int]], total: int, function_to_test) -> None:
-    assert function_to_test(trees_map, slopes) == total
+def test_toboggan_p1(trees_map: List[List[int]], right: int, down: int, function_to_test) -> None:
+    assert function_to_test(trees_map, right, down) == reference_solution_toboggan_p1(trees_map, right, down)
+
+
+def reference_solution_toboggan_p2(trees_map: List[List[int]], slopes: Tuple[Tuple[int]]) -> int:
+    """Reference solution (part 2)"""
+    total = 1
+    for right, down in slopes:
+        total *= reference_solution_toboggan_p1(trees_map, right, down)
+    return total
+
+
+@pytest.mark.parametrize(
+    "trees_map, slopes",
+    [
+        (trees_1, ((1, 1), (3, 1), (5, 1), (7, 1), (1, 2)),),  # 9354744432
+        (trees_2, ((1, 1), (3, 1), (5, 1), (7, 1), (1, 2)),),  # 1574890240
+    ]
+)
+def test_toboggan_p2(trees_map: List[List[int]], slopes: Tuple[Tuple[int]], function_to_test) -> None:
+    assert function_to_test(trees_map, slopes) == reference_solution_toboggan_p2(trees_map, slopes)
