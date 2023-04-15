@@ -2,7 +2,7 @@ import io
 import pathlib
 import re
 from contextlib import redirect_stdout
-from typing import Callable
+from typing import Callable, Dict
 
 import ipynbname
 import pytest
@@ -22,16 +22,14 @@ def _name_from_ipynbname() -> str | None:
         return None
 
 
-def _name_from_globals() -> str | None:
-    module_path = globals().get('__vsc_ipynb_file__')
-    if module_path:
-        return pathlib.Path(module_path).stem
-    return None
+def _name_from_globals(globals_dict: Dict) -> str | None:
+    module_path = globals_dict.get('__vsc_ipynb_file__') if globals_dict else None
+    return pathlib.Path(module_path).stem if module_path else None
 
 
-def get_module_name(line: str) -> str:
+def get_module_name(line: str, globals_dict: Dict = None) -> str:
     """Fetch the test module name"""
-    module_name = _name_from_line(line) or _name_from_ipynbname() or _name_from_globals()
+    module_name = _name_from_line(line) or _name_from_ipynbname() or _name_from_globals(globals_dict)
 
     if not module_name:
         raise RuntimeError("Test module is undefined. Did you provide an argument to %%ipytest?")
@@ -66,7 +64,7 @@ class TestMagic(Magics):
     def ipytest(self, line: str, cell: str):
         """The `%%ipytest` cell magic"""
         # Get the module containing the test(s)
-        module_name = get_module_name(line)
+        module_name = get_module_name(line, self.shell.user_global_ns)
 
         # Check that the test module file exists
         module_file = pathlib.Path(f"tutorial/tests/test_{module_name}.py")
