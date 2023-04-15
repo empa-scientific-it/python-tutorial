@@ -10,8 +10,7 @@ import sys
 
 def get_data(name: str, data_dir:str="data") -> pl.Path:
     current_module  = sys.modules[__name__]
-    print(current_module.__file__)
-    return (pl.Path(current_module.__file__).parent / pl.Path(f"{data_dir}/{name}")).resolve()
+    return (pl.Path(current_module.__file__).parent / f"{data_dir}/{name}").resolve()
 
 def reference_solution_exercise1(f: pl.Path) -> "dict[str, list[int]]":
     with open(f) as lines:
