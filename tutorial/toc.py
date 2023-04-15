@@ -6,19 +6,12 @@ from IPython.core.getipython import get_ipython
 
 def build_toc() -> None:
     # Get notebook path
-    print(globals())
-    nb_path = None
     try:
         nb_name = ipynbname.name() + ".ipynb"
     except FileNotFoundError:
-        try:
-            nb_name = globals()['__vsc_ipynb_file__']
-        except KeyError:
-            raise RuntimeError("Notebook name is undefined")
-        else:
-            nb_path = pathlib.Path(nb_name)
+        raise RuntimeError("Notebook name is undefined. Are you running the notebook in VS Code?")
 
-    nb_path = nb_path or pathlib.Path(__file__).parents[1] / nb_name
+    nb_path = pathlib.Path(__file__).parents[1] / nb_name
 
     # Read the notebook
     nb_obj = nbformat.read(nb_path, nbformat.NO_CONVERT)
