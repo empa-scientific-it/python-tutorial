@@ -7,12 +7,6 @@ from typing import List, Tuple
 import pytest
 
 
-# def read_data(filename: str) -> str:
-#     """Read input data"""
-#     # NOTE: the path is relative to the IPython notebook's dir
-#     return pathlib.Path(f"tutorial/tests/data/{filename}").read_text()
-
-
 def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     """Read input data"""
     current_module = sys.modules[__name__]
