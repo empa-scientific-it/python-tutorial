@@ -1,7 +1,7 @@
 import pathlib
 import sys
 from collections import Counter
-from math import factorial
+from math import isqrt
 from typing import List, Tuple
 
 import pytest
@@ -18,8 +18,18 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
 #
 
 def is_prime(num: int) -> bool:
-    """One-liner (non-efficient) to check if a number is prime"""
-    return (factorial(num - 1) + 1) % num == 0
+    """Check if a number is prime"""
+    if num <= 3:
+        return num > 1
+
+    if num % 2 == 0 or num % 3 == 0:
+        return False
+
+    for i in range(5, isqrt(num) + 1, 6):
+        if num % i == 0 or num % (i + 2) == 0:
+            return False
+
+    return True
 
 
 def reference_solution_find_factors(num: int) -> List[int]:
