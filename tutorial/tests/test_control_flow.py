@@ -1,6 +1,7 @@
 import pathlib
 import sys
 from collections import Counter
+from itertools import combinations
 from math import isqrt
 from typing import List, Tuple
 
@@ -48,7 +49,46 @@ def test_find_factors(num: int, function_to_test) -> None:
 
 
 #
-# Exercise 2: Cats with hats
+# Exercise 2: Find the pair/triplet
+#
+
+nums_1, nums_2 = [[int(x) for x in read_data(f"2020_{i}.txt").read_text().splitlines()] for i in (1, 2)]
+
+
+def reference_solution_find_pair(nums: List[int]) -> int:
+    """Reference solution (part 1)"""
+    complements = {}
+    for num in nums:
+        if num in complements:
+            return num * complements[num]
+        complements[2020 - num] = num
+
+
+@pytest.mark.parametrize(
+    "nums",
+    [nums_1, nums_2]
+)
+def test_find_pair(nums: List[int], function_to_test) -> None:
+    assert function_to_test(nums) == reference_solution_find_pair(nums)
+
+
+def reference_solution_find_triplet(nums: List[int]) -> int:
+    """Reference solution (part 2)"""
+    for a, b, c in combinations(nums, 3):
+        if a + b + c == 2020:
+            return a * b * c
+
+
+@pytest.mark.parametrize(
+    "nums",
+    [nums_1, nums_2]
+)
+def test_find_triplet(nums: List[int], function_to_test) -> None:
+    assert function_to_test(nums) == reference_solution_find_triplet(nums)
+
+
+#
+# Exercise 3: Cats with hats
 #
 
 def reference_solution_cats_with_hats() -> int:
@@ -68,7 +108,7 @@ def test_cats_with_hats(function_to_test) -> None:
 
 
 #
-# Exercise 3: Toboggan trajectory
+# Exercise 4: Toboggan trajectory
 #
 
 def parse_data(filename: str) -> List[List[int]]:
