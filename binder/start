@@ -1,0 +1,2 @@
+#!/bin/bash
+cp /home/jovyan/binder/ipython_config.py /home/jovyan/.ipython/profile_default/
