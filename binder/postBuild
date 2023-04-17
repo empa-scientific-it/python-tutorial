@@ -1,5 +1,5 @@
 #!/bin/bash
 set -ex
 
-mkdir -p /home/jovyan/.ipython/profile_default/startup
-cp binder/ipython_config.py /home/jovyan/.ipython/profile_default/
+mkdir -p ${HOME}/.ipython/profile_default/startup
+cp binder/ipython_config.py ${HOME}/.ipython/profile_default/
