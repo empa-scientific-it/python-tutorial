@@ -2,9 +2,6 @@
 
 c = get_config()  #noqa
 
-# Autoload the %%ipytest cell magic
-c.InteractiveShellApp.exec_lines = ['%load_ext tutorial.tests.testsuite']
-
 #------------------------------------------------------------------------------
 # InteractiveShellApp(Configurable) configuration
 #------------------------------------------------------------------------------
@@ -41,7 +38,7 @@ c.InteractiveShellApp.exec_lines = ['%load_ext tutorial.tests.testsuite']
 
 ## A list of dotted module names of IPython extensions to load.
 #  Default: []
-# c.InteractiveShellApp.extensions = []
+c.InteractiveShellApp.extensions = ['tutorial.tests.testsuite']
 
 ## Dotted module name(s) of one or more IPython extensions to load.
 #  

@@ -2,5 +2,4 @@
 set -ex
 
 mkdir -p /home/jovyan/.ipython/profile_default/startup
-cp /home/jovyan/binder/ipython_config.py /home/jovyan/.ipython/profile_default/
-cp /home/jovyan/tutorial/tests/testsuite.py /home/jovyan/.ipython/profile_default/startup/
+cp binder/ipython_config.py /home/jovyan/.ipython/profile_default/
