@@ -6,17 +6,14 @@ from IPython.core.interactiveshell import InteractiveShell
 
 class Solution(ipw.VBox):
     
-    def __init__(self, shell: InteractiveShell, exercise: str, **kwargs):
+    def __init__(self, ns: Callable, exercise: str, **kwargs):
         super().__init__(**kwargs)
-        self.show_button = ipw.Button(description="Show solution")
-        self.exercise = exercise
-        self.shell = shell
-        self.children = [self.show_button]
+        self.show_button = ipw.Button(description=f"Solution exercise: {exercise}")
+        self.cell = ipw.Textarea()
+        self.ns = ns
+        self.children = [self.show_button, self.cell]
         self.show_button.on_click(self.show)
     
     def show(self, widget: ipw.Widget):
-        code = self.shell.user_ns.get(self.exercise)
-        if isinstance(code, Callable):
-
-            display.display(code.__doc__, display.Code(inspect.getsource(code), language="python"), clear=True, raw=False)
-    
+        display.display(self.ns.__doc__, display.Code(inspect.getsource(self.ns), language="python"), clear=True, raw=False)
+        self.cell.value.set(display.Code(inspect.getsource(self.ns)))

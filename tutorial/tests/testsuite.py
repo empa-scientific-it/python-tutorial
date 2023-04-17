@@ -2,17 +2,19 @@ import io
 import pathlib
 import re
 from contextlib import redirect_stdout
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional, List
 
 import ipynbname
 import pytest
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, magics_class, cell_magic
 from IPython.display import HTML, display
-
+import importlib
 
 import tutorial.reveal_solution as rs
+import importlib.util
 
+import dataclasses
 
 def _name_from_line(line: str = None):
     return line.strip().removesuffix(".py") if line else None
@@ -39,6 +41,12 @@ def get_module_name(line: str, globals_dict: Dict = None) -> str:
 
     return module_name
 
+def find_solution(ns: Dict[str, Callable], postfix: str) -> Optional[Callable]:
+    """
+    Given a namespace, finds a solution matching a given pattern
+    """
+    return [f for k,f in ns if k.endswith(postfix)][0]
+
 
 class FunctionInjectionPlugin:
     """A class to inject a function to test"""
@@ -52,6 +60,12 @@ class FunctionInjectionPlugin:
             metafunc.parametrize("function_to_test", [self.function_to_test])
 
 
+
+@dataclasses.dataclass
+class TestResult:
+    stdout: str
+    name: str
+
 class TestCollector:
     """A class to collect all test that will be run"""
     def __init__(self) -> None:
@@ -59,6 +73,18 @@ class TestCollector:
     
     def pytest_collection_finish(self, session: pytest.Session):
         [self.tests.add(fun) for fun in session.items]
+
+
+class ResultCollector:
+    """
+    A class that will collect the result of a tes
+    """
+    def __init__(self) -> None:
+        self.stdout:List[TestResult] = []
+    
+    def pytest_runtest_logreport(self, report: pytest.TestReport):
+        if report.when == "call":
+            self.stdout.append(TestResult(report.capstdout, report.nodeid))
 
 @pytest.fixture
 def function_to_test():
@@ -99,28 +125,40 @@ class TestMagic(Magics):
 
         if not functions_to_run:
             raise ValueError("No function to test defined in the cell")
-        #Create the test collector
-        test_collector = TestCollector()
-        # Run the tests
+
         for name, function in functions_to_run.items():
-            with redirect_stdout(io.StringIO()) as pytest_stdout:
+            #Create the test collector
+            test_collector = TestCollector()
+            result_collector = ResultCollector()
+            # Run the tests
+            buttons = []
+            with  redirect_stdout(io.StringIO()) as pytest_stdout:
                 result = pytest.main(
                     [
                         "-q",
                         f"{module_file}::test_{name}",
                     ],
-                    plugins=[FunctionInjectionPlugin(function), test_collector],
+                    plugins=[FunctionInjectionPlugin(function), test_collector, result_collector],
                 )
+                # Read pytest output
+                pytest_output = pytest_stdout.getvalue()
+            # Import test modules
+            tes_module_spec = importlib.util.spec_from_file_location(f"{module_file.stem}", str(module_file))
+            test_module = importlib.util.module_from_spec(tes_module_spec)
+            tes_module_spec.loader.exec_module(test_module)
+            solution_name = f"reference_solution_{name}"
+            fn = test_module.__dict__.get(solution_name)
+            if fn:
+                buttons.append(rs.Solution(fn, name))
 
-            # Read pytest output
-            pytest_output = pytest_stdout.getvalue()
-
+            
             if result == pytest.ExitCode.OK:
                 color, title, test_result = (
                     "alert-success",
                     f"Tests <strong>PASSED</strong> for the function <code>{name}</code>",
                     "&#x1F64C Congratulations, your solution was correct!",
                 )
+                #print(pytest_output)
             else:
                 color, title, test_result = (
                     "alert-danger",
@@ -130,10 +168,10 @@ class TestMagic(Magics):
 
                 # Print all pytest output
                 print(pytest_output)
-
+            test_runs = "".join([f"""<li>For test {f.name}: <details style="overflow-y: scroll; max-height: 100vh;"><div style="border: 1px solid black">{"".join([f"<p>{line}</p>" for line in f.stdout.splitlines()])}</div></details></li>""" for f in result_collector.stdout])
             display(
                 HTML(
-                    f"""<div class="alert alert-box {color}"><h4>{title}</h4>{test_result}</div>"""
+                    f"""<div class="alert alert-box {color}"><h4>{title}</h4>{test_result}</div><h4>I ran the test 'test_{name}' {len(test_collector.tests)} times with different arguments.</h4><h4>The outputs of your program for each test run are here. Click on the details to see them</h4><div class="alert alert-box"><ul>{test_runs}<ul></div>"""
                 ),
                 *buttons
             )
