@@ -1,5 +1,3 @@
-
-
 from .common import Question, Quiz
 
 
@@ -41,4 +39,3 @@ class IntegerFloatDivistion(Quiz):
         )
 
         super().__init__(questions=[q1, q2, q3])
-

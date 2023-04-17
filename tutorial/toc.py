@@ -9,7 +9,9 @@ def build_toc() -> None:
     try:
         nb_name = ipynbname.name() + ".ipynb"
     except FileNotFoundError:
-        raise RuntimeError("Notebook name is undefined. Are you running the notebook in VS Code?")
+        raise RuntimeError(
+            "Notebook name is undefined. Are you running the notebook in VS Code?"
+        )
 
     nb_path = pathlib.Path(__file__).parents[1] / nb_name
 
@@ -33,7 +35,9 @@ def build_toc() -> None:
     toc_str = "# Table of contents\n"
     level_0 = toc[0][0]  # the first level
     for level, text, anchor in toc:
-        toc_str += "{} [{}]({})\n".format("  " * (level - level_0) + "-", text, "#" + anchor)
+        toc_str += "{} [{}]({})\n".format(
+            "  " * (level - level_0) + "-", text, "#" + anchor
+        )
 
     # Add a new cell with the toc content
     get_ipython().set_next_input(toc_str)

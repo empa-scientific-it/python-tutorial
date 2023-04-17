@@ -11,7 +11,6 @@ from IPython.core.magic import Magics, magics_class, cell_magic
 from IPython.display import HTML, display
 import importlib
 
-import tutorial.reveal_solution as rs
 import importlib.util
 
 import dataclasses
@@ -131,7 +130,6 @@ class TestMagic(Magics):
             test_collector = TestCollector()
             result_collector = ResultCollector()
             # Run the tests
-            buttons = []
             with  redirect_stdout(io.StringIO()) as pytest_stdout:
                 result = pytest.main(
                     [
@@ -142,14 +140,8 @@ class TestMagic(Magics):
                 )
                 # Read pytest output
                 pytest_output = pytest_stdout.getvalue()
-            # Import test modules
-            tes_module_spec = importlib.util.spec_from_file_location(f"{module_file.stem}", str(module_file))
-            test_module = importlib.util.module_from_spec(tes_module_spec)
-            tes_module_spec.loader.exec_module(test_module)
-            solution_name = f"reference_solution_{name}"
-            fn = test_module.__dict__.get(solution_name)
-            if fn:
-                buttons.append(rs.Solution(fn, name))
+            
+
 
             
             if result == pytest.ExitCode.OK:
@@ -172,8 +164,7 @@ class TestMagic(Magics):
             display(
                 HTML(
                     f"""<div class="alert alert-box {color}"><h4>{title}</h4>{test_result}</div><h4>I ran the test 'test_{name}' {len(test_collector.tests)} times with different arguments.</h4><h4>The outputs of your program for each test run are here. Click on the details to see them</h4><div class="alert alert-box"><ul>{test_runs}<ul></div>"""
-                ),
-                *buttons
+                )
             )
 
 
