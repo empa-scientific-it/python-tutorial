@@ -11,6 +11,9 @@ from IPython.core.magic import Magics, magics_class, cell_magic
 from IPython.display import HTML, display
 
 
+import tutorial.reveal_solution as rs
+
+
 def _name_from_line(line: str = None):
     return line.strip().removesuffix(".py") if line else None
 
@@ -49,6 +52,14 @@ class FunctionInjectionPlugin:
             metafunc.parametrize("function_to_test", [self.function_to_test])
 
 
+class TestCollector:
+    """A class to collect all test that will be run"""
+    def __init__(self) -> None:
+        self.tests = set()
+    
+    def pytest_collection_finish(self, session: pytest.Session):
+        [self.tests.add(fun) for fun in session.items]
+
 @pytest.fixture
 def function_to_test():
     """Function to test, overriden at runtime by the cell magic"""
@@ -80,13 +91,16 @@ class TestMagic(Magics):
 
         # Get the functions objects from user namespace
         functions_to_run = {}
+        buttons = []
         for name, function in self.shell.user_ns.items():
             if name in functions_names and callable(function):
                 functions_to_run[name.removeprefix("solution_")] = function
+                
 
         if not functions_to_run:
             raise ValueError("No function to test defined in the cell")
-
+        #Create the test collector
+        test_collector = TestCollector()
         # Run the tests
         for name, function in functions_to_run.items():
             with redirect_stdout(io.StringIO()) as pytest_stdout:
@@ -95,7 +109,7 @@ class TestMagic(Magics):
                         "-q",
                         f"{module_file}::test_{name}",
                     ],
-                    plugins=[FunctionInjectionPlugin(function)],
+                    plugins=[FunctionInjectionPlugin(function), test_collector],
                 )
 
             # Read pytest output
@@ -120,7 +134,8 @@ class TestMagic(Magics):
             display(
                 HTML(
                     f"""<div class="alert alert-box {color}"><h4>{title}</h4>{test_result}</div>"""
-                )
+                ),
+                *buttons
             )
 
 
