@@ -3,7 +3,7 @@
 c = get_config()  #noqa
 
 # Autoload the %%ipytest cell magic
-c.InteractiveShellApp.extensions = ['tutorial.tests.testsuite']
+c.InteractiveShellApp.exec_lines = ['%load_ext tutorial.tests.testsuite']
 
 #------------------------------------------------------------------------------
 # InteractiveShellApp(Configurable) configuration
