@@ -41,9 +41,7 @@ def get_module_name(line: str, globals_dict: Dict = None) -> str:
     return module_name
 
 def find_solution(ns: Dict[str, Callable], postfix: str) -> Optional[Callable]:
-    """
-    Given a namespace, finds a solution matching a given pattern
-    """
+    """Given a namespace, finds a solution matching a given pattern."""
     return [f for k,f in ns if k.endswith(postfix)][0]
 
 
@@ -66,7 +64,7 @@ class TestResult:
     name: str
 
 class TestCollector:
-    """A class to collect all test that will be run"""
+    """A class to collect all tests that will be run."""
     def __init__(self) -> None:
         self.tests = set()
     
@@ -75,9 +73,7 @@ class TestCollector:
 
 
 class ResultCollector:
-    """
-    A class that will collect the result of a tes
-    """
+    """A class that will collect the result of a test."""
     def __init__(self) -> None:
         self.stdout:List[TestResult] = []
     
