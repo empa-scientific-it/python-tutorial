@@ -41,9 +41,7 @@ def get_module_name(line: str, globals_dict: Dict = None) -> str:
     return module_name
 
 def find_solution(ns: Dict[str, Callable], postfix: str) -> Optional[Callable]:
-    """
-    Given a namespace, finds a solution matching a given pattern
-    """
+    """Given a namespace, finds a solution matching a given pattern."""
     return [f for k,f in ns if k.endswith(postfix)][0]
 
 
