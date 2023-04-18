@@ -66,7 +66,7 @@ class TestResult:
     name: str
 
 class TestCollector:
-    """A class to collect all test that will be run"""
+    """A class to collect all tests that will be run."""
     def __init__(self) -> None:
         self.tests = set()
     
