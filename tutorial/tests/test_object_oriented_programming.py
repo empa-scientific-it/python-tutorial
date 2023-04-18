@@ -41,7 +41,7 @@ class Bowl:
             self.scoops.append(one_scoop)
 
     def __str__(self):
-        return f"Ice cream bowl with {', '.join(s.flavor for s in self.scoops)}"
+        return f"Ice cream bowl with {', '.join(s.flavor for s in self.scoops)} scoops"
 
 
 def test_ice_cream_bowl(function_to_test) -> None:
