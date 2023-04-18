@@ -75,9 +75,7 @@ class TestCollector:
 
 
 class ResultCollector:
-    """
-    A class that will collect the result of a tes
-    """
+    """A class that will collect the result of a test."""
     def __init__(self) -> None:
         self.stdout:List[TestResult] = []
     
