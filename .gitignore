@@ -130,4 +130,5 @@ dmypy.json
 
 # Misc
 .DS_Store
-
+*_files/
+*.html
