@@ -1,7 +1,6 @@
 import pathlib
 import sys
 from collections import Counter
-from itertools import combinations
 from math import isqrt
 from typing import List, Tuple
 
@@ -72,11 +71,27 @@ def test_find_pair(nums: List[int], function_to_test) -> None:
     assert function_to_test(nums) == reference_solution_find_pair(nums)
 
 
+def reference_solution_find_triplet_slow(nums: List[int]) -> int:
+    """Reference solution (part 2), O(n^3)"""
+    n = len(nums)
+    for i in range(n - 2):
+        for j in range(i + 1, n - 1):
+            for k in range(j + 1, n):
+                if nums[i] + nums[j] + nums[k] == 2020:
+                    return nums[i] * nums_2[j] * nums[k]
+
+
 def reference_solution_find_triplet(nums: List[int]) -> int:
-    """Reference solution (part 2)"""
-    for a, b, c in combinations(nums, 3):
-        if a + b + c == 2020:
-            return a * b * c
+    """Reference solution (part 2), O(n^2)"""
+    n = len(nums)
+    for i in range(n - 1):
+        s = set()
+        target_sum = 2020 - nums[i]
+        for j in range(i + 1, n):
+            last_num = target_sum - nums[j]
+            if last_num in s:
+                return nums[i] * nums[j] * last_num
+            s.add(nums[j])
 
 
 @pytest.mark.parametrize(
