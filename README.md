@@ -34,7 +34,8 @@ conda env create -f binder/environment.yml
 ```
 
 > **Warning**
-> If you are on Windows and using Command Prompt or the PowerShell, please make sure to adjust path in the command above accordingly.
+>
+> If you are on Windows and using Command Prompt or the PowerShell, please make sure to adjust the path in the command above accordingly.
 
 Then activate the environment with
 ```console
