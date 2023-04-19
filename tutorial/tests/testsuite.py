@@ -1,7 +1,7 @@
 import io
 import pathlib
 import re
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 from typing import Callable, Dict, Optional, List
 
 import ipynbname
@@ -10,6 +10,8 @@ from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, magics_class, cell_magic
 from IPython.display import HTML, display
 import importlib
+
+import ipywidgets
 
 import importlib.util
 
@@ -58,10 +60,75 @@ class FunctionInjectionPlugin:
 
 
 
+
+
+
 @dataclasses.dataclass
 class TestResult:
-    stdout: str
+    stdout: List[str]
+    stderr: List[str]
+    test_name: str
+    success: bool
+
+@dataclasses.dataclass
+class OutputConfig:
+    style: str
     name: str
+    result: str
+
+
+def format_success_failure(success: bool , name: str) -> OutputConfig:
+    """
+    Depending on the test results, returns a fragment that represent
+    an error message or a success message
+    """
+    if success:
+        return OutputConfig(
+            "alert-success",
+            f"Tests <strong>PASSED</strong> for the function <code>{name}</code>",
+            "&#x1F64C Congratulations, your solution was correct!")
+    else:
+        return OutputConfig(
+                "alert-danger",
+                f"Tests <strong>FAILED</strong> for the function <code>{name}</code>",
+                "&#x1F631 Your solution was not correct!")
+
+
+
+def format_long_stdout(text: str) -> str:
+    """
+    Format a long test stdout as a HTML by using the <details> element
+    """
+    def join_lines(text: str, n: int) -> str:
+        return "".join([f"<p>{line}</p>" for i, line in enumerate(text.splitlines()) if i < n])
+    test_runs = "".join([f"""<details style="overflow-y: scroll; max-height: 200px;"><summary>Click here to see output</summary><div style="border: 1px solid black">{"".join(join_lines(text, len(text)))}</div></details></li>"""])
+    return test_runs
+
+
+    
+
+
+class TestResultOutput(ipywidgets.VBox):
+
+    def __init__(self, name: str, success: bool, test_outputs: List[TestResult], test_stdout: str):
+        
+        output_config = format_success_failure(success, name)
+        message = f"""<div class="alert alert-box {output_config.style}"><h4>{output_config.name}</h4>{output_config.result}</div><h4>"""
+        output_cell = ipywidgets.Output()
+        with output_cell:
+            display(HTML(message)) 
+            display(HTML(f"<h4>We run the test for solution_{name} {len(test_outputs)} times, below you find the details for each test run:</h4>"))
+            for test in test_outputs:
+                display(HTML(f"<h4>Test {test.test_name}</h4>"))
+                display(HTML(f"<h5>Test output (contains the outputs you printed in solution_{name})</h5>"))
+                display(HTML(format_long_stdout(test.stdout)))
+                display(HTML(f"<h5>Test error</h5>"))
+                display(HTML(format_long_stdout(test.stderr)))
+            
+        super().__init__(children=[output_cell])
+
+
+
 
 class TestCollector:
     """A class to collect all tests that will be run."""
@@ -75,11 +142,15 @@ class TestCollector:
 class ResultCollector:
     """A class that will collect the result of a test."""
     def __init__(self) -> None:
-        self.stdout:List[TestResult] = []
+        self.tests:Dict[str, TestResult] = {}
     
     def pytest_runtest_logreport(self, report: pytest.TestReport):
-        if report.when == "call":
-            self.stdout.append(TestResult(report.capstdout, report.nodeid))
+        if report.when == "teardown":
+            self.tests[report.nodeid] = TestResult(report.capstdout, report.capstderr, report.nodeid, not report.failed)
+
+    def pytest_exception_interact(self, node: pytest.Item, call: pytest.CallInfo, report: pytest.TestReport):
+        print(node)
+        self.tests[report.nodeid] = TestResult(report.capstdout, str(call.excinfo.getrepr()) , report.nodeid, not report.failed)
 
 @pytest.fixture
 def function_to_test():
@@ -120,13 +191,13 @@ class TestMagic(Magics):
 
         if not functions_to_run:
             raise ValueError("No function to test defined in the cell")
-
+        outputs = []
         for name, function in functions_to_run.items():
             #Create the test collector
             test_collector = TestCollector()
             result_collector = ResultCollector()
             # Run the tests
-            with  redirect_stdout(io.StringIO()) as pytest_stdout:
+            with  redirect_stderr(io.StringIO()) as pytest_stdout:
                 result = pytest.main(
                     [
                         "-q",
@@ -136,32 +207,10 @@ class TestMagic(Magics):
                 )
                 # Read pytest output
                 pytest_output = pytest_stdout.getvalue()
+                display(*[(test.stderr) for test in result_collector.tests.values()])
+            outputs.append(TestResultOutput(name, result == pytest.ExitCode.OK, list(result_collector.tests.values()), pytest_stdout.getvalue()))
             
-
-
-            
-            if result == pytest.ExitCode.OK:
-                color, title, test_result = (
-                    "alert-success",
-                    f"Tests <strong>PASSED</strong> for the function <code>{name}</code>",
-                    "&#x1F64C Congratulations, your solution was correct!",
-                )
-                #print(pytest_output)
-            else:
-                color, title, test_result = (
-                    "alert-danger",
-                    f"Tests <strong>FAILED</strong> for the function <code>{name}</code>",
-                    "&#x1F631 Your solution was not correct!",
-                )
-
-                # Print all pytest output
-                print(pytest_output)
-            test_runs = "".join([f"""<li>For test {f.name}: <details style="overflow-y: scroll; max-height: 100vh;"><div style="border: 1px solid black">{"".join([f"<p>{line}</p>" for line in f.stdout.splitlines()])}</div></details></li>""" for f in result_collector.stdout])
-            display(
-                HTML(
-                    f"""<div class="alert alert-box {color}"><h4>{title}</h4>{test_result}</div><h4>I ran the test 'test_{name}' {len(test_collector.tests)} times with different arguments.</h4><h4>The outputs of your program for each test run are here. Click on the details to see them</h4><div class="alert alert-box"><ul>{test_runs}<ul></div>"""
-                )
-            )
+        display(*(outputs))
 
 
 def load_ipython_extension(ipython):
