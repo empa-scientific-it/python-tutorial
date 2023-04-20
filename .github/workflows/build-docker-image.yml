@@ -1,5 +1,10 @@
 name: Build Tutorial Container
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - feature/build-docker-image
+  workflow_dispatch:
+    
 jobs:
   build:
     runs-on: ubuntu-latest
