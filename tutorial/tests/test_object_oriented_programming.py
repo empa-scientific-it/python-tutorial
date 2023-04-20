@@ -165,10 +165,10 @@ def test_moons(moons: str, function_to_test):
 class Universe:
     """A class for a universe"""
 
-    def __init__(self, moons: str) -> None:
-        self.moons = [Moon(moon) for moon in moons.splitlines()]
+    def __init__(self, universe_start: str) -> None:
+        self.moons = [Moon(moon) for moon in universe_start.splitlines()]
 
-    def evolve(self) -> None:
+    def evolve(self) -> "Universe":
         """Evolve the universe"""
         for n, moon_i in enumerate(self.moons[:-1]):
             for moon_j in self.moons[n + 1 :]:
@@ -176,6 +176,8 @@ class Universe:
 
         for moon in self.moons:
             moon.update_positions()
+
+        return self
 
     @property
     def energy(self) -> int:
@@ -196,4 +198,5 @@ def test_n_body(universe_start: str, function_to_test) -> None:
     universe = Universe(universe_start)
     for _ in range(1000):
         universe.evolve()
-    assert function_to_test(universe) == universe.energy
+    # TODO: improve the assertion: test the entire evolution of the universe (e.g., the energy at each step)
+    assert function_to_test(universe_start) == universe.energy
