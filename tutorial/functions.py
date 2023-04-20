@@ -7,7 +7,7 @@ class Functions(Quiz):
             question="How do you indicate a docstring for a Python function?",
             options={
                 "With triple quotes": "Correct!",
-                "With # Docstring:": "",
+                "With # Docstring:": "What's the meaning of # in Python?",
                 "With // Docstring:": "Is // a valid Python comment?",
             },
             correct_answer="With triple quotes",
@@ -17,8 +17,8 @@ class Functions(Quiz):
         q2 = Question(
             question="What is the purpose of type hints in Python function definitions?",
             options={
-                "To enforce strict typing": "",
-                "Only to make the code more readable": "",
+                "To enforce strict typing": "Does the interpreter enforce type hints?",
+                "Only to make the code more readable": "Not only...",
                 "To document the expected types of function arguments and return values": "Correct!",
             },
             correct_answer="To document the expected types of function arguments and return values",
