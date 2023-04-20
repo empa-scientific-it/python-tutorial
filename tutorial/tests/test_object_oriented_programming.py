@@ -3,6 +3,7 @@ import sys
 from typing import List
 
 import pytest
+from numpy import average
 
 
 #
@@ -61,7 +62,7 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     """Read input data"""
     current_module = sys.modules[__name__]
     return (
-        pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}"
+            pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}"
     ).resolve()
 
 
@@ -120,15 +121,15 @@ class Moon:
         """Update the velocity of the moon"""
         for n, position in enumerate(self.positions):
             if position > moon.positions[n]:
-                delta = 1
-            elif position < moon.positions[n]:
                 delta = -1
+            elif position < moon.positions[n]:
+                delta = 1
             else:
                 delta = 0
 
             if delta:
-                self.velocities[n] -= delta
-                moon.velocities[n] += delta
+                self.velocities[n] += delta
+                moon.velocities[n] -= delta
 
     def update_positions(self) -> None:
         """Update the position of the moon"""
@@ -171,7 +172,7 @@ class Universe:
     def evolve(self) -> "Universe":
         """Evolve the universe"""
         for n, moon_i in enumerate(self.moons[:-1]):
-            for moon_j in self.moons[n + 1 :]:
+            for moon_j in self.moons[n + 1:]:
                 moon_i.update_velocities(moon_j)
 
         for moon in self.moons:
@@ -196,7 +197,5 @@ class Universe:
 @pytest.mark.parametrize("universe_start", universes)
 def test_n_body(universe_start: str, function_to_test) -> None:
     universe = Universe(universe_start)
-    for _ in range(1000):
-        universe.evolve()
-    # TODO: improve the assertion: test the entire evolution of the universe (e.g., the energy at each step)
-    assert function_to_test(universe_start) == universe.energy
+    energy = [universe.evolve().energy for _ in range(1000)]
+    assert function_to_test(universe_start) == pytest.approx(average(energy))
