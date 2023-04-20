@@ -13,6 +13,8 @@ from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import HTML, display
 from nbconvert import filters
 
+from collections import namedtuple
+
 
 def _name_from_line(line: str = None):
     return line.strip().removesuffix(".py") if line else None
@@ -68,8 +70,8 @@ class FunctionInjectionPlugin:
 class TestResult:
     """Container class to store the test results when we collect them"""
 
-    stdout: List[str]
-    stderr: List[str]
+    stdout: str
+    stderr: str
     test_name: str
     success: bool
 
@@ -138,31 +140,13 @@ class TestResultOutput(ipywidgets.VBox):
             )
             for test in test_outputs:
                 display(HTML(f"<h5>Test {test.test_name}</h5>"))
-                display(
-                    HTML(
-                        f"<h5>Test output (contains the outputs you printed in solution_{name})</h5>"
-                    )
-                )
-                display(HTML(format_long_stdout(test.stdout)))
-                display(
-                    HTML(
-                        f"<h5>Test error (contains error messages encountered during the test)</h5>"
-                    )
-                )
-                colored_stderr = filters.ansi.ansi2html(test.stderr)
-                display(HTML(format_long_stdout(colored_stderr)))
+
+                colored_output = format_long_stdout(test.stdout + filters.ansi.ansi2html(test.stderr))
+                display(HTML(colored_output))
+
+                
 
         super().__init__(children=[output_cell])
-
-
-class TestCollector:
-    """A class to collect all tests that will be run."""
-
-    def __init__(self) -> None:
-        self.tests = set()
-
-    def pytest_collection_finish(self, session: pytest.Session):
-        [self.tests.add(fun) for fun in session.items]
 
 
 class ResultCollector:
@@ -183,7 +167,7 @@ class ResultCollector:
     ):
         # We need to collect the results and the stderr if the test failed
         if report.failed:
-            self.tests[report.nodeid] = TestResult(
+            self.tests[node.nodeid] = TestResult(
                 report.capstdout,
                 str(call.excinfo.getrepr()),
                 report.nodeid,
@@ -232,7 +216,6 @@ class TestMagic(Magics):
         outputs = []
         for name, function in functions_to_run.items():
             # Create the test collector
-            test_collector = TestCollector()
             result_collector = ResultCollector()
             # Run the tests
             with redirect_stderr(io.StringIO()) as pytest_stderr, redirect_stdout(
@@ -245,7 +228,6 @@ class TestMagic(Magics):
                     ],
                     plugins=[
                         FunctionInjectionPlugin(function),
-                        test_collector,
                         result_collector,
                     ],
                 )
