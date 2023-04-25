@@ -19,14 +19,14 @@ class Functions(Quiz):
             options={
                 "To enforce strict typing": "Does the interpreter enforce type hints?",
                 "Only to make the code more readable": "Not only...",
-                "To document the expected types of function arguments and return values": "Correct!",
+                "To improve code readability and document the expected types of arguments and return values": "Correct!",
             },
-            correct_answer="To document the expected types of function arguments and return values",
+            correct_answer="To improve code readability document the expected types of arguments and return values",
             shuffle=True,
         )
 
         q3 = Question(
-            question="What is the syntax to define a function with an arbitrary number of any type of argument?",
+            question="How do you define a function that accepts an arbitrary number of arguments of any type?",
             options={
                 "def function_name(*args):": "What about keyword arguments?",
                 "def function_name(*args, **kwargs):": "Correct!",
