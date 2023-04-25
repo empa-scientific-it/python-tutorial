@@ -21,7 +21,7 @@ class Functions(Quiz):
                 "Only to make the code more readable": "Not only...",
                 "To improve code readability and document the expected types of arguments and return values": "Correct!",
             },
-            correct_answer="To improve code readability document the expected types of arguments and return values",
+            correct_answer="To improve code readability and document the expected types of arguments and return values",
             shuffle=True,
         )
 
