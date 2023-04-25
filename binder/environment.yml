@@ -13,3 +13,4 @@ dependencies:
     - jupyterlab
     - pytest
     - pytest-timeout
+    - markdown
