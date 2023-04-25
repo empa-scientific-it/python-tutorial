@@ -27,6 +27,13 @@ Extract the archive in a directory of your choice.
 
 ### 2. Create a dedicated environment
 
+Enter the tutorial folder with
+
+```console
+cd /path/to/python-tutorial
+
+```
+
 You should now create a new environment with `conda`:
 
 ```console
@@ -35,7 +42,7 @@ conda env create -f binder/environment.yml
 
 > **Warning**
 >
-> If you are on Windows and using Command Prompt or the PowerShell, please make sure to adjust the path in the command above accordingly.
+> If you are on Windows and using Command Prompt or the PowerShell, please make sure to adjust the paths in the commands above accordingly.
 
 Then activate the environment with
 ```console
