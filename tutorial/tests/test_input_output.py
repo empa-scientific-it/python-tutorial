@@ -27,10 +27,10 @@ def test_exercise1(function_to_test):
 
 def reference_solution_exercise2(f: pl.Path)-> int:
     with open(f) as lines:
-        return len(lines.readlines())
+        return len(list(itertools.chain.from_iterable([l.split() for l in lines.readlines()])))
 
 def test_exercise2(function_to_test):
-    f = get_data("example.csv")
+    f = get_data("lines.txt")
     assert function_to_test(f) == reference_solution_exercise2(f)
 
 
