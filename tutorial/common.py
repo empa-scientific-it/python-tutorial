@@ -20,7 +20,7 @@ class Question(ipw.VBox):
             options = sorted(options.items(), key=lambda x: random.random())
         
         # Radio buttons with options.
-        self.answer = ipw.RadioButtons(options=options, value=None)
+        self.answer = ipw.RadioButtons(options=options, value=None, layout={'width': 'max-content'})
         self.answer.observe(self.clear_output, 'value')
 
         # Help button
