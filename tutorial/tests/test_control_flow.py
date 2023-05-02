@@ -41,14 +41,14 @@ def reference_indexed_string(string: str) -> list[tuple[str, int]]:
     ],
 )
 def test_indexed_string(string: str, function_to_test) -> None:
-    assert reference_indexed_string(string) == function_to_test(string)
+    result = function_to_test(string)
+    assert result is not None, "The function should return a list, not 'None'"
+    assert reference_indexed_string(string) == result
 
 
 def reference_range_of_nums(start: int, end: int) -> list[int]:
     """Reference solution warm-up 2"""
-    if start > end:
-        start, end = end, start
-    return list(range(start, end + 1))
+    return list(range(start, end + 1, (1 if start < end else -1)))
 
 
 @pytest.mark.parametrize(
@@ -58,11 +58,13 @@ def reference_range_of_nums(start: int, end: int) -> list[int]:
         (99, 20),
         (-20, 30),
         (30, 100),
-        (-30, 0),
+        (0, -30),
     ],
 )
 def test_range_of_nums(start: int, end: int, function_to_test) -> None:
-    assert reference_range_of_nums(start, end) == function_to_test(start, end)
+    assert reference_range_of_nums(start, end) == function_to_test(
+        start, end
+    ), "The function returned an empty range"
 
 
 def reference_sqrt_of_nums(nums: list[int]) -> list[float]:
@@ -213,7 +215,7 @@ def reference_solution_cats_with_hats() -> int:
     for loop in range(1, 101):
         for cat, has_hat in cats.items():
             if cat % loop == 0:
-                cats[cat] = False if has_hat else True
+                cats[cat] = not has_hat
 
     return Counter(cats.values())[True]
 
