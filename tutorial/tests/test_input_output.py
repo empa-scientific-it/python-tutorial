@@ -12,6 +12,14 @@ def get_data(name: str, data_dir:str="data") -> pl.Path:
     current_module  = sys.modules[__name__]
     return (pl.Path(current_module.__file__).parent / f"{data_dir}/{name}").resolve()
 
+def reference_solution_find_all_files(f: pl.Path) -> "list[pl.Path]":
+    return list(f.parent.glob(f.name))
+
+def test_find_all_files(function_to_test):
+    f = pl.Path("data/")
+    assert function_to_test(f) == reference_solution_find_all_files(f)
+
+
 def reference_solution_exercise1(f: pl.Path) -> "dict[str, list[int]]":
     with open(f) as lines:
         reader = csv.reader(lines)
