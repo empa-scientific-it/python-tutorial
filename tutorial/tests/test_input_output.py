@@ -19,6 +19,33 @@ def test_find_all_files(function_to_test):
     f = pl.Path("data/")
     assert function_to_test(f) == reference_solution_find_all_files(f)
 
+def reference_solution_count_parents(f: pl.Path) -> int:
+    return len([ob for ob in f.parent.glob("*") if ob.is_dir()])
+
+def test_count_parents(function_to_test):
+    f  = pl.Path(sys.modules[__name__].__file__).parent.parent
+    print(f)
+    assert function_to_test(f) == reference_solution_count_parents(f)
+
+def reference_solution_read_file(f: pl.Path) -> "list[str]":
+    with open(f) as lines:
+        return [l for l in lines.readlines()]
+
+def test_read_file(function_to_test):
+    for fp in ["lines.txt", "example.csv"]:
+        data = get_data(fp)
+        assert function_to_test(data) == reference_solution_read_file(data)
+
+def reference_solution_write_file(f: pl.Path, lines: "list[str]") -> None:
+    with open(f, "w") as f:
+        f.writelines(lines)
+
+def test_write_file(function_to_test):
+    lines = ["python tutorial 2023"]
+    f = pl.Path("test.txt")
+    function_to_test(f)
+    with open(f) as input_file:
+        assert input_file.readlines() == lines
 
 def reference_solution_exercise1(f: pl.Path) -> "dict[str, list[int]]":
     with open(f) as lines:
