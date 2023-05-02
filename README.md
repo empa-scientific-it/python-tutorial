@@ -49,7 +49,7 @@ Then activate the environment with
 conda activate python-tutorial
 ```
 
-You can update the existing environment (that is, downloading the latest version of the packages) with
+You can update the existing environment (that is, downloading the latest version of the packages) with:
 
 ```console
 conda env update -f binder/environment.yml
