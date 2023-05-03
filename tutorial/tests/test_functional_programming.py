@@ -5,11 +5,56 @@ from numpy.typing import ArrayLike, NDArray
 import functools
 import requests
 import itertools
-
+import ast
+import inspect
+import random
 
 def reference_solution_exercise2(l: List[int], k: int):
     return [i for i in l if i % k == 0]
 
+
+def check_for_loop_in_body(fun: Callable) -> bool:
+    """Checks if the body of a function contains a for loop"""
+    tree = ast.parse(inspect.getsource(fun))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.For):
+            return True
+    return False
+
+
+def reference_solution_filter_even(l: "list[int]") -> "list[int]":
+    return list(filter(lambda x: x % 2 == 0, l))
+
+@pytest.mark.parametrize(
+    "l",
+    [
+        ([1, 2, 3, 4]),
+        (list(range(100,2))),
+        ([random.randint(0, 10) for i in range(100)]),
+    ],
+)
+def test_filter_even(function_to_test: Callable, l: List[int]):
+    res = function_to_test(l)
+    assert type(res) == list, "The function you wrote does not return a list"
+    assert res == reference_solution_filter_even(l), "The list you return is not equal to the expected solution"
+    assert not check_for_loop_in_body(function_to_test), "You are not allowed to use a for loop in this exercise"
+
+
+
+def reference_solution_add_one(l: List[int]) -> List[int]:
+    return list(map(lambda x: x + 1, l))
+
+@pytest.mark.parametrize(
+    "l",
+    [
+        ([1, 2, 3, 4]),
+        (list(range(100,2))),
+        ([random.randint(0, 10) for i in range(100)]),
+    ],
+)
+def test_add_one(function_to_test: Callable, l: List[int]):
+    assert function_to_test(l) == reference_solution_add_one(l), "The list you return is not equal to the expected solution"
+    assert not check_for_loop_in_body(function_to_test), "You are not allowed to use a for loop in this exercise"
 
 @pytest.mark.parametrize(
     "l, k",
