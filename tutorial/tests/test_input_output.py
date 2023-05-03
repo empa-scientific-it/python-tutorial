@@ -6,7 +6,8 @@ from .testsuite import get_module_name
 from .. import prepare_magic_file
 import sys
 
-
+from io import StringIO
+import contextlib
 
 def get_data(name: str, data_dir:str="data") -> pl.Path:
     current_module  = sys.modules[__name__]
@@ -54,6 +55,39 @@ def reference_solution_exercise1(f: pl.Path) -> "dict[str, list[int]]":
         transposed = {k:list(v) for k,v in zip(headers, itertools.zip_longest(*(l for l in reader)))}
     return transposed
 
+
+def reference_solution_print_odd(n: int) -> None:
+    for i in range(n):
+        if i % 2 != 0:
+            print(i)
+
+@pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
+def test_print_odd(function_to_test, n:int):
+    #redirect stdout of function_to_test to a string
+    solution_stdout = StringIO()
+    with contextlib.redirect_stdout(solution_stdout):
+        function_to_test(n)
+    reference_stdout = StringIO()
+    with contextlib.redirect_stdout(reference_stdout):
+        reference_solution_print_odd(n)
+    assert reference_stdout.getvalue() == solution_stdout.getvalue()
+
+    
+def reference_solution_print_salutation() -> None:
+    name = input()
+    print(f"Hello {name}")
+
+def test_print_salutation(function_to_test):
+    #redirect stdout of function_to_test to a string
+    solution_stdout = StringIO()
+    solution_stdin = StringIO()
+    with contextlib.redirect_stdout(solution_stdout), contextlib.redirect_stdin(solution_stdin):
+        function_to_test()
+    reference_stdout = StringIO()
+    reference_stdin = StringIO(solution_stdin.getvalue())
+    with contextlib.redirect_stdout(reference_stdout), contextlib.redirect_stdin(reference_stdin):
+        reference_solution_print_salutation() 
+    assert reference_stdout.getvalue() == solution_stdout.getvalue()
 
 def test_exercise1(function_to_test):
     f = get_data("example.csv")
