@@ -89,6 +89,21 @@ def test_print_salutation(function_to_test):
         reference_solution_print_salutation() 
     assert reference_stdout.getvalue() == solution_stdout.getvalue()
 
+
+def reference_solution_read_write_file(input_file: pl.Path, output_file: pl.Path) -> None:
+    with open(input_file) as read_file, open(output_file, "w") as write_file:   
+        for line in read_file.readlines():
+            write_file.write(f"{line}, {len(line)}")
+
+def test_read_write_file(function_to_test):
+    input_file = get_data("lines.txt")
+    output_file = pl.Path("output.txt")
+    test_output_file = pl.Path("test_output.txt")
+    function_to_test(input_file, output_file)
+    reference_solution_read_write_file(input_file, test_output_file)
+    with open(output_file) as output_file, open(test_output_file) as tes:
+        assert output_file.readlines() == tes.readlines()
+
 def test_exercise1(function_to_test):
     f = get_data("example.csv")
     assert function_to_test(f) == reference_solution_exercise1(f)
