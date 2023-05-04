@@ -30,7 +30,6 @@ def reference_solution_count_parents(f: pl.Path) -> int:
 
 def test_count_parents(function_to_test):
     f = pl.Path(sys.modules[__name__].__file__).parent.parent
-    print(f)
     assert function_to_test(f) == reference_solution_count_parents(f)
 
 
