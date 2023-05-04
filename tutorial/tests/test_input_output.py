@@ -93,7 +93,7 @@ def test_print_salutation(function_to_test):
 def reference_solution_read_write_file(input_file: pl.Path, output_file: pl.Path) -> None:
     with open(input_file) as read_file, open(output_file, "w") as write_file:   
         for line in read_file.readlines():
-            write_file.write(f"{line}, {len(line)}")
+            write_file.write(line[:-1] + ', ' + str(len(line)) + '\n')
 
 def test_read_write_file(function_to_test):
     input_file = get_data("lines.txt")
