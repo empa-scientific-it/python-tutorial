@@ -14,7 +14,7 @@ def get_data(name: str, data_dir:str="data") -> pl.Path:
     return (pl.Path(current_module.__file__).parent / f"{data_dir}/{name}").resolve()
 
 def reference_solution_find_all_files(f: pl.Path) -> "list[pl.Path]":
-    return list(f.parent.glob(f.name))
+    return list(f.parent.iterdir())
 
 def test_find_all_files(function_to_test):
     f = pl.Path("data/")
