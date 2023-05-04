@@ -91,7 +91,7 @@ def reference_solution_read_write_file(
 ) -> None:
     with open(input_file) as read_file, open(output_file, "w") as write_file:
         for line in read_file.readlines():
-            write_file.write(line[:-1] + ", " + str(len(line)) + "\n")
+            write_file.write(f"{line.strip(["\n","\r"])}, {len(line)}\n")
 
 
 def test_read_write_file(function_to_test):
