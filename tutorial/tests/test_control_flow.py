@@ -48,7 +48,8 @@ def test_indexed_string(string: str, function_to_test) -> None:
 
 def reference_range_of_nums(start: int, end: int) -> list[int]:
     """Reference solution warm-up 2"""
-    return list(range(start, end + 1, (1 if start < end else -1)))
+    step = 1 if start < end else -1
+    return list(range(start, end + step, step))
 
 
 @pytest.mark.parametrize(
