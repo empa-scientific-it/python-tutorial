@@ -6,6 +6,15 @@ import pytest
 from numpy import average
 
 
+FLAVORS = [
+    (),
+    ("chocolate"),
+    ("chocolate", "vanilla", "persimmon"),
+    ("chocolate", "vanilla", "stracciatella"),
+    ("chocolate", "vanilla", "stracciatella", "strawberry"),
+    ("chocolate", "vanilla", "stracciatella", "strawberry", "pistachio"),
+    ]
+
 #
 # Exercise 1: Ice cream scoop
 #
@@ -20,10 +29,14 @@ class Scoop:
     def __str__(self):
         return f"Ice cream scoop with flavor '{self.flavor}'"
 
+def reference_ice_cream_scoop(flavors: tuple[str]) -> list[Scoop, str]:
+    return [(Scoop(flavor), str(Scoop(flavor))) for flavor in flavors]
 
-def test_ice_cream_scoop(function_to_test) -> None:
-    flavors = ("chocolate", "vanilla", "persimmon")
-    assert function_to_test(flavors) == [str(Scoop(flavor)) for flavor in flavors]
+@pytest.mark.parametrize("flavors", FLAVORS)
+def test_ice_cream_scoop(flavors, function_to_test) -> None:
+    test_solution = [string for _, string in function_to_test(flavors)]
+    reference_solution = [string for _, string in reference_ice_cream_scoop(flavors)]
+    assert test_solution == reference_solution
 
 
 #
