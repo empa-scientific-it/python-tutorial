@@ -6,8 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  repo2docker:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: checkout files in repo
         uses: actions/checkout@main
