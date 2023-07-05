@@ -9,7 +9,6 @@ jobs:
   repo2docker:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       packages: write
     steps:
       - name: checkout files in repo
