@@ -1,6 +1,6 @@
 # python-tutorial
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/empa-scientific-it/python-tutorial.git/main?labpath=index.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/empa-scientific-it/python-tutorial.git/main?labpath=index.ipynb) [![Build Docker container](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/build-docker-image.yml/badge.svg)](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/build-docker-image.yml)
 
 ## Run the tutorial on your computer
 
@@ -77,7 +77,7 @@ conda env update -f environment.yml
 
 > **Note**
 >
-> The following instructions are for Windows. With minor changes, the steps are identical on macOS or Linux.
+> The following instructions are for Windows. With minor changes, the steps work on macOS or Linux as well.
 
 1. Install Docker Desktop: First, you need to install Docker Desktop on your Windows machine. You can download it from the official Docker website: https://www.docker.com/products/docker-desktop.
 
@@ -88,13 +88,13 @@ conda env update -f environment.yml
 4. Pull the Docker image: In PowerShell, run the following command to pull the "empascientificit/python-tutorial" Docker image:
 
 ```console
-docker pull empascientificit/python-tutorial
+docker pull ghcr.io/empa-scientific-it/python-tutorial:latest
 ```
 
 5. Run the Docker container: Once the image is downloaded, run the following command to start a Docker container from the image:
 
 ```console
-docker run -p 8888:8888 -v /path/to/python-tutorial:/home/jovyan/work empascientificit/python-tutorial
+docker run -p 8888:8888 -n python_tutorial -v /path/to/python-tutorial:/home/jovyan/work ghcr.io/empa-scientific-it/python-tutorial:latest jupyter lab
 ```
 
 Replace `/path/to/python-tutorial` with the path to the folder you created in step 2, for example `C:/Users/yourusername/Desktop/python-tutorial`.
@@ -106,3 +106,7 @@ Replace `/path/to/python-tutorial` with the path to the folder you created in st
 6. Access the Jupyter Notebook: Open a web browser and navigate to `http://localhost:8888/lab`. You should see the Jupyter Notebook interface. Enter the token provided in the PowerShell console to access the notebook. Alternatively, you can directly click on the link that appears in the PowerShell after the container has started.
 
 You can now use the Jupyter in the Docker container to run the python-tutorial. When you're done, you can stop the container by pressing `Ctrl+C` in the PowerShell console.
+
+> **Note**
+>
+> If you want to restart the container, you can simply run the command `docker container start python_tutorial`.
