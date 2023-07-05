@@ -4,13 +4,17 @@
 
 ## Run the tutorial on your computer
 
-### 0. Prerequisites
+You have two ways in which you can run the tutorial **locally**.
+
+### 1. With a `conda` environment
+
+#### 0. Prerequisites
 
 To run the tutorial locally, you should first install [conda](https://docs.conda.io/en/latest/miniconda.html) (or [mamba](https://mamba.readthedocs.io/en/latest/installation.html)).
 
 It is also suggested that you have a recent version of `git`. Check out [how to install `git`](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) on your operating system.
 
-### 1. Download the material
+#### 1. Download the material
 
 Go to the directory on your machine where you want to download the material and clone the repository:
 
@@ -24,7 +28,7 @@ Alternatively, you can manually download a ZIP archive with the latest version o
 
 Extract the archive in a directory of your choice.
 
-### 2. Create a dedicated environment
+#### 2. Create a dedicated environment
 
 Enter the tutorial folder with
 
@@ -55,7 +59,7 @@ You can update the existing environment (that is, downloading the latest version
 conda env update -f binder/environment.yml
 ```
 
-### 3. Launch the tutorial via Jupyter
+#### 3. Launch the tutorial via Jupyter
 
 Finally, launch JupyterLab with
 
@@ -70,6 +74,10 @@ conda env update -f environment.yml
 ```
 
 ### 2. With Docker
+
+> **Note**
+>
+> The following instructions are for Windows. With minor changes, the steps are identical on macOS or Linux.
 
 1. Install Docker Desktop: First, you need to install Docker Desktop on your Windows machine. You can download it from the official Docker website: https://www.docker.com/products/docker-desktop.
 
@@ -97,4 +105,4 @@ Replace `/path/to/python-tutorial` with the path to the folder you created in st
 
 6. Access the Jupyter Notebook: Open a web browser and navigate to `http://localhost:8888/lab`. You should see the Jupyter Notebook interface. Enter the token provided in the PowerShell console to access the notebook. Alternatively, you can directly click on the link that appears in the PowerShell after the container has started.
 
-You can now use the Jupyter in the Docker container to run the python-tutorial. When you're done, you can stop the container by pressing `Ctrl+C` in the PowerShell console. If you want to start the container again, just run the "docker run" command again.
+You can now use the Jupyter in the Docker container to run the python-tutorial. When you're done, you can stop the container by pressing `Ctrl+C` in the PowerShell console.
