@@ -2,7 +2,12 @@ name: Build Tutorial Container
 on:
   push:
     branches:
-      - feature/build-docker-image
+      - main
+    paths-ignore:
+      - "*.md"
+      - "slides/**"
+      - "images/**"
+      - ".gitignore"
   workflow_dispatch:
 
 jobs:
