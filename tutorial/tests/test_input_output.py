@@ -15,6 +15,27 @@ def get_data(name: str, data_dir: str = "data") -> pl.Path:
     return (pl.Path(current_module.__file__).parent / f"{data_dir}/{name}").resolve()
 
 
+def reference_solution_print_odd(n: int) -> None:
+    for i in range(n):
+        if i % 2 != 0:
+            print(i)
+
+
+@pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
+def test_print_odd(function_to_test, n: int):
+    # redirect stdout of function_to_test to a string
+    solution_stdout = StringIO()
+
+    with contextlib.redirect_stdout(solution_stdout):
+        function_to_test(n)
+    reference_stdout = StringIO()
+
+    with contextlib.redirect_stdout(reference_stdout):
+        reference_solution_print_odd(n)
+
+    assert reference_stdout.getvalue() == solution_stdout.getvalue()
+
+
 def reference_solution_find_all_files(f: pl.Path) -> "list[pl.Path]":
     return list(f.parent.iterdir())
 
@@ -35,7 +56,7 @@ def test_count_parents(function_to_test):
 
 def reference_solution_read_file(f: pl.Path) -> "list[str]":
     with open(f) as lines:
-        return [l for l in lines.readlines()]
+        return list(lines.readlines())
 
 
 def test_read_file(function_to_test):
@@ -44,8 +65,8 @@ def test_read_file(function_to_test):
         assert function_to_test(data) == reference_solution_read_file(data)
 
 
-def reference_solution_write_file(f: pl.Path, lines: "list[str]") -> None:
-    with open(f, "w") as f:
+def reference_solution_write_file(file: pl.Path, lines: "list[str]") -> None:
+    with file.open("w") as f:
         f.writelines(lines)
 
 
@@ -57,7 +78,27 @@ def test_write_file(function_to_test):
         assert input_file.readlines() == lines
 
 
-def reference_solution_exercise1(f: pl.Path) -> "dict[str, list[int]]":
+def reference_solution_read_write_file(
+    input_file: pl.Path, output_file: pl.Path
+) -> None:
+    with open(input_file) as read_file, open(output_file, "w") as write_file:
+        for line in read_file.readlines():
+            write_file.write("{}, {}\n".format(line.strip("\n\r"), len(line)))
+
+
+def test_read_write_file(function_to_test):
+    input_file = get_data("lines.txt")
+    output_file = pl.Path("output.txt")
+    test_output_file = pl.Path("test_output.txt")
+
+    function_to_test(input_file, output_file)
+    reference_solution_read_write_file(input_file, test_output_file)
+
+    with open(output_file) as output_file, open(test_output_file) as tes:
+        assert output_file.readlines() == tes.readlines()
+
+
+def reference_solution_exercise1(f: pl.Path) -> dict[str, list[str]]:
     with open(f) as lines:
         reader = csv.reader(lines)
         headers = next(reader)
@@ -66,42 +107,6 @@ def reference_solution_exercise1(f: pl.Path) -> "dict[str, list[int]]":
             for k, v in zip(headers, itertools.zip_longest(*(l for l in reader)))
         }
     return transposed
-
-
-def reference_solution_print_odd(n: int) -> None:
-    for i in range(n):
-        if i % 2 != 0:
-            print(i)
-
-
-@pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
-def test_print_odd(function_to_test, n: int):
-    # redirect stdout of function_to_test to a string
-    solution_stdout = StringIO()
-    with contextlib.redirect_stdout(solution_stdout):
-        function_to_test(n)
-    reference_stdout = StringIO()
-    with contextlib.redirect_stdout(reference_stdout):
-        reference_solution_print_odd(n)
-    assert reference_stdout.getvalue() == solution_stdout.getvalue()
-
-
-def reference_solution_read_write_file(
-    input_file: pl.Path, output_file: pl.Path
-) -> None:
-    with open(input_file) as read_file, open(output_file, "w") as write_file:
-        for line in read_file.readlines():
-            write_file.write(f"{line.strip(["\n","\r"])}, {len(line)}\n")
-
-
-def test_read_write_file(function_to_test):
-    input_file = get_data("lines.txt")
-    output_file = pl.Path("output.txt")
-    test_output_file = pl.Path("test_output.txt")
-    function_to_test(input_file, output_file)
-    reference_solution_read_write_file(input_file, test_output_file)
-    with open(output_file) as output_file, open(test_output_file) as tes:
-        assert output_file.readlines() == tes.readlines()
 
 
 def test_exercise1(function_to_test):
@@ -145,14 +150,16 @@ def test_exercise3(function_to_test):
 
 def reference_solution_exercise4(
     english: pl.Path, dictionary: pl.Path
-) -> "list[(str, str)]":
+) -> list[tuple[str, str]]:
     with open(english) as english_file:
         english_reader = csv.reader(english_file)
         english_words = [w for w, _ in english_reader]
+
     with open(dictionary) as dict_file:
         dict_reader = csv.reader(dict_file)
         next(dict_reader)
         translations = {en: it for _, it, en, _ in dict_reader}
+
     return [(e, translations[e]) for e in english_words if e in translations.keys()]
 
 
