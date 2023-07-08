@@ -3,7 +3,7 @@ import csv
 import itertools
 import pathlib as pl
 from collections import Counter
-from io import StringIO, TextIOWrapper
+from io import StringIO
 
 import pytest
 
@@ -41,8 +41,8 @@ def test_find_all_files(function_to_test):
     assert function_to_test(f) == reference_solution_find_all_files(f)
 
 
-def reference_solution_count_dirs(f: pl.Path) -> int:
-    return len([ob for ob in f.glob("*") if ob.is_dir()])
+def reference_solution_count_dirs(path: pl.Path) -> int:
+    return len([obj for obj in path.glob("*") if obj.is_dir()])
 
 
 def test_count_dirs(function_to_test):
@@ -61,21 +61,21 @@ def test_read_file(function_to_test):
         assert function_to_test(data) == reference_solution_read_file(data)
 
 
-def reference_solution_write_file(file: TextIOWrapper, lines: "list[str]") -> None:
-    if not file.closed:
-        file.writelines(lines)
+def reference_solution_write_file(file: pl.Path) -> None:
+    file.write_text("python tutorial 2023")
 
 
 def test_write_file(function_to_test, tmp_path: pl.Path):
-    lines = ["python tutorial 2023"]
-    tmp_file = tmp_path / "test_write_file.txt"
+    tmp_user = tmp_path / "user_write_file.txt"
+    tmp_test = tmp_path / "test_write_file.txt"
 
-    with tmp_file.open("w") as temp_file:
-        function_to_test(temp_file)
-        reference_solution_write_file(temp_file, lines)
+    function_to_test(tmp_user)
+    reference_solution_write_file(tmp_test)
 
-    with tmp_file.open("r") as temp_file:
-        assert temp_file.readlines() == lines
+    if not tmp_user.exists():
+        pytest.fail("Cannot read from inexistent file.")
+
+    assert tmp_user.read_text() == tmp_test.read_text()
 
 
 def reference_solution_read_write_file(
@@ -94,8 +94,7 @@ def test_read_write_file(function_to_test, tmp_path: pl.Path):
     function_to_test(input_file, output_file)
     reference_solution_read_write_file(input_file, test_output_file)
 
-    with output_file.open("r") as ofile, test_output_file.open("r") as tfile:
-        assert ofile.readlines() == tfile.readlines()
+    assert output_file.read_text() == test_output_file.read_text()
 
 
 def reference_solution_exercise1(file: pl.Path) -> dict[str, list[str]]:
