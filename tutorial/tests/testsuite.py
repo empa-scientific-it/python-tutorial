@@ -13,9 +13,6 @@ from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import HTML, Javascript, display
 from nbconvert import filters
 
-import warnings
-warnings.filterwarnings('ignore')
-
 
 def _name_from_line(line: str = None):
     return line.strip().removesuffix(".py") if line else None
@@ -48,11 +45,6 @@ def get_module_name(line: str, globals_dict: Dict = None) -> str:
         )
 
     return module_name
-
-
-def find_solution(ns: Dict[str, Callable], postfix: str) -> Optional[Callable]:
-    """Given a namespace, finds a solution matching a given pattern."""
-    return [f for k, f in ns if k.endswith(postfix)][0]
 
 
 class FunctionInjectionPlugin:
@@ -140,30 +132,33 @@ class TestResultOutput(ipywidgets.VBox):
         output_cell = ipywidgets.Output()
 
         with output_cell:
-            custom_div = '<div style="border: 1px solid; border-color: lightgray; background-color: whitesmoke; margin: 5px; padding: 10px;">'
+            custom_div_style = '"border: 1px solid; border-color: lightgray; background-color: whitesmoke; margin: 5px; padding: 10px;"'
             display(HTML("<h3>Test results</h3>"))
             display(HTML(f"""<div class="alert alert-box {output_config.style}"><h4>{output_config.name}</h4>{output_config.result}</div>"""))
 
             if not syntax_error:
                 if len(test_outputs) > 0 and test_outputs[0].stdout:
-                    display(HTML(f"<h4>Code output:</h4> {custom_div}{test_outputs[0].stdout}</div>"))
+                    display(HTML(f"<h4>Code output:</h4> <div style={custom_div_style}>{test_outputs[0].stdout}</div>"))
 
-                message = f"<h4>We tested your solution <code>solution_{name}</code> {len(test_outputs)} times with different inputs. "
-                if success:
-                    message += "All tests passed!</h4>"
-                else:
-                    message += "Below you find the details for each test run:</h4>"
+                display(HTML(f"""
+                    <h4>We tested your solution <code>solution_{name}</code> {len(test_outputs)} times with different inputs. 
+                    {"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}
+                """))
 
+                if not success:
                     for test in test_outputs:
-                        test_name = re.search(r'\[.*?\]', test.test_name).group()
-                        test_name = re.sub('\[|\]', '', test_name)
-                        message += f"{custom_div}<h5>Test {test_name}</h5>"
-                        message += format_long_stdout(filters.ansi.ansi2html(test.stderr))
-                        message += f"</div>"
-            else:
-                message = f"<h4>Your code cannot run because of the following error:</h4>"
+                        test_name = test.test_name
+                        if match := re.search(r'\[.*?\]', test_name):
+                            test_name = re.sub('\[|\]', '', match.group())
 
-            display(HTML(message))
+                        display(HTML(f"""
+                            <div style={custom_div_style}>
+                                <h5>Test {test_name}</h5>
+                                {format_long_stdout(filters.ansi.ansi2html(test.stderr))}
+                            </div>
+                        """))
+            else:
+                display(HTML(f"<h4>Your code cannot run because of the following error:</h4>"))
 
         super().__init__(children=[output_cell])
 
