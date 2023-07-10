@@ -1,16 +1,18 @@
-import dataclasses
+"""A module to define the `%%ipytest` cell magic"""
 import io
 import pathlib
 import re
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Callable, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Callable, Dict, List
 
 import ipynbname
 import ipywidgets
 import pytest
+from IPython.core.display import HTML, Javascript
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
-from IPython.display import HTML, Javascript, display
+from IPython.display import display
 from nbconvert import filters
 
 
@@ -59,24 +61,28 @@ class FunctionInjectionPlugin:
             metafunc.parametrize("function_to_test", [self.function_to_test])
 
 
-@dataclasses.dataclass
+@dataclass
 class TestResult:
     """Container class to store the test results when we collect them"""
+
     stdout: str
     stderr: str
     test_name: str
     success: bool
 
 
-@dataclasses.dataclass
+@dataclass
 class OutputConfig:
     """Container class to store the information to display in the test output"""
+
     style: str
     name: str
     result: str
 
 
-def format_success_failure(syntax_error: bool, success: bool, name: str) -> OutputConfig:
+def format_success_failure(
+    syntax_error: bool, success: bool, name: str
+) -> OutputConfig:
     """
     Depending on the test results, returns a fragment that represents
     either an error message, a success message, or a syntax error warning
@@ -84,22 +90,22 @@ def format_success_failure(syntax_error: bool, success: bool, name: str) -> Outp
     if syntax_error:
         return OutputConfig(
             "alert-warning",
-            f"Tests <strong>CANNOT RUN</strong> for this cell.",
+            "Tests <strong>COULD NOT RUN</strong> for this cell.",
             "&#129300 Careful, looks like you have a syntax error.",
         )
 
-    if success:
-        return OutputConfig(
-            "alert-success",
-            f"Tests <strong>PASSED</strong> for the function <code>{name}</code>",
-            "&#x1F64C Congratulations, your solution was correct!",
-        )
-    else:
+    if not success:
         return OutputConfig(
             "alert-danger",
             f"Tests <strong>FAILED</strong> for the function <code>{name}</code>",
             "&#x1F631 Your solution was not correct!",
         )
+
+    return OutputConfig(
+        "alert-success",
+        f"Tests <strong>PASSED</strong> for the function <code>{name}</code>",
+        "&#x1F64C Congratulations, your solution was correct!",
+    )
 
 
 def format_long_stdout(text: str) -> str:
@@ -108,12 +114,10 @@ def format_long_stdout(text: str) -> str:
     """
 
     def join_lines(text: str) -> str:
-        text = text.splitlines()
-        return "".join(
-            [f"<p>{line}</p>" for line in text[-6:-1]]
-        )
+        lines = text.splitlines()
+        return "".join(f"<p>{line}</p>" for line in lines[-6:-1])
 
-    separator = 59 * ' _'
+    separator = 59 * " _"
     text = text.split(separator)[-1]
     text_lines = "".join(join_lines(text))
     test_runs = "".join(
@@ -127,38 +131,64 @@ def format_long_stdout(text: str) -> str:
 class TestResultOutput(ipywidgets.VBox):
     """Class to display the test results in a structured way"""
 
-    def __init__(self, name: str, syntax_error: bool, success: bool, test_outputs: List[TestResult]):
+    def __init__(
+        self,
+        name: str = "",
+        syntax_error: bool = False,
+        success: bool = False,
+        test_outputs: List[TestResult] = None,
+    ):
         output_config = format_success_failure(syntax_error, success, name)
         output_cell = ipywidgets.Output()
 
         with output_cell:
             custom_div_style = '"border: 1px solid; border-color: lightgray; background-color: whitesmoke; margin: 5px; padding: 10px;"'
             display(HTML("<h3>Test results</h3>"))
-            display(HTML(f"""<div class="alert alert-box {output_config.style}"><h4>{output_config.name}</h4>{output_config.result}</div>"""))
+            display(
+                HTML(
+                    f"""<div class="alert alert-box {output_config.style}"><h4>{output_config.name}</h4>{output_config.result}</div>"""
+                )
+            )
 
             if not syntax_error:
                 if len(test_outputs) > 0 and test_outputs[0].stdout:
-                    display(HTML(f"<h4>Code output:</h4> <div style={custom_div_style}>{test_outputs[0].stdout}</div>"))
+                    display(
+                        HTML(
+                            f"<h4>Code output:</h4> <div style={custom_div_style}>{test_outputs[0].stdout}</div>"
+                        )
+                    )
 
-                display(HTML(f"""
+                display(
+                    HTML(
+                        f"""
                     <h4>We tested your solution <code>solution_{name}</code> {len(test_outputs)} times with different inputs. 
                     {"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}
-                """))
+                """
+                    )
+                )
 
                 if not success:
                     for test in test_outputs:
                         test_name = test.test_name
-                        if match := re.search(r'\[.*?\]', test_name):
-                            test_name = re.sub('\[|\]', '', match.group())
+                        if match := re.search(r"\[.*?\]", test_name):
+                            test_name = re.sub(r"\[|\]", "", match.group())
 
-                        display(HTML(f"""
+                        display(
+                            HTML(
+                                f"""
                             <div style={custom_div_style}>
                                 <h5>Test {test_name}</h5>
                                 {format_long_stdout(filters.ansi.ansi2html(test.stderr))}
                             </div>
-                        """))
+                        """
+                            )
+                        )
             else:
-                display(HTML(f"<h4>Your code cannot run because of the following error:</h4>"))
+                display(
+                    HTML(
+                        "<h4>Your code cannot run because of the following error:</h4>"
+                    )
+                )
 
         super().__init__(children=[output_cell])
 
@@ -183,9 +213,9 @@ class ResultCollector:
         if report.failed:
             self.tests[node.nodeid] = TestResult(
                 report.capstdout,
-                str(call.excinfo.getrepr()),
+                str(call.excinfo.getrepr() if call.excinfo else ""),
                 report.nodeid,
-                not report.failed,
+                False,
             )
 
 
@@ -235,7 +265,9 @@ class TestMagic(Magics):
                 # Create the test collector
                 result_collector = ResultCollector()
                 # Run the tests
-                with redirect_stderr(io.StringIO()) as pytest_stderr, redirect_stdout(io.StringIO()) as pytest_stdout:
+                with redirect_stderr(io.StringIO()) as pytest_stderr, redirect_stdout(
+                    io.StringIO()
+                ) as pytest_stdout:
                     result = pytest.main(
                         [
                             "-q",
@@ -261,16 +293,22 @@ class TestMagic(Magics):
 
             display(*outputs)
 
-            # hide cell outputs that were not generated by a function 
-            display(Javascript("""      
+            # hide cell outputs that were not generated by a function
+            display(
+                Javascript(
+                    """      
                 var output_divs = document.querySelectorAll(".jp-OutputArea-executeResult");
                 for (let div of output_divs) {
                     div.setAttribute("style", "display: none;");
                 }
-            """))
+            """
+                )
+            )
 
             # remove syntax error styling
-            display(Javascript("""      
+            display(
+                Javascript(
+                    """      
                 var output_divs = document.querySelectorAll(".jp-Cell-outputArea");
                 for (let div of output_divs) {
                     var div_str = String(div.innerHTML);
@@ -278,18 +316,22 @@ class TestMagic(Magics):
                         div.setAttribute("style", "padding-bottom: 0;");  
                     }
                 }
-            """))
+            """
+                )
+            )
 
-        except Exception as e:
+        except Exception:
             # Catches syntax errors and creates a custom warning
-            display(TestResultOutput(
-                None,
-                True,
-                False,
-                None,
-            ))
+            display(
+                TestResultOutput(
+                    syntax_error=True,
+                    success=False,
+                )
+            )
 
-            display(Javascript("""      
+            display(
+                Javascript(
+                    """      
                 var syntax_error_containers = document.querySelectorAll('div[data-mime-type="application/vnd.jupyter.stderr"]');
                 for (let container of syntax_error_containers) {
                     var syntax_error_div = container.parentNode;
@@ -298,7 +340,9 @@ class TestMagic(Magics):
                     container_div.setAttribute("style", container_style);
                     syntax_error_div.setAttribute("style", "position: absolute; bottom: 10px;");
                 }
-            """))
+            """
+                )
+            )
 
 
 def load_ipython_extension(ipython):
