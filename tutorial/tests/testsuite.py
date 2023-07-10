@@ -126,7 +126,7 @@ def format_long_stdout(text: str) -> str:
     text_lines = "".join(join_lines(text))
     test_runs = "".join(
         [
-            f"""<details style="overflow-y: scroll; max-height: 200px;"><summary><u>Click here to expand</u></summary><div>{text_lines}</div></details></li>"""
+            f"""<details style="overflow-y: auto; max-height: 200px;"><summary><u>Click here to expand</u></summary><div>{text_lines}</div></details></li>"""
         ]
     )
     return test_runs
