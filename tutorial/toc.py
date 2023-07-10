@@ -1,20 +1,15 @@
 #!/usr/bin/env python
+"""CLI script to build a table of contents for an IPython notebook"""
 import argparse as ap
-import dataclasses
 import pathlib
 import re
+from collections import namedtuple
 
 import nbformat
 from nbformat import NotebookNode
 
 
-@dataclasses.dataclass
-class TocEntry:
-    """A table of contents entry"""
-
-    level: int
-    text: str
-    anchor: str
+TocEntry = namedtuple("TocEntry", ["level", "text", "anchor"])
 
 
 def extract_markdown_cells(notebook: NotebookNode) -> str:
@@ -37,7 +32,7 @@ def extract_toc(notebook: str) -> list[TocEntry]:
     return toc
 
 
-def markdown_toc(toc: "list[TocEntry]") -> str:
+def markdown_toc(toc: list[TocEntry]) -> str:
     """Build a string representation of the toc as a nested markdown list"""
     lines = []
     for entry in toc:
@@ -62,8 +57,7 @@ def build_toc(nb_path: pathlib.Path, placeholder: str = "[TOC]") -> NotebookNode
     toc_header = "# Table of Contents"
 
     for cell in nb_obj.cells:
-        print(cell)
-        if cell.source.startswith(placeholder) or cell.source.startswith(toc_header):
+        if cell.source.startswith((placeholder, toc_header)):
             cell.source = f"{toc_header}\n{toc_repr}"
             cell.cell_type = "markdown"
 
@@ -72,18 +66,36 @@ def build_toc(nb_path: pathlib.Path, placeholder: str = "[TOC]") -> NotebookNode
 
 def main():
     """CLI entry point"""
-    parser = ap.ArgumentParser()
+    parser = ap.ArgumentParser(
+        description="Build a table of contents for an IPython notebook"
+    )
     parser.add_argument("notebook", type=str, help="Path to the notebook to process")
-    parser.add_argument("--output", "-o", type=str, default=None, help="Output path")
+    parser.add_argument(
+        "--output", "-o", type=str, default=None, help="Path to the output notebook"
+    )
+    parser.add_argument(
+        "--force",
+        "-f",
+        action="store_true",
+        default=False,
+        help="Force overwrite of original notebook",
+    )
     args = parser.parse_args()
 
-    if args.output is None:
-        args.output = args.notebook
+    if not (input_nb := pathlib.Path(args.notebook)).exists():
+        raise FileNotFoundError(f"Notebook '{input_nb}' does not exist.")
 
-    output_nb = pathlib.Path(args.output)
+    if args.output is None:
+        output_nb = input_nb.with_suffix(".toc.ipynb")
+    else:
+        output_nb = pathlib.Path(args.output)
 
     with output_nb.open("w", encoding="utf-8") as file:
-        nbformat.write(build_toc(pathlib.Path(args.notebook)), file)
+        nbformat.write(build_toc(input_nb), file)
+
+    if args.force:
+        input_nb.unlink()
+        output_nb.rename(input_nb)
 
 
 if __name__ == "__main__":
