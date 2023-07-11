@@ -139,20 +139,20 @@ def test_exercise3(function_to_test):
 def reference_solution_exercise4(
     english: pl.Path, dictionary: pl.Path
 ) -> list[tuple[str, str]]:
-    with english.open("r") as english_file:
-        english_reader = csv.reader(english_file)
-        english_words = [w for w, _ in english_reader]
+    english_words = english.read_text().splitlines()
 
     with dictionary.open("r") as dict_file:
         dict_reader = csv.reader(dict_file)
-        next(dict_reader)
-        translations = {en: it for _, it, en, _ in dict_reader}
+        next(dict_reader)  # skip header
+        translations = {en: it for _, it, en in dict_reader}
 
-    return [(e, translations[e]) for e in english_words if e in translations.keys()]
+    return [
+        (word, translations[word]) for word in english_words if word in translations
+    ]
 
 
 def test_exercise4(function_to_test):
-    words = get_data("english.csv")
+    words = get_data("english.txt")
     dictionary = get_data("dict.csv")
     assert function_to_test(words, dictionary) == reference_solution_exercise4(
         words, dictionary
