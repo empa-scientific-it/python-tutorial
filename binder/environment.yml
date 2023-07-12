@@ -15,3 +15,4 @@ dependencies:
           - pytest
           - pytest-timeout
           - markdown
+          - pre-commit
