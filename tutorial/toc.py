@@ -28,10 +28,7 @@ def extract_toc(notebook: str) -> list[TocEntry]:
     """Extract the table of contents from a markdown string"""
     toc = []
 
-    # Regex trick: use a capture group to match the heading level discarding code blocks
-    line_re = re.compile(r"```py.*\n#|^(#{1,6})\s+(.+)", re.MULTILINE)
-
-    for match in re.findall(line_re, notebook):
+    for match in re.findall(r"```py.*\n#|^(#{1,6})\s+(.+)", notebook, re.MULTILINE):
         if all(match):
             level, text = match
             anchor = "-".join(text.replace("`", "").split())
@@ -47,13 +44,15 @@ def markdown_toc(toc: list[TocEntry]) -> str:
     )
 
 
-def build_toc(nb_path: pathlib.Path, placeholder: str = "[TOC]") -> NotebookNode:
-    """Build a table of contents for a notebook and insert it at the location of a placeholder"""
-    # Read the notebook
-    nb_obj: NotebookNode = nbformat.read(nb_path, nbformat.NO_CONVERT)
+def add_toc_and_backlinks(
+    notebook_path: pathlib.Path, placeholder: str = "[TOC]"
+) -> NotebookNode:
+    """Replace a `placeholder` cell with a table of contents and add backlinks to each header"""
+    # Read notebook
+    notebook: NotebookNode = nbformat.read(notebook_path, nbformat.NO_CONVERT)
 
     # Extract markdown cells
-    md_cells = extract_markdown_cells(nb_obj)
+    md_cells = extract_markdown_cells(notebook)
 
     # Build tree
     toc_tree = extract_toc(md_cells)
@@ -64,12 +63,19 @@ def build_toc(nb_path: pathlib.Path, placeholder: str = "[TOC]") -> NotebookNode
     # Insert it a the location of a placeholder
     toc_header = "# Table of Contents"
 
-    for cell in nb_obj.cells:
+    for cell in notebook.cells:
+        # Add backlinks
+        if cell.cell_type == "markdown":
+            cell.source = re.sub(
+                r"^(#{1,6})\s+(.+)", r"\1 \2 [↩](#Table-of-Contents)", cell.source
+            )
+
+        # Replace placeholder with toc
         if cell.source.startswith((placeholder, toc_header)):
             cell.source = f"{toc_header}\n{toc_repr}"
             cell.cell_type = "markdown"
 
-    return nb_obj
+    return notebook
 
 
 def main():
@@ -99,7 +105,7 @@ def main():
         output_nb = pathlib.Path(args.output)
 
     with output_nb.open("w", encoding="utf-8") as file:
-        nbformat.write(build_toc(input_nb), file)
+        nbformat.write(add_toc_and_backlinks(input_nb), file)
 
     if args.force:
         input_nb.unlink()
