@@ -6,6 +6,14 @@ import pytest
 from numpy import average
 
 
+FLAVORS = [
+    ("chocolate",),
+    ("chocolate", "vanilla", "persimmon"),
+    ("chocolate", "vanilla", "stracciatella"),
+    ("chocolate", "vanilla", "stracciatella", "strawberry"),
+    ("chocolate", "vanilla", "stracciatella", "strawberry", "pistachio"),
+]
+
 #
 # Exercise 1: Ice cream scoop
 #
@@ -21,9 +29,15 @@ class Scoop:
         return f"Ice cream scoop with flavor '{self.flavor}'"
 
 
-def test_ice_cream_scoop(function_to_test) -> None:
-    flavors = ("chocolate", "vanilla", "persimmon")
-    assert function_to_test(flavors) == [str(Scoop(flavor)) for flavor in flavors]
+def reference_ice_cream_scoop(flavors: tuple[str]) -> list[Scoop, str]:
+    return [(Scoop(flavor), str(Scoop(flavor))) for flavor in flavors]
+
+
+@pytest.mark.parametrize("flavors", FLAVORS)
+def test_ice_cream_scoop(flavors, function_to_test) -> None:
+    test_solution = [string for _, string in function_to_test(flavors)]
+    reference_solution = [string for _, string in reference_ice_cream_scoop(flavors)]
+    assert test_solution == reference_solution
 
 
 #
@@ -62,7 +76,7 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     """Read input data"""
     current_module = sys.modules[__name__]
     return (
-            pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}"
+        pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}"
     ).resolve()
 
 
@@ -172,7 +186,7 @@ class Universe:
     def evolve(self) -> "Universe":
         """Evolve the universe"""
         for n, moon_i in enumerate(self.moons[:-1]):
-            for moon_j in self.moons[n + 1:]:
+            for moon_j in self.moons[n + 1 :]:
                 moon_i.update_velocities(moon_j)
 
         for moon in self.moons:
