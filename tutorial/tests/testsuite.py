@@ -170,8 +170,8 @@ class TestResultOutput(ipywidgets.VBox):
                             HTML(
                                 f"""
                             <div style={custom_div_style}>
-                                <h5>Test {test_name}</h5>
-                                {format_long_stdout(filters.ansi.ansi2html(test.stderr))}
+                                <h5>{"&#10004" if test.success else "&#10060"} Test {test_name}</h5>
+                                {format_long_stdout(filters.ansi.ansi2html(test.stderr)) if not test.success else ""}
                             </div>
                         """
                             )
