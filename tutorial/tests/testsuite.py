@@ -113,10 +113,11 @@ def format_long_stdout(text: str) -> str:
     Format a long test stdout as a HTML by using the <details> element
     """
 
-   stdout_body = re.split(r"_{3,}", text)[-1]
-   html_body = "".join(f"<p>{line}</p>" for line in stdout_body.splitlines()[-6:-1])
+    stdout_body = re.split(r"_\s{3,}", text)[-1]
+    stdout_filtered = list(filter(re.compile(".*>E\s").match, stdout_body.splitlines()))
+    html_body = "".join(f"<p>{line}</p>" for line in stdout_filtered)
 
-   test_runs = f"""<details style="overflow-y: auto; max-height: 200px;"><summary><u>Click here to expand</u></summary><div>{html_body}</div></details></li>"""
+    test_runs = f"""<details style="overflow-y: auto; max-height: 200px;"><summary><u>Click here to expand</u></summary><div>{html_body}</div></details></li>"""
     return test_runs
 
 
