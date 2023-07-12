@@ -3,13 +3,18 @@
 import argparse as ap
 import pathlib
 import re
-from collections import namedtuple
+from typing import NamedTuple
 
 import nbformat
 from nbformat import NotebookNode
 
 
-TocEntry = namedtuple("TocEntry", ["level", "text", "anchor"])
+class TocEntry(NamedTuple):
+    """Table of contents entry"""
+
+    level: int
+    text: str
+    anchor: str
 
 
 def extract_markdown_cells(notebook: NotebookNode) -> str:
@@ -22,29 +27,32 @@ def extract_markdown_cells(notebook: NotebookNode) -> str:
 def extract_toc(notebook: str) -> list[TocEntry]:
     """Extract the table of contents from a markdown string"""
     toc = []
-    line_re = re.compile(r"(#+)\s+(.+)")
-    for line in notebook.splitlines():
-        if groups := re.match(line_re, line):
-            heading, text, *_ = groups.groups()
-            level = len(heading)
+
+    # Regex trick: use a capture group to match the heading level discarding code blocks
+    line_re = re.compile(r"```py.*\n#|^(#{1,6})\s+(.+)", re.MULTILINE)
+
+    for match in re.findall(line_re, notebook):
+        if all(match):
+            level, text = match
             anchor = "-".join(text.replace("`", "").split())
-            toc.append(TocEntry(level, text, anchor))
+            toc.append(TocEntry(len(level), text, anchor))
+
     return toc
 
 
 def markdown_toc(toc: list[TocEntry]) -> str:
     """Build a string representation of the toc as a nested markdown list"""
-    lines = []
-    for entry in toc:
-        line = f"{'  ' * entry.level}- [{entry.text}](#{entry.anchor})"
-        lines.append(line)
-    return "\n".join(lines)
+    return "\n".join(
+        f"{'  ' * entry.level}- [{entry.text}](#{entry.anchor})" for entry in toc
+    )
 
 
 def build_toc(nb_path: pathlib.Path, placeholder: str = "[TOC]") -> NotebookNode:
     """Build a table of contents for a notebook and insert it at the location of a placeholder"""
     # Read the notebook
     nb_obj: NotebookNode = nbformat.read(nb_path, nbformat.NO_CONVERT)
+
+    # Extract markdown cells
     md_cells = extract_markdown_cells(nb_obj)
 
     # Build tree
