@@ -113,18 +113,10 @@ def format_long_stdout(text: str) -> str:
     Format a long test stdout as a HTML by using the <details> element
     """
 
-    def join_lines(text: str) -> str:
-        lines = text.splitlines()
-        return "".join(f"<p>{line}</p>" for line in lines[-6:-1])
+   stdout_body = re.split(r"_{3,}", text)[-1]
+   html_body = "".join(f"<p>{line}</p>" for line in stdout_body.splitlines()[-6:-1])
 
-    separator = 59 * " _"
-    text = text.split(separator)[-1]
-    text_lines = "".join(join_lines(text))
-    test_runs = "".join(
-        [
-            f"""<details style="overflow-y: auto; max-height: 200px;"><summary><u>Click here to expand</u></summary><div>{text_lines}</div></details></li>"""
-        ]
-    )
+   test_runs = f"""<details style="overflow-y: auto; max-height: 200px;"><summary><u>Click here to expand</u></summary><div>{html_body}</div></details></li>"""
     return test_runs
 
 
