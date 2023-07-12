@@ -154,7 +154,7 @@ class TestResultOutput(ipywidgets.VBox):
                 display(
                     HTML(
                         f"""
-                    <h4>We tested your solution <code>solution_{name}</code> {len(test_outputs)} times with different inputs. 
+                        <h4>We tested your solution <code>solution_{name}</code> with {'1 input' if len(test_outputs) == 1 else str(len(test_outputs)) + ' different inputs'}. 
                     {"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}
                 """
                     )
