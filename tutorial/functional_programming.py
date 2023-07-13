@@ -4,7 +4,7 @@ from .common import Question, Quiz
 class PureFunctions(Quiz):
     def __init__(self, title=""):
         q1 = Question(
-            question= """Is the following function pure:<br><div><pre>def f(x: int) -> int: \n    return x + 1</pre></div>""",
+            question="""Is the following function pure:<br><div><pre>def f(x: int) -> int: \n    return x + 1</pre></div>""",
             options={
                 "Yes": "Correct!",
                 "No": "Why not? The function does not have any side effects.",
@@ -33,6 +33,5 @@ class PureFunctions(Quiz):
             hint="Purity means that the function does not have any side effects, for example changing variables other than the inputs, opening files, etc.",
             shuffle=True,
         )
-
 
         super().__init__(questions=[q1, q2, q3])

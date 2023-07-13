@@ -5,7 +5,6 @@ from typing import List
 import pytest
 from numpy import average
 
-
 #
 # Exercise 1: Ice cream scoop
 #
@@ -62,7 +61,7 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     """Read input data"""
     current_module = sys.modules[__name__]
     return (
-            pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}"
+        pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}"
     ).resolve()
 
 
@@ -172,7 +171,7 @@ class Universe:
     def evolve(self) -> "Universe":
         """Evolve the universe"""
         for n, moon_i in enumerate(self.moons[:-1]):
-            for moon_j in self.moons[n + 1:]:
+            for moon_j in self.moons[n + 1 :]:
                 moon_i.update_velocities(moon_j)
 
         for moon in self.moons:
