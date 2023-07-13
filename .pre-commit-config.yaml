@@ -1,6 +1,6 @@
 ---
 ci:
-    autoupdat_schedule: quarterly
+    autoupdate_schedule: quarterly
 
 repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
