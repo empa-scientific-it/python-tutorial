@@ -10,12 +10,15 @@ import pytest
 def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     """Read input data"""
     current_module = sys.modules[__name__]
-    return (pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}").resolve()
+    return (
+        pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}"
+    ).resolve()
 
 
 #
 # Exercise 1: Longest Sequence
 #
+
 
 def reference_solution_longest_sequence(nums: List[int]) -> int:
     """
@@ -46,10 +49,12 @@ def reference_solution_longest_sequence(nums: List[int]) -> int:
         [100, 4, 200, 1, 3, 2],
         [0, 3, 7, 2, 5, 8, 4, 6, 0, 1],
         [0, 2, 14, 12, 4, 18, 16, 8, 10, 6],
-    ]
+    ],
 )
 def test_longest_sequence(input_nums: List[int], function_to_test) -> None:
-    assert function_to_test(input_nums) == reference_solution_longest_sequence(input_nums)
+    assert function_to_test(input_nums) == reference_solution_longest_sequence(
+        input_nums
+    )
 
 
 @pytest.mark.timeout(60)
@@ -57,15 +62,18 @@ def test_longest_sequence(input_nums: List[int], function_to_test) -> None:
     "input_nums",
     [
         [int(x) for x in read_data("longest_10000.txt").read_text().splitlines()],
-    ]
+    ],
 )
 def test_longest_sequence_best(input_nums: List[int], function_to_test) -> None:
-    assert function_to_test(input_nums) == reference_solution_longest_sequence(input_nums)
+    assert function_to_test(input_nums) == reference_solution_longest_sequence(
+        input_nums
+    )
 
 
 #
 # Exercise 2: Password Validator
 #
+
 
 def reference_solution_password_validator1(start: int, end: int) -> int:
     """Password validator reference solution (part 1)"""
@@ -94,10 +102,12 @@ def reference_solution_password_validator2(start: int, end: int) -> int:
     [
         (138241, 674034),
         (136760, 595730),
-    ]
+    ],
 )
 def test_password_validator1(pwd_range: Tuple[int], function_to_test) -> None:
-    assert function_to_test(*pwd_range) == reference_solution_password_validator1(*pwd_range)
+    assert function_to_test(*pwd_range) == reference_solution_password_validator1(
+        *pwd_range
+    )
 
 
 @pytest.mark.parametrize(
@@ -105,10 +115,12 @@ def test_password_validator1(pwd_range: Tuple[int], function_to_test) -> None:
     [
         (138241, 674034),
         (136760, 595730),
-    ]
+    ],
 )
 def test_password_validator2(pwd_range: Tuple[int], function_to_test) -> None:
-    assert function_to_test(*pwd_range) == reference_solution_password_validator2(*pwd_range)
+    assert function_to_test(*pwd_range) == reference_solution_password_validator2(
+        *pwd_range
+    )
 
 
 #
@@ -116,7 +128,7 @@ def test_password_validator2(pwd_range: Tuple[int], function_to_test) -> None:
 #
 
 prio = {l: i for i, l in enumerate(ascii_lowercase + ascii_uppercase, start=1)}
-buckets_1, buckets_2 = [read_data(f"buckets_{num}.txt") for num in (1, 2)]
+buckets_1, buckets_2 = (read_data(f"buckets_{num}.txt") for num in (1, 2))
 
 
 def reference_solution_buckets1(buckets: pathlib.Path) -> int:

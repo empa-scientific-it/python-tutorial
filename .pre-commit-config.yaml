@@ -1,0 +1,67 @@
+---
+ci:
+    autoupdate_schedule: quarterly
+
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.4.0
+      hooks:
+          - id: end-of-file-fixer
+          - id: trailing-whitespace
+            exclude: miscellaneous/structures/SiO2.xyz
+          - id: check-yaml
+          - id: check-added-large-files
+    - repo: https://github.com/pycqa/isort
+      rev: 5.12.0
+      hooks:
+          - id: isort
+            args: [--profile, black, --filter-files]
+    - repo: https://github.com/PyCQA/autoflake
+      rev: v2.2.0
+      hooks:
+          - id: autoflake
+    - repo: https://github.com/asottile/pyupgrade
+      rev: v3.9.0
+      hooks:
+          - id: pyupgrade
+            args: [--py38-plus]
+    - repo: https://github.com/psf/black
+      rev: 23.7.0
+      hooks:
+          - id: black
+            language_version: python3 # Should be a command that runs python3.6+
+    - repo: https://github.com/PyCQA/flake8
+      rev: 6.0.0
+      hooks:
+          - id: flake8
+            args: [--count, --show-source, --statistics]
+            additional_dependencies:
+                - flake8-bugbear
+                - flake8-builtins
+                - flake8-comprehensions
+                - flake8-debugger
+                - flake8-logging-format
+                - pep8-naming
+                - pyflakes
+                - tryceratops
+    - repo: https://github.com/pre-commit/mirrors-mypy
+      rev: v1.4.1
+      hooks:
+          - id: mypy
+            additional_dependencies:
+                - types-click-spinner
+                - types-requests
+                - types-tabulate
+                - types-toml
+    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+      rev: 0.2.3
+      hooks:
+          - id: yamlfmt
+    - repo: https://github.com/asottile/setup-cfg-fmt
+      rev: v2.4.0
+      hooks:
+          - id: setup-cfg-fmt
+    - repo: https://github.com/kynan/nbstripout
+      rev: 0.6.1
+      hooks:
+          - id: nbstripout
