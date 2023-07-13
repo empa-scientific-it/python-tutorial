@@ -8,7 +8,6 @@ from collections import namedtuple
 import nbformat
 from nbformat import NotebookNode
 
-
 TocEntry = namedtuple("TocEntry", ["level", "text", "anchor"])
 
 
