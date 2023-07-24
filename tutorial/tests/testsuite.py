@@ -2,9 +2,10 @@
 import io
 import pathlib
 import re
+import ast
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Set
 
 import ipynbname
 import ipywidgets
@@ -12,7 +13,8 @@ import pytest
 from IPython.core.display import HTML, Javascript
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
-from IPython.display import display
+from IPython.display import display, Code
+from IPython import get_ipython
 from nbconvert import filters
 
 
@@ -130,6 +132,8 @@ class TestResultOutput(ipywidgets.VBox):
         syntax_error: bool = False,
         success: bool = False,
         test_outputs: List[TestResult] = None,
+        cell_exec_count: int = None,
+        solution_body: str = None,
     ):
         output_config = format_success_failure(syntax_error, success, name)
         output_cell = ipywidgets.Output()
@@ -183,7 +187,46 @@ class TestResultOutput(ipywidgets.VBox):
                     )
                 )
 
-        super().__init__(children=[output_cell])
+        # Reveal proposed solution
+        solution_output = ipywidgets.Output()
+        with solution_output:
+            display(
+                HTML(
+                    "<h4>Proposed solution:</h4>"
+                )
+            )
+
+        solution_code = ipywidgets.Output()
+        with solution_code:
+            display(
+                Code(
+                    language="python",
+                    data=f"{solution_body}"
+                )
+            )
+
+        solution_accordion = ipywidgets.Accordion(
+            titles=("Click here to reveal", ),
+            children=[solution_code]
+        )
+
+        solution_box = ipywidgets.Box(
+            children=[solution_output, solution_accordion],
+            layout={"display": "block" if (cell_exec_count > 2 or success) else "none", "padding": "0 20px 0 0"}
+        )
+
+        display(
+            Javascript(
+                """
+                    var divs = document.querySelectorAll(".jupyter-widget-Collapse-contents");
+                    for (let div of divs) {
+                        div.setAttribute("style", "padding: 0");
+                    }
+                """
+            )
+        )
+
+        super().__init__(children=[output_cell, solution_box])
 
 
 class ResultCollector:
@@ -223,6 +266,8 @@ class TestMagic(Magics):
 
     shell: InteractiveShell
 
+    cells = {}
+
     @cell_magic
     def ipytest(self, line: str, cell: str):
         """The `%%ipytest` cell magic"""
@@ -253,6 +298,27 @@ class TestMagic(Magics):
             if not functions_to_run:
                 raise ValueError("No function to test defined in the cell")
 
+            # store execution count information for each cell
+            ipython_info = get_ipython()
+            cell_id = ipython_info.parent_header["metadata"]["cellId"]
+            if cell_id in self.cells:
+                self.cells[cell_id] += 1
+            else:
+                self.cells[cell_id] = 1
+ 
+            # find reference solution
+            tree = ast.parse(open(module_file, "r").read())         
+
+            function_defs = {}
+            for node in tree.body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    function_defs[node.name] = node
+
+            called_function_names = {}
+            for node in tree.body:
+                if node in function_defs.values() and node.name.startswith("reference_"):
+                    called_function_names[node.name] = retrieve_functions(node, function_defs, {node.name})
+
             outputs = []
             for name, function in functions_to_run.items():
                 # Create the test collector
@@ -275,12 +341,19 @@ class TestMagic(Magics):
                     pytest_output = pytest_stdout.getvalue()
                     pytest_error = pytest_stderr.getvalue()
 
+                solution_functions = [val for key, val in called_function_names.items() if key in f"reference_{name}"][0]
+                solution_code = ""
+                for f in solution_functions:
+                    solution_code += ast.unparse(function_defs[f]) + "\n\n"
+
                 outputs.append(
                     TestResultOutput(
                         name,
                         False,
                         result == pytest.ExitCode.OK,
                         list(result_collector.tests.values()),
+                        self.cells[cell_id],
+                        solution_code,
                     )
                 )
 
@@ -336,6 +409,15 @@ class TestMagic(Magics):
             """
                 )
             )
+
+
+def retrieve_functions(node: object, function_defs: Set[object], called_functions: Set[str]) -> Set[object]:
+    for w in ast.walk(node):
+        if isinstance(w, ast.Call) and w.func.id in function_defs.keys():
+            called_functions.add(w.func.id)
+        for child in ast.iter_child_nodes(w):
+            called_functions = retrieve_functions(child, function_defs, called_functions)
+    return called_functions
 
 
 def load_ipython_extension(ipython):
