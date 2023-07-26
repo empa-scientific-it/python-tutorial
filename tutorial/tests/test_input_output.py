@@ -7,7 +7,7 @@ from io import StringIO
 
 import pytest
 
-from .. import prepare_magic_file
+from tutorial.prepare_magic_file import decode_secret_message
 
 
 def get_data(name: str, data_dir: str = "data") -> pl.Path:
@@ -160,7 +160,7 @@ def test_exercise4(function_to_test):
 
 
 def reference_exercise5(secret_file: pl.Path) -> str:
-    return prepare_magic_file.decode_secret_message(secret_file)
+    return decode_secret_message(secret_file)
 
 
 def test_exercise5(function_to_test):

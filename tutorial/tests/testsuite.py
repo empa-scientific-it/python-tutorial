@@ -31,12 +31,14 @@ def _name_from_ipynbname() -> str | None:
 
 def _name_from_globals(globals_dict: Dict) -> str | None:
     """Find the name of the test module from the globals dictionary if working in VSCode"""
+
     module_path = globals_dict.get("__vsc_ipynb_file__") if globals_dict else None
     return pathlib.Path(module_path).stem if module_path else None
 
 
 def get_module_name(line: str, globals_dict: Dict = None) -> str:
     """Fetch the test module name"""
+
     module_name = (
         _name_from_line(line)
         or _name_from_ipynbname()
@@ -58,7 +60,7 @@ class FunctionInjectionPlugin:
         self.function_to_test = function_to_test
 
     def pytest_generate_tests(self, metafunc: pytest.Metafunc) -> None:
-        """Override the abstract `function_to_test` fixture function"""
+        # Override the abstract `function_to_test` fixture function
         if "function_to_test" in metafunc.fixturenames:
             metafunc.parametrize("function_to_test", [self.function_to_test])
 
@@ -89,6 +91,7 @@ def format_success_failure(
     Depending on the test results, returns a fragment that represents
     either an error message, a success message, or a syntax error warning
     """
+
     if syntax_error:
         return OutputConfig(
             "alert-warning",
@@ -112,7 +115,8 @@ def format_success_failure(
 
 def format_long_stdout(text: str) -> str:
     """
-    Format a long test stdout as a HTML by using the <details> element
+    Format the error message lines of a long test stdout
+    as an HTML that expands, by using the <details> element
     """
 
     stdout_body = re.split(r"_\s{3,}", text)[-1]
@@ -137,6 +141,9 @@ class TestResultOutput(ipywidgets.VBox):
     ):
         output_config = format_success_failure(syntax_error, success, name)
         output_cell = ipywidgets.Output()
+
+        # For each test, create an alert box with the appropriate message,
+        # print the code output and display code errors in case of failure
 
         with output_cell:
             custom_div_style = '"border: 1px solid; border-color: lightgray; background-color: whitesmoke; margin: 5px; padding: 10px;"'
@@ -187,7 +194,9 @@ class TestResultOutput(ipywidgets.VBox):
                     )
                 )
 
-        # Reveal proposed solution
+        # After 3 failed attempts or on success, reveal the proposed solution
+        # using a Code box inside an Accordion to display the str containing all code
+
         solution_output = ipywidgets.Output()
         with solution_output:
             display(
@@ -215,6 +224,7 @@ class TestResultOutput(ipywidgets.VBox):
             layout={"display": "block" if (cell_exec_count > 2 or success) else "none", "padding": "0 20px 0 0"}
         )
 
+        # fix css styling
         display(
             Javascript(
                 """
@@ -306,18 +316,24 @@ class TestMagic(Magics):
             else:
                 self.cells[cell_id] = 1
  
-            # find reference solution
-            tree = ast.parse(open(module_file, "r").read())         
-
+            # Find all reference solutions:
+            # Parse the file using the AST module and retrieve all function definitions and imports
+            # For each reference solution store the names of all other functions used inside of it
+            tree = ast.parse(open(module_file, "r").read())
             function_defs = {}
+            function_imports = {}
+            called_function_names = {}
+
             for node in tree.body:
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     function_defs[node.name] = node
+                elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                    for n in node.names:
+                        function_imports[n.name] = node.module if hasattr(node, 'module') else None
 
-            called_function_names = {}
             for node in tree.body:
                 if node in function_defs.values() and node.name.startswith("reference_"):
-                    called_function_names[node.name] = retrieve_functions(node, function_defs, {node.name})
+                    called_function_names[node.name] = retrieve_functions(node, {node.name})
 
             outputs = []
             for name, function in functions_to_run.items():
@@ -341,11 +357,23 @@ class TestMagic(Magics):
                     pytest_output = pytest_stdout.getvalue()
                     pytest_error = pytest_stderr.getvalue()
 
+                # Find the respective reference solution for the executed function
+                # Create a str containing its code and the code of all other functions used,
+                # whether coming from the same file or an imported one
                 solution_functions = [val for key, val in called_function_names.items() if key in f"reference_{name}"][0]
                 solution_code = ""
-                for f in solution_functions:
-                    solution_code += ast.unparse(function_defs[f]) + "\n\n"
 
+                for f in solution_functions:
+                    if f in function_defs:
+                        solution_code += ast.unparse(function_defs[f]) + "\n\n"
+                    else:
+                        function_file = pathlib.Path(f"{function_imports[f].replace('.', '/')}.py")
+                        if function_file.exists():
+                            function_file_tree = ast.parse(open(function_file, "r").read())
+                            for node in function_file_tree.body:
+                                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == f:
+                                    solution_code += ast.unparse(node) + "\n\n"
+                
                 outputs.append(
                     TestResultOutput(
                         name,
@@ -411,12 +439,14 @@ class TestMagic(Magics):
             )
 
 
-def retrieve_functions(node: object, function_defs: Set[object], called_functions: Set[str]) -> Set[object]:
+def retrieve_functions(node: object, called_functions: Set[str]) -> Set[object]:
+    """Recursively walk the AST tree to retrieve all function definitions in a file"""
+
     for w in ast.walk(node):
-        if isinstance(w, ast.Call) and w.func.id in function_defs.keys():
+        if isinstance(w, ast.Call) and hasattr(w.func, 'id'):
             called_functions.add(w.func.id)
         for child in ast.iter_child_nodes(w):
-            called_functions = retrieve_functions(child, function_defs, called_functions)
+            called_functions = retrieve_functions(child, called_functions)
     return called_functions
 
 
@@ -426,4 +456,5 @@ def load_ipython_extension(ipython):
     can be loaded via `%load_ext module.path` or be configured to be
     autoloaded by IPython at startup time.
     """
+
     ipython.register_magics(TestMagic)
