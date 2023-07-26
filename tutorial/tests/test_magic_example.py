@@ -4,7 +4,16 @@ def my_num() -> int:
     return 1
 
 
+def my_test2(x: str) -> None:
+    print(x)
+
+
+def last_test() -> str:
+    return "this has been a success"
+
+
 def my_test(x: str) -> str:
+    my_test2(last_test())
     return x
 
 

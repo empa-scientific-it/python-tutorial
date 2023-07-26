@@ -327,13 +327,13 @@ class TestMagic(Magics):
             for node in tree.body:
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     function_defs[node.name] = node
-                elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                elif isinstance(node, (ast.Import, ast.ImportFrom)) and hasattr(node, 'module'):
                     for n in node.names:
-                        function_imports[n.name] = node.module if hasattr(node, 'module') else None
-
+                        function_imports[n.name] = node.module
+            
             for node in tree.body:
                 if node in function_defs.values() and node.name.startswith("reference_"):
-                    called_function_names[node.name] = retrieve_functions(node, {node.name})
+                    called_function_names[node.name] = retrieve_functions({**function_defs, **function_imports}, node, {node.name})
 
             outputs = []
             for name, function in functions_to_run.items():
@@ -366,7 +366,7 @@ class TestMagic(Magics):
                 for f in solution_functions:
                     if f in function_defs:
                         solution_code += ast.unparse(function_defs[f]) + "\n\n"
-                    else:
+                    elif f in function_imports:
                         function_file = pathlib.Path(f"{function_imports[f].replace('.', '/')}.py")
                         if function_file.exists():
                             function_file_tree = ast.parse(open(function_file, "r").read())
@@ -439,14 +439,16 @@ class TestMagic(Magics):
             )
 
 
-def retrieve_functions(node: object, called_functions: Set[str]) -> Set[object]:
+def retrieve_functions(all_functions: Dict, node: object, called_functions: Set[str]) -> Set[object]:
     """Recursively walk the AST tree to retrieve all function definitions in a file"""
 
-    for w in ast.walk(node):
-        if isinstance(w, ast.Call) and hasattr(w.func, 'id'):
-            called_functions.add(w.func.id)
-        for child in ast.iter_child_nodes(w):
-            called_functions = retrieve_functions(child, called_functions)
+    for n in ast.walk(node):
+        if isinstance(n, ast.Call) and hasattr(n.func, 'id'):
+            called_functions.add(n.func.id)
+            if n.func.id in all_functions:
+                called_functions = retrieve_functions(all_functions, all_functions[n.func.id], called_functions)
+        for child in ast.iter_child_nodes(n):
+            called_functions = retrieve_functions(all_functions, child, called_functions)
     return called_functions
 
 
