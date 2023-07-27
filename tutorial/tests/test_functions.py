@@ -20,7 +20,7 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
 #
 
 
-def reference_solution_longest_sequence(nums: List[int]) -> int:
+def reference_longest_sequence(nums: List[int]) -> int:
     """
     Find the longest consecutive sequence of integers
 
@@ -52,7 +52,7 @@ def reference_solution_longest_sequence(nums: List[int]) -> int:
     ],
 )
 def test_longest_sequence(input_nums: List[int], function_to_test) -> None:
-    assert function_to_test(input_nums) == reference_solution_longest_sequence(
+    assert function_to_test(input_nums) == reference_longest_sequence(
         input_nums
     )
 
@@ -65,7 +65,7 @@ def test_longest_sequence(input_nums: List[int], function_to_test) -> None:
     ],
 )
 def test_longest_sequence_best(input_nums: List[int], function_to_test) -> None:
-    assert function_to_test(input_nums) == reference_solution_longest_sequence(
+    assert function_to_test(input_nums) == reference_longest_sequence(
         input_nums
     )
 
@@ -75,7 +75,7 @@ def test_longest_sequence_best(input_nums: List[int], function_to_test) -> None:
 #
 
 
-def reference_solution_password_validator1(start: int, end: int) -> int:
+def reference_password_validator1(start: int, end: int) -> int:
     """Password validator reference solution (part 1)"""
     count = 0
     for pwd in range(start, end + 1):
@@ -85,7 +85,7 @@ def reference_solution_password_validator1(start: int, end: int) -> int:
     return count
 
 
-def reference_solution_password_validator2(start: int, end: int) -> int:
+def reference_password_validator2(start: int, end: int) -> int:
     """Password validator reference solution (part 2)"""
     count = 0
     for pwd in range(start, end + 1):
@@ -105,7 +105,7 @@ def reference_solution_password_validator2(start: int, end: int) -> int:
     ],
 )
 def test_password_validator1(pwd_range: Tuple[int], function_to_test) -> None:
-    assert function_to_test(*pwd_range) == reference_solution_password_validator1(
+    assert function_to_test(*pwd_range) == reference_password_validator1(
         *pwd_range
     )
 
@@ -118,7 +118,7 @@ def test_password_validator1(pwd_range: Tuple[int], function_to_test) -> None:
     ],
 )
 def test_password_validator2(pwd_range: Tuple[int], function_to_test) -> None:
-    assert function_to_test(*pwd_range) == reference_solution_password_validator2(
+    assert function_to_test(*pwd_range) == reference_password_validator2(
         *pwd_range
     )
 
@@ -131,7 +131,7 @@ prio = {l: i for i, l in enumerate(ascii_lowercase + ascii_uppercase, start=1)}
 buckets_1, buckets_2 = (read_data(f"buckets_{num}.txt") for num in (1, 2))
 
 
-def reference_solution_buckets1(buckets: pathlib.Path) -> int:
+def reference_buckets1(buckets: pathlib.Path) -> int:
     """Reference solution (part 1)"""
     data = buckets.read_text().splitlines()
     total = 0
@@ -143,7 +143,7 @@ def reference_solution_buckets1(buckets: pathlib.Path) -> int:
     return total
 
 
-def reference_solution_buckets2(buckets: pathlib.Path) -> int:
+def reference_buckets2(buckets: pathlib.Path) -> int:
     """Reference solution (part 2)"""
     data = buckets.read_text().splitlines()
     total = 0
@@ -160,7 +160,7 @@ def reference_solution_buckets2(buckets: pathlib.Path) -> int:
     [buckets_1, buckets_2],
 )
 def test_buckets1(buckets: pathlib.Path, function_to_test):
-    assert function_to_test(buckets) == reference_solution_buckets1(buckets)
+    assert function_to_test(buckets) == reference_buckets1(buckets)
 
 
 @pytest.mark.parametrize(
@@ -168,4 +168,4 @@ def test_buckets1(buckets: pathlib.Path, function_to_test):
     [buckets_1, buckets_2],
 )
 def test_buckets2(buckets: pathlib.Path, function_to_test):
-    assert function_to_test(buckets) == reference_solution_buckets2(buckets)
+    assert function_to_test(buckets) == reference_buckets2(buckets)

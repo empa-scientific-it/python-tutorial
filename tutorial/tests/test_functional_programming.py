@@ -11,7 +11,7 @@ import requests
 from numpy.typing import NDArray
 
 
-def reference_solution_exercise2(my_list: List[int], k: int):
+def reference_exercise2(my_list: List[int], k: int):
     return [i for i in my_list if i % k == 0]
 
 
@@ -24,7 +24,7 @@ def check_for_loop_in_body(fun: Callable) -> bool:
     return False
 
 
-def reference_solution_filter_even(my_list: "list[int]") -> "list[int]":
+def reference_filter_even(my_list: "list[int]") -> "list[int]":
     return list(filter(lambda x: x % 2 == 0, my_list))
 
 
@@ -39,7 +39,7 @@ def reference_solution_filter_even(my_list: "list[int]") -> "list[int]":
 def test_filter_even(function_to_test: Callable, my_list: List[int]):
     res = function_to_test(my_list)
     assert type(res) == list, "The function you wrote does not return a list"
-    assert res == reference_solution_filter_even(
+    assert res == reference_filter_even(
         my_list
     ), "The list you return is not equal to the expected solution"
     assert not check_for_loop_in_body(
@@ -47,7 +47,7 @@ def test_filter_even(function_to_test: Callable, my_list: List[int]):
     ), "You are not allowed to use a for loop in this exercise"
 
 
-def reference_solution_add_one(my_list: List[int]) -> List[int]:
+def reference_add_one(my_list: List[int]) -> List[int]:
     return list(map(lambda x: x + 1, my_list))  # noqa: C417
 
 
@@ -60,7 +60,7 @@ def reference_solution_add_one(my_list: List[int]) -> List[int]:
     ],
 )
 def test_add_one(function_to_test: Callable, my_list: List[int]):
-    assert function_to_test(my_list) == reference_solution_add_one(
+    assert function_to_test(my_list) == reference_add_one(
         my_list
     ), "The list you return is not equal to the expected solution"
     assert not check_for_loop_in_body(
@@ -80,10 +80,10 @@ def test_exercise2(
     my_list: List[int],
     k: int,
 ):
-    assert function_to_test(my_list, k) == reference_solution_exercise2(my_list, k)
+    assert function_to_test(my_list, k) == reference_exercise2(my_list, k)
 
 
-def reference_solution_exercise3(x: List[List[int]]) -> List[List[int]]:
+def reference_exercise3(x: List[List[int]]) -> List[List[int]]:
     return [list(i) for i in zip(*x)]
 
 
@@ -96,20 +96,20 @@ def test_exercise3(
 ):
     res = function_to_test(my_input.tolist())
     assert (
-        res == reference_solution_exercise3(my_input.tolist())
+        res == reference_exercise3(my_input.tolist())
         and res == my_input.transpose().tolist()
     )
 
 
-def reference_solution_exercise4(my_list: List[List[Any]]) -> List[Any]:
+def reference_exercise4(my_list: List[List[Any]]) -> List[Any]:
     return functools.reduce(lambda x, y: x + y, my_list)
 
 
 @pytest.mark.parametrize(
     "my_input, reference_func",
     [
-        ([[1, 2, 3, 4], [4, 5, 5], [4, 5, 6]], reference_solution_exercise4),
-        ([["a", "b", "c"], ["d", "f", "e"], ["another"]], reference_solution_exercise4),
+        ([[1, 2, 3, 4], [4, 5, 5], [4, 5, 6]], reference_exercise4),
+        ([["a", "b", "c"], ["d", "f", "e"], ["another"]], reference_exercise4),
     ],
 )
 def test_exercise4(
@@ -126,7 +126,7 @@ def get_data_exercise5() -> List[str]:
     return words.splitlines()
 
 
-def reference_solution_exercise5(w: List[str]) -> List[Tuple[str, int]]:
+def reference_exercise5(w: List[str]) -> List[Tuple[str, int]]:
     return [
         (k, len(list(v)))
         for k, v in itertools.groupby(sorted(w, key=lambda x: x[0]), key=lambda x: x[0])
@@ -135,10 +135,10 @@ def reference_solution_exercise5(w: List[str]) -> List[Tuple[str, int]]:
 
 def test_exercise5(function_to_test: Callable[[List[str]], List[Tuple[str, int]]]):
     data = get_data_exercise5()
-    assert function_to_test(data) == reference_solution_exercise5(data)
+    assert function_to_test(data) == reference_exercise5(data)
 
 
-def reference_solution_exercise6(
+def reference_exercise6(
     my_list: List[Tuple[str, int]]
 ) -> List[Tuple[str, float]]:
     total = sum(map(lambda x: x[1], my_list))  # noqa: C417
@@ -148,8 +148,8 @@ def reference_solution_exercise6(
 def test_exercise6(
     function_to_test: Callable[[List[Tuple[str, int]]], List[Tuple[str, float]]]
 ):
-    input_data = reference_solution_exercise5(get_data_exercise5())
-    assert function_to_test(input_data) == reference_solution_exercise6(input_data)
+    input_data = reference_exercise5(get_data_exercise5())
+    assert function_to_test(input_data) == reference_exercise6(input_data)
 
 
 def reference_function_exercise7(my_list: List[str]) -> List[str]:
