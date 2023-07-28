@@ -4,7 +4,7 @@ import pathlib
 import re
 import ast
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Dict, Set
+from typing import Dict
 
 import ipynbname
 import pytest
@@ -14,7 +14,7 @@ from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import display
 from IPython import get_ipython
 
-from tutorial.tests.testsuite_helpers import TestResultOutput, FunctionInjectionPlugin, ResultCollector
+from tutorial.tests.testsuite_helpers import TestResultOutput, FunctionInjectionPlugin, ResultCollector, AstParser
 
 
 def _name_from_line(line: str = None):
@@ -45,7 +45,7 @@ def get_module_name(line: str, globals_dict: Dict = None) -> str:
     )
 
     if not module_name:
-        raise RuntimeError(
+        raise ReferenceError(
             "Test module is undefined. Did you provide an argument to %%ipytest?"
         )
 
@@ -57,7 +57,6 @@ class TestMagic(Magics):
     """Class to add the test cell magic"""
 
     shell: InteractiveShell
-
     cells = {}
 
     @cell_magic
@@ -88,34 +87,18 @@ class TestMagic(Magics):
                     functions_to_run[name.removeprefix("solution_")] = function
 
             if not functions_to_run:
-                raise ValueError("No function to test defined in the cell")
+                raise ReferenceError("No function to test defined in the cell")
 
-            # store execution count information for each cell
-            ipython_info = get_ipython()
-            cell_id = ipython_info.parent_header["metadata"]["cellId"]
+            # Store execution count information for each cell
+            cell_id = get_ipython().parent_header["metadata"]["cellId"]
             if cell_id in self.cells:
                 self.cells[cell_id] += 1
             else:
                 self.cells[cell_id] = 1
- 
-            # Find all reference solutions:
-            # Parse the file using the AST module and retrieve all function definitions and imports
-            # For each reference solution store the names of all other functions used inside of it
-            tree = ast.parse(open(module_file, "r").read())
-            function_defs = {}
-            function_imports = {}
-            called_function_names = {}
 
-            for node in tree.body:
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    function_defs[node.name] = node
-                elif isinstance(node, (ast.Import, ast.ImportFrom)) and hasattr(node, 'module'):
-                    for n in node.names:
-                        function_imports[n.name] = node.module
-            
-            for node in tree.body:
-                if node in function_defs.values() and node.name.startswith("reference_"):
-                    called_function_names[node.name] = retrieve_functions({**function_defs, **function_imports}, node, {node.name})
+            # Parse AST tree of file containing the test functions,
+            # to extract and store info of function definitions and imports
+            ast_parser = AstParser(module_file)
 
             outputs = []
             for name, function in functions_to_run.items():
@@ -139,23 +122,6 @@ class TestMagic(Magics):
                     pytest_stdout.getvalue()
                     pytest_stderr.getvalue()
 
-                # Find the respective reference solution for the executed function
-                # Create a str containing its code and the code of all other functions used,
-                # whether coming from the same file or an imported one
-                solution_functions = [val for key, val in called_function_names.items() if key in f"reference_{name}"][0]
-                solution_code = ""
-
-                for f in solution_functions:
-                    if f in function_defs:
-                        solution_code += ast.unparse(function_defs[f]) + "\n\n"
-                    elif f in function_imports:
-                        function_file = pathlib.Path(f"{function_imports[f].replace('.', '/')}.py")
-                        if function_file.exists():
-                            function_file_tree = ast.parse(open(function_file, "r").read())
-                            for node in function_file_tree.body:
-                                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == f:
-                                    solution_code += ast.unparse(node) + "\n\n"
-                
                 outputs.append(
                     TestResultOutput(
                         name,
@@ -163,7 +129,7 @@ class TestMagic(Magics):
                         result == pytest.ExitCode.OK,
                         list(result_collector.tests.values()),
                         self.cells[cell_id],
-                        solution_code,
+                        ast_parser.get_solution_code(name),
                     )
                 )
 
@@ -219,19 +185,6 @@ class TestMagic(Magics):
             """
                 )
             )
-
-
-def retrieve_functions(all_functions: Dict, node: object, called_functions: Set[str]) -> Set[object]:
-    """Recursively walk the AST tree to retrieve all function definitions in a file"""
-
-    for n in ast.walk(node):
-        if isinstance(n, ast.Call) and hasattr(n.func, 'id'):
-            called_functions.add(n.func.id)
-            if n.func.id in all_functions:
-                called_functions = retrieve_functions(all_functions, all_functions[n.func.id], called_functions)
-        for child in ast.iter_child_nodes(n):
-            called_functions = retrieve_functions(all_functions, child, called_functions)
-    return called_functions
 
 
 def load_ipython_extension(ipython):

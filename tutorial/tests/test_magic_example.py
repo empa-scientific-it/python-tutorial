@@ -25,16 +25,16 @@ def my_print(text: str) -> None:
     print(my_test(text))
 
 
-def my_calc(num: int, pow: int) -> int:
-    return num ** pow
+def my_calc(num: int, power: int) -> int:
+    return num ** power
 
 
-def reference_power(num: int, pow: int) -> int:
+def reference_power(num: int, power: int) -> int:
     """Compute num ^ pow"""
     if my_num():
         print('ok')
     my_print(my_str())
-    return my_calc(num, pow)
+    return my_calc(num, power)
 
 
 input_args = [1, 2, 3, 4, 32]

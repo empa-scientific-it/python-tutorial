@@ -114,7 +114,7 @@ def test_exercise1(function_to_test):
 def reference_exercise2(file: pl.Path) -> int:
     with file.open("r") as lines:
         return len(
-            list(itertools.chain.from_iterable([l.split() for l in lines.readlines()]))
+            list(itertools.chain.from_iterable([line.split() for line in lines.readlines()]))
         )
 
 
@@ -126,7 +126,7 @@ def test_exercise2(function_to_test):
 def reference_exercise3(file: pl.Path) -> "dict[str, int]":
     with file.open("r") as lines:
         res = sorted(
-            l for l in itertools.chain.from_iterable(lines.readlines()) if l.isalpha()
+            line for line in itertools.chain.from_iterable(lines.readlines()) if line.isalpha()
         )
     return Counter(res)
 
