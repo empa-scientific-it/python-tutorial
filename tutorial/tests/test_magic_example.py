@@ -27,7 +27,7 @@ def my_print(text: str) -> None:
 
 
 def my_calc(num: int, power: int) -> int:
-    return num ** power
+    return num**power
 
 
 def reference_power(num: int, power: int) -> int:

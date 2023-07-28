@@ -1,12 +1,13 @@
-import re
 import ast
-import pytest
-import ipywidgets
-from nbconvert import filters
+import re
 from dataclasses import dataclass
-from IPython.display import display, Code
-from typing import Callable, List, Dict, Set
+from typing import Callable, Dict, List, Set
+
+import ipywidgets
+import pytest
 from IPython.core.display import HTML, Javascript
+from IPython.display import Code, display
+from nbconvert import filters
 
 
 @dataclass
@@ -235,35 +236,45 @@ class AstParser:
         self.function_imports = {}
         self.called_function_names = {}
 
-        tree = ast.parse(open(self.module_file, "r").read())
+        tree = ast.parse(open(self.module_file).read())
 
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 self.function_defs[node.name] = node
-            elif isinstance(node, (ast.Import, ast.ImportFrom)) and hasattr(node, 'module'):
+            elif isinstance(node, (ast.Import, ast.ImportFrom)) and hasattr(
+                node, "module"
+            ):
                 for n in node.names:
                     self.function_imports[n.name] = node.module
-        
+
         for node in tree.body:
-            if node in self.function_defs.values() and node.name.startswith("reference_"):
-                self.called_function_names[node.name] = self.retrieve_functions({**self.function_defs, **self.function_imports}, node, {node.name})
+            if node in self.function_defs.values() and node.name.startswith(
+                "reference_"
+            ):
+                self.called_function_names[node.name] = self.retrieve_functions(
+                    {**self.function_defs, **self.function_imports}, node, {node.name}
+                )
 
-
-    def retrieve_functions(self, all_functions: Dict, node: object, called_functions: Set[str]) -> Set[object]:
+    def retrieve_functions(
+        self, all_functions: Dict, node: object, called_functions: Set[str]
+    ) -> Set[object]:
         """
         Recursively walk the AST tree to retrieve all function definitions in a file
         """
 
         for n in ast.walk(node):
-            if isinstance(n, ast.Call) and hasattr(n.func, 'id'):
+            if isinstance(n, ast.Call) and hasattr(n.func, "id"):
                 called_functions.add(n.func.id)
                 if n.func.id in all_functions:
-                    called_functions = self.retrieve_functions(all_functions, all_functions[n.func.id], called_functions)
+                    called_functions = self.retrieve_functions(
+                        all_functions, all_functions[n.func.id], called_functions
+                    )
             for child in ast.iter_child_nodes(n):
-                called_functions = self.retrieve_functions(all_functions, child, called_functions)
+                called_functions = self.retrieve_functions(
+                    all_functions, child, called_functions
+                )
 
         return called_functions
-
 
     def get_solution_code(self, name):
         """
@@ -271,19 +282,28 @@ class AstParser:
         Create a str containing its code and the code of all other functions used,
         whether coming from the same file or an imported one.
         """
-    
-        solution_functions = [val for key, val in self.called_function_names.items() if key in f"reference_{name}"][0]
+
+        solution_functions = [
+            val
+            for key, val in self.called_function_names.items()
+            if key in f"reference_{name}"
+        ][0]
         solution_code = ""
 
         for f in solution_functions:
             if f in self.function_defs:
                 solution_code += ast.unparse(self.function_defs[f]) + "\n\n"
             elif f in self.function_imports:
-                function_file = pathlib.Path(f"{self.function_imports[f].replace('.', '/')}.py")
+                function_file = pathlib.Path(
+                    f"{self.function_imports[f].replace('.', '/')}.py"
+                )
                 if function_file.exists():
-                    function_file_tree = ast.parse(open(function_file, "r").read())
+                    function_file_tree = ast.parse(open(function_file).read())
                     for node in function_file_tree.body:
-                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == f:
+                        if (
+                            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                            and node.name == f
+                        ):
                             solution_code += ast.unparse(node) + "\n\n"
 
         return solution_code

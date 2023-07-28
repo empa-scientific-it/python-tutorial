@@ -1,5 +1,4 @@
 """A module to define the `%%ipytest` cell magic"""
-import ast
 import io
 import pathlib
 import re
@@ -14,7 +13,12 @@ from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import display
 
-from tutorial.tests.testsuite_helpers import TestResultOutput, FunctionInjectionPlugin, ResultCollector, AstParser
+from tutorial.tests.testsuite_helpers import (
+    AstParser,
+    FunctionInjectionPlugin,
+    ResultCollector,
+    TestResultOutput,
+)
 
 
 def _name_from_line(line: str = None):
