@@ -241,9 +241,7 @@ def parse_data(filename: str) -> List[List[int]]:
 trees_1, trees_2 = (parse_data(f"trees_{num}.txt") for num in (1, 2))
 
 
-def reference_toboggan_p1(
-    trees_map: List[List[int]], right: int, down: int
-) -> int:
+def reference_toboggan_p1(trees_map: List[List[int]], right: int, down: int) -> int:
     """Reference solution (part 1)"""
     start, trees, depth, width = [0, 0], 0, len(trees_map), len(trees_map[0])
     while start[0] < depth:
@@ -267,9 +265,7 @@ def test_toboggan_p1(
     )
 
 
-def reference_toboggan_p2(
-    trees_map: List[List[int]], slopes: Tuple[Tuple[int]]
-) -> int:
+def reference_toboggan_p2(trees_map: List[List[int]], slopes: Tuple[Tuple[int]]) -> int:
     """Reference solution (part 2)"""
     total = 1
     for right, down in slopes:

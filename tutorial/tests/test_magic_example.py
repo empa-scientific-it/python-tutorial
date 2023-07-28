@@ -1,5 +1,6 @@
 import pytest
 
+
 def my_num() -> int:
     return 1
 
@@ -26,13 +27,13 @@ def my_print(text: str) -> None:
 
 
 def my_calc(num: int, pow: int) -> int:
-    return num ** pow
+    return num**pow
 
 
 def reference_power(num: int, pow: int) -> int:
     """Compute num ^ pow"""
     if my_num():
-        print('ok')
+        print("ok")
     my_print(my_str())
     return my_calc(num, pow)
 

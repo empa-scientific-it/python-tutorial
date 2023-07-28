@@ -138,9 +138,7 @@ def test_exercise5(function_to_test: Callable[[List[str]], List[Tuple[str, int]]
     assert function_to_test(data) == reference_exercise5(data)
 
 
-def reference_exercise6(
-    my_list: List[Tuple[str, int]]
-) -> List[Tuple[str, float]]:
+def reference_exercise6(my_list: List[Tuple[str, int]]) -> List[Tuple[str, float]]:
     total = sum(map(lambda x: x[1], my_list))  # noqa: C417
     return [(letter, freq / total) for letter, freq in my_list]
 

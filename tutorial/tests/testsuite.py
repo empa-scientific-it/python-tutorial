@@ -1,20 +1,24 @@
 """A module to define the `%%ipytest` cell magic"""
+import ast
 import io
 import pathlib
 import re
-import ast
 from contextlib import redirect_stderr, redirect_stdout
 from typing import Dict, Set
 
 import ipynbname
 import pytest
+from IPython import get_ipython
 from IPython.core.display import Javascript
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import display
-from IPython import get_ipython
 
-from tutorial.tests.testsuite_helpers import TestResultOutput, FunctionInjectionPlugin, ResultCollector
+from tutorial.tests.testsuite_helpers import (
+    FunctionInjectionPlugin,
+    ResultCollector,
+    TestResultOutput,
+)
 
 
 def _name_from_line(line: str = None):
@@ -97,11 +101,11 @@ class TestMagic(Magics):
                 self.cells[cell_id] += 1
             else:
                 self.cells[cell_id] = 1
- 
+
             # Find all reference solutions:
             # Parse the file using the AST module and retrieve all function definitions and imports
             # For each reference solution store the names of all other functions used inside of it
-            tree = ast.parse(open(module_file, "r").read())
+            tree = ast.parse(open(module_file).read())
             function_defs = {}
             function_imports = {}
             called_function_names = {}
@@ -109,13 +113,19 @@ class TestMagic(Magics):
             for node in tree.body:
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     function_defs[node.name] = node
-                elif isinstance(node, (ast.Import, ast.ImportFrom)) and hasattr(node, 'module'):
+                elif isinstance(node, (ast.Import, ast.ImportFrom)) and hasattr(
+                    node, "module"
+                ):
                     for n in node.names:
                         function_imports[n.name] = node.module
-            
+
             for node in tree.body:
-                if node in function_defs.values() and node.name.startswith("reference_"):
-                    called_function_names[node.name] = retrieve_functions({**function_defs, **function_imports}, node, {node.name})
+                if node in function_defs.values() and node.name.startswith(
+                    "reference_"
+                ):
+                    called_function_names[node.name] = retrieve_functions(
+                        {**function_defs, **function_imports}, node, {node.name}
+                    )
 
             outputs = []
             for name, function in functions_to_run.items():
@@ -142,20 +152,31 @@ class TestMagic(Magics):
                 # Find the respective reference solution for the executed function
                 # Create a str containing its code and the code of all other functions used,
                 # whether coming from the same file or an imported one
-                solution_functions = [val for key, val in called_function_names.items() if key in f"reference_{name}"][0]
+                solution_functions = [
+                    val
+                    for key, val in called_function_names.items()
+                    if key in f"reference_{name}"
+                ][0]
                 solution_code = ""
 
                 for f in solution_functions:
                     if f in function_defs:
                         solution_code += ast.unparse(function_defs[f]) + "\n\n"
                     elif f in function_imports:
-                        function_file = pathlib.Path(f"{function_imports[f].replace('.', '/')}.py")
+                        function_file = pathlib.Path(
+                            f"{function_imports[f].replace('.', '/')}.py"
+                        )
                         if function_file.exists():
-                            function_file_tree = ast.parse(open(function_file, "r").read())
+                            function_file_tree = ast.parse(open(function_file).read())
                             for node in function_file_tree.body:
-                                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == f:
+                                if (
+                                    isinstance(
+                                        node, (ast.FunctionDef, ast.AsyncFunctionDef)
+                                    )
+                                    and node.name == f
+                                ):
                                     solution_code += ast.unparse(node) + "\n\n"
-                
+
                 outputs.append(
                     TestResultOutput(
                         name,
@@ -221,16 +242,22 @@ class TestMagic(Magics):
             )
 
 
-def retrieve_functions(all_functions: Dict, node: object, called_functions: Set[str]) -> Set[object]:
+def retrieve_functions(
+    all_functions: Dict, node: object, called_functions: Set[str]
+) -> Set[object]:
     """Recursively walk the AST tree to retrieve all function definitions in a file"""
 
     for n in ast.walk(node):
-        if isinstance(n, ast.Call) and hasattr(n.func, 'id'):
+        if isinstance(n, ast.Call) and hasattr(n.func, "id"):
             called_functions.add(n.func.id)
             if n.func.id in all_functions:
-                called_functions = retrieve_functions(all_functions, all_functions[n.func.id], called_functions)
+                called_functions = retrieve_functions(
+                    all_functions, all_functions[n.func.id], called_functions
+                )
         for child in ast.iter_child_nodes(n):
-            called_functions = retrieve_functions(all_functions, child, called_functions)
+            called_functions = retrieve_functions(
+                all_functions, child, called_functions
+            )
     return called_functions
 
 
