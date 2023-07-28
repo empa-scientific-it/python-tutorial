@@ -2,12 +2,11 @@ import re
 import ast
 import pytest
 import ipywidgets
-from typing import Callable, List, Dict, Set
 from nbconvert import filters
-from IPython.core.display import HTML, Javascript
-from IPython.display import display, Code
-
 from dataclasses import dataclass
+from IPython.display import display, Code
+from typing import Callable, List, Dict, Set
+from IPython.core.display import HTML, Javascript
 
 
 @dataclass
@@ -146,29 +145,22 @@ class TestResultOutput(ipywidgets.VBox):
 
         solution_output = ipywidgets.Output()
         with solution_output:
-            display(
-                HTML(
-                    "<h4>Proposed solution:</h4>"
-                )
-            )
+            display(HTML("<h4>Proposed solution:</h4>"))
 
         solution_code = ipywidgets.Output()
         with solution_code:
-            display(
-                Code(
-                    language="python",
-                    data=f"{solution_body}"
-                )
-            )
+            display(Code(language="python", data=f"{solution_body}"))
 
         solution_accordion = ipywidgets.Accordion(
-            titles=("Click here to reveal", ),
-            children=[solution_code]
+            titles=("Click here to reveal",), children=[solution_code]
         )
 
         solution_box = ipywidgets.Box(
             children=[solution_output, solution_accordion],
-            layout={"display": "block" if (cell_exec_count > 2 or success) else "none", "padding": "0 20px 0 0"}
+            layout={
+                "display": "block" if (cell_exec_count > 2 or success) else "none",
+                "padding": "0 20px 0 0",
+            },
         )
 
         # fix css styling

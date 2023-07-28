@@ -78,9 +78,7 @@ def test_write_file(function_to_test, tmp_path: pl.Path):
     assert tmp_user.read_text() == tmp_test.read_text()
 
 
-def reference_read_write_file(
-    input_file: pl.Path, output_file: pl.Path
-) -> None:
+def reference_read_write_file(input_file: pl.Path, output_file: pl.Path) -> None:
     with input_file.open("r") as read_file, output_file.open("w") as write_file:
         for line in read_file.readlines():
             write_file.write("{}, {}\n".format(line.strip("\n\r"), len(line)))
@@ -136,9 +134,7 @@ def test_exercise3(function_to_test):
     assert function_to_test(f) == reference_exercise3(f)
 
 
-def reference_exercise4(
-    english: pl.Path, dictionary: pl.Path
-) -> list[tuple[str, str]]:
+def reference_exercise4(english: pl.Path, dictionary: pl.Path) -> list[tuple[str, str]]:
     english_words = english.read_text().splitlines()
 
     with dictionary.open("r") as dict_file:
@@ -154,9 +150,7 @@ def reference_exercise4(
 def test_exercise4(function_to_test):
     words = get_data("english.txt")
     dictionary = get_data("dict.csv")
-    assert function_to_test(words, dictionary) == reference_exercise4(
-        words, dictionary
-    )
+    assert function_to_test(words, dictionary) == reference_exercise4(words, dictionary)
 
 
 def reference_exercise5(secret_file: pl.Path) -> str:

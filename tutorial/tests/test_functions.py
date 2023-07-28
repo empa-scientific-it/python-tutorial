@@ -52,9 +52,7 @@ def reference_longest_sequence(nums: List[int]) -> int:
     ],
 )
 def test_longest_sequence(input_nums: List[int], function_to_test) -> None:
-    assert function_to_test(input_nums) == reference_longest_sequence(
-        input_nums
-    )
+    assert function_to_test(input_nums) == reference_longest_sequence(input_nums)
 
 
 @pytest.mark.timeout(60)
@@ -65,9 +63,7 @@ def test_longest_sequence(input_nums: List[int], function_to_test) -> None:
     ],
 )
 def test_longest_sequence_best(input_nums: List[int], function_to_test) -> None:
-    assert function_to_test(input_nums) == reference_longest_sequence(
-        input_nums
-    )
+    assert function_to_test(input_nums) == reference_longest_sequence(input_nums)
 
 
 #
@@ -105,9 +101,7 @@ def reference_password_validator2(start: int, end: int) -> int:
     ],
 )
 def test_password_validator1(pwd_range: Tuple[int], function_to_test) -> None:
-    assert function_to_test(*pwd_range) == reference_password_validator1(
-        *pwd_range
-    )
+    assert function_to_test(*pwd_range) == reference_password_validator1(*pwd_range)
 
 
 @pytest.mark.parametrize(
@@ -118,9 +112,7 @@ def test_password_validator1(pwd_range: Tuple[int], function_to_test) -> None:
     ],
 )
 def test_password_validator2(pwd_range: Tuple[int], function_to_test) -> None:
-    assert function_to_test(*pwd_range) == reference_password_validator2(
-        *pwd_range
-    )
+    assert function_to_test(*pwd_range) == reference_password_validator2(*pwd_range)
 
 
 #

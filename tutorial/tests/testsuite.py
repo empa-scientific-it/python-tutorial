@@ -1,18 +1,18 @@
 """A module to define the `%%ipytest` cell magic"""
+import ast
 import io
 import pathlib
 import re
-import ast
 from contextlib import redirect_stderr, redirect_stdout
 from typing import Dict
 
 import ipynbname
 import pytest
+from IPython import get_ipython
 from IPython.core.display import Javascript
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import display
-from IPython import get_ipython
 
 from tutorial.tests.testsuite_helpers import TestResultOutput, FunctionInjectionPlugin, ResultCollector, AstParser
 
