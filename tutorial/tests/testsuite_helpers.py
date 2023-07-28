@@ -5,6 +5,7 @@ from typing import Callable, Dict, List, Set
 
 import ipywidgets
 import pytest
+import pathlib
 from IPython.core.display import HTML, Javascript
 from IPython.display import Code, display
 from nbconvert import filters
