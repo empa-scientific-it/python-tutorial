@@ -249,8 +249,10 @@ class AstParser:
                     self.function_imports[n.name] = node.module
 
         for node in tree.body:
-            if node in self.function_defs.values() and hasattr(node, "name") and node.name.startswith(
-                "reference_"
+            if (
+                node in self.function_defs.values()
+                and hasattr(node, "name")
+                and node.name.startswith("reference_")
             ):
                 self.called_function_names[node.name] = self.retrieve_functions(
                     {**self.function_defs, **self.function_imports}, node, {node.name}
