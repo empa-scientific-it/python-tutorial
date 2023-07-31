@@ -39,7 +39,7 @@ def _name_from_globals(globals_dict: Dict) -> str | None:
     return pathlib.Path(module_path).stem if module_path else None
 
 
-def get_module_name(line: str, globals_dict: Dict = {}) -> str:
+def get_module_name(line: str, globals_dict: Dict) -> str:
     """Fetch the test module name"""
 
     module_name = (
@@ -128,10 +128,10 @@ class TestMagic(Magics):
 
                 outputs.append(
                     TestResultOutput(
+                        list(result_collector.tests.values()),
                         name,
                         False,
                         result == pytest.ExitCode.OK,
-                        list(result_collector.tests.values()),
                         self.cells[cell_id],
                         ast_parser.get_solution_code(name),
                     )

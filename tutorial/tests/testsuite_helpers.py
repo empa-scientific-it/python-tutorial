@@ -71,7 +71,12 @@ def format_long_stdout(text: str) -> str:
     )
     html_body = "".join(f"<p>{line}</p>" for line in stdout_filtered)
 
-    test_runs = f"""<details style="overflow-y: auto; max-height: 200px;"><summary><u>Click here to expand</u></summary><div>{html_body}</div></details></li>"""
+    test_runs = f"""
+            <details style="overflow-y: auto; max-height: 200px;">
+                <summary><u style="cursor: pointer;">Click here to expand</u></summary>
+                <div style="padding-top: 15px;">{html_body}</div>
+            </details>
+        """
     return test_runs
 
 
@@ -80,10 +85,10 @@ class TestResultOutput(ipywidgets.VBox):
 
     def __init__(
         self,
+        test_outputs: List[TestResult],
         name: str = "",
         syntax_error: bool = False,
         success: bool = False,
-        test_outputs: List[TestResult] = [],
         cell_exec_count: int = 0,
         solution_body: str = "",
     ):
@@ -259,7 +264,7 @@ class AstParser:
                 )
 
     def retrieve_functions(
-        self, all_functions: Dict, node: object, called_functions: Set[str]
+        self, all_functions: Dict, node: object, called_functions: Set[object]
     ) -> Set[object]:
         """
         Recursively walk the AST tree to retrieve all function definitions in a file
