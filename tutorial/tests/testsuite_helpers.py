@@ -83,9 +83,9 @@ class TestResultOutput(ipywidgets.VBox):
         name: str = "",
         syntax_error: bool = False,
         success: bool = False,
-        test_outputs: List[TestResult] = None,
-        cell_exec_count: int = None,
-        solution_body: str = None,
+        test_outputs: List[TestResult] = [],
+        cell_exec_count: int = 0,
+        solution_body: str = "",
     ):
         output_config = format_success_failure(syntax_error, success, name)
         output_cell = ipywidgets.Output()
@@ -113,9 +113,9 @@ class TestResultOutput(ipywidgets.VBox):
                 display(
                     HTML(
                         f"""
-                        <h4>We tested your solution <code>solution_{name}</code> with {'1 input' if len(test_outputs) == 1 else str(len(test_outputs)) + ' different inputs'}.
-                    {"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}
-                """
+                            <h4>We tested your solution <code>solution_{name}</code> with {'1 input' if len(test_outputs) == 1 else str(len(test_outputs)) + ' different inputs'}.
+                            {"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}
+                        """
                     )
                 )
 
@@ -128,11 +128,11 @@ class TestResultOutput(ipywidgets.VBox):
                         display(
                             HTML(
                                 f"""
-                            <div style={custom_div_style}>
-                                <h5>{"&#10004" if test.success else "&#10060"} Test {test_name}</h5>
-                                {format_long_stdout(filters.ansi.ansi2html(test.stderr)) if not test.success else ""}
-                            </div>
-                        """
+                                    <div style={custom_div_style}>
+                                        <h5>{"&#10004" if test.success else "&#10060"} Test {test_name}</h5>
+                                        {format_long_stdout(filters.ansi.ansi2html(test.stderr)) if not test.success else ""}
+                                    </div>
+                                """
                             )
                         )
             else:
@@ -249,7 +249,7 @@ class AstParser:
                     self.function_imports[n.name] = node.module
 
         for node in tree.body:
-            if node in self.function_defs.values() and node.name.startswith(
+            if node in self.function_defs.values() and hasattr(node, "name") and node.name.startswith(
                 "reference_"
             ):
                 self.called_function_names[node.name] = self.retrieve_functions(
@@ -263,17 +263,18 @@ class AstParser:
         Recursively walk the AST tree to retrieve all function definitions in a file
         """
 
-        for n in ast.walk(node):
-            if isinstance(n, ast.Call) and hasattr(n.func, "id"):
-                called_functions.add(n.func.id)
-                if n.func.id in all_functions:
+        if isinstance(node, ast.AST):
+            for n in ast.walk(node):
+                if isinstance(n, ast.Call) and hasattr(n.func, "id"):
+                    called_functions.add(n.func.id)
+                    if n.func.id in all_functions:
+                        called_functions = self.retrieve_functions(
+                            all_functions, all_functions[n.func.id], called_functions
+                        )
+                for child in ast.iter_child_nodes(n):
                     called_functions = self.retrieve_functions(
-                        all_functions, all_functions[n.func.id], called_functions
+                        all_functions, child, called_functions
                     )
-            for child in ast.iter_child_nodes(n):
-                called_functions = self.retrieve_functions(
-                    all_functions, child, called_functions
-                )
 
         return called_functions
 

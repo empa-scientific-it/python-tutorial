@@ -21,7 +21,7 @@ from tutorial.tests.testsuite_helpers import (
 )
 
 
-def _name_from_line(line: str = None):
+def _name_from_line(line: str = ""):
     return line.strip().removesuffix(".py") if line else None
 
 
@@ -39,7 +39,7 @@ def _name_from_globals(globals_dict: Dict) -> str | None:
     return pathlib.Path(module_path).stem if module_path else None
 
 
-def get_module_name(line: str, globals_dict: Dict = None) -> str:
+def get_module_name(line: str, globals_dict: Dict = {}) -> str:
     """Fetch the test module name"""
 
     module_name = (
