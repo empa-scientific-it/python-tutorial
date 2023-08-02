@@ -16,9 +16,9 @@ from IPython.display import display
 from tutorial.tests.testsuite_helpers import (
     AstParser,
     FunctionInjectionPlugin,
+    FunctionNotFound,
     ResultCollector,
     TestResultOutput,
-    FunctionNotFound
 )
 
 

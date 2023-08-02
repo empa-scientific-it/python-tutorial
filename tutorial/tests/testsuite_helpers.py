@@ -318,7 +318,6 @@ class AstParser:
         return solution_code
 
 
-
 class FunctionNotFound(Exception):
     """Custom exception raised when the solution code cannot be parsed"""
 
