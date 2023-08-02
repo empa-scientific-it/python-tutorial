@@ -316,3 +316,11 @@ class AstParser:
                             solution_code += ast.unparse(node) + "\n\n"
 
         return solution_code
+
+
+
+class FunctionNotFound(Exception):
+    """Custom exception raised when the solution code cannot be parsed"""
+
+    def __init__(self, function: str) -> None:
+        super().__init__(f"Function {function} not found in solution code")

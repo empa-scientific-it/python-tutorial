@@ -18,6 +18,7 @@ from tutorial.tests.testsuite_helpers import (
     FunctionInjectionPlugin,
     ResultCollector,
     TestResultOutput,
+    FunctionNotFound
 )
 
 
@@ -49,9 +50,7 @@ def get_module_name(line: str, globals_dict: Dict) -> str:
     )
 
     if not module_name:
-        raise ReferenceError(
-            "Test module is undefined. Did you provide an argument to %%ipytest?"
-        )
+        raise ModuleNotFoundError(module_name)
 
     return module_name
 
@@ -91,7 +90,7 @@ class TestMagic(Magics):
                     functions_to_run[name.removeprefix("solution_")] = function
 
             if not functions_to_run:
-                raise ReferenceError("No function to test defined in the cell")
+                raise FunctionNotFound(functions_names)
 
             # Store execution count information for each cell
             cell_id = get_ipython().parent_header["metadata"]["cellId"]
