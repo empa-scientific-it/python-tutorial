@@ -273,7 +273,7 @@ class AstParser:
         if isinstance(node, ast.AST):
             for n in ast.walk(node):
                 match n:
-                    case ast.Call(ast.Name(id=name), args, keywords):
+                    case ast.Call(ast.Name(id=name)):
                         called_functions.add(name)
                         if name in all_functions:
                             called_functions = self.retrieve_functions(
