@@ -272,12 +272,13 @@ class AstParser:
 
         if isinstance(node, ast.AST):
             for n in ast.walk(node):
-                if isinstance(n, ast.Call) and hasattr(n.func, "id"):
-                    called_functions.add(n.func.id)
-                    if n.func.id in all_functions:
-                        called_functions = self.retrieve_functions(
-                            all_functions, all_functions[n.func.id], called_functions
-                        )
+                match n:
+                    case ast.Call(ast.Name(id=name), args, keywords):
+                        called_functions.add(name)
+                        if name in all_functions:
+                            called_functions = self.retrieve_functions(
+                                all_functions, all_functions[name], called_functions
+                            )
                 for child in ast.iter_child_nodes(n):
                     called_functions = self.retrieve_functions(
                         all_functions, child, called_functions
@@ -318,8 +319,8 @@ class AstParser:
         return solution_code
 
 
-class FunctionNotFound(Exception):
+class FunctionNotFoundError(Exception):
     """Custom exception raised when the solution code cannot be parsed"""
 
-    def __init__(self, function: str) -> None:
-        super().__init__(f"Function {function} not found in solution code")
+    def __init__(self) -> None:
+        super().__init__("No functions to test defined in the cell")

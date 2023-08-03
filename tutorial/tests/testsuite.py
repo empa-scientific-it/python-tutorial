@@ -16,7 +16,7 @@ from IPython.display import display
 from tutorial.tests.testsuite_helpers import (
     AstParser,
     FunctionInjectionPlugin,
-    FunctionNotFound,
+    FunctionNotFoundError,
     ResultCollector,
     TestResultOutput,
 )
@@ -60,7 +60,7 @@ class TestMagic(Magics):
     """Class to add the test cell magic"""
 
     shell: InteractiveShell
-    cells = {}
+    cells: Dict[str, int] = {}
 
     @cell_magic
     def ipytest(self, line: str, cell: str):
@@ -90,7 +90,7 @@ class TestMagic(Magics):
                     functions_to_run[name.removeprefix("solution_")] = function
 
             if not functions_to_run:
-                raise FunctionNotFound(functions_names)
+                raise FunctionNotFoundError()
 
             # Store execution count information for each cell
             cell_id = get_ipython().parent_header["metadata"]["cellId"]
