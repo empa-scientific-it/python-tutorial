@@ -27,7 +27,7 @@ def my_print(text: str) -> None:
 
 
 def my_calc(num: int, power: int) -> int:
-    return num ** power
+    return num**power
 
 
 def reference_power2(num: int) -> int:
@@ -40,12 +40,12 @@ def reference_power2(num: int) -> int:
 
 def reference_power3(num: int) -> int:
     """Compute num ^ 3"""
-    return num ** 3
+    return num**3
 
 
 def reference_power4(num: int) -> int:
     """Compute num ^ 4"""
-    return num ** 4
+    return num**4
 
 
 input_args = [1, 2, 3, 4, 32]
