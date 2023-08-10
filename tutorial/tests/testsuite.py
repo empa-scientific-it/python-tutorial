@@ -13,7 +13,7 @@ from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import display
 
-from tutorial.tests.testsuite_helpers import (
+from .testsuite_helpers import (
     AstParser,
     FunctionInjectionPlugin,
     FunctionNotFoundError,
@@ -99,8 +99,8 @@ class TestMagic(Magics):
             else:
                 self.cells[cell_id] = 1
 
-            # Parse AST tree of file containing the test functions,
-            # to extract and store info of function definitions and imports
+            # Parse the AST tree of the file containing the test functions,
+            # to extract and store all information of function definitions and imports
             ast_parser = AstParser(module_file)
 
             outputs = []

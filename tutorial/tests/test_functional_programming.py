@@ -106,18 +106,17 @@ def reference_exercise4(my_list: List[List[Any]]) -> List[Any]:
 
 
 @pytest.mark.parametrize(
-    "my_input, reference_func",
+    "my_input",
     [
-        ([[1, 2, 3, 4], [4, 5, 5], [4, 5, 6]], reference_exercise4),
-        ([["a", "b", "c"], ["d", "f", "e"], ["another"]], reference_exercise4),
+        ([[1, 2, 3, 4], [4, 5, 5], [4, 5, 6]]),
+        ([["a", "b", "c"], ["d", "f", "e"], ["another"]]),
     ],
 )
 def test_exercise4(
     function_to_test: Callable[[List[List[any]]], List[Any]],
     my_input: List[List[Any]],
-    reference_func: Callable,
 ):
-    assert function_to_test(my_input) == reference_func(my_input)
+    assert function_to_test(my_input) == reference_exercise4(my_input)
 
 
 @functools.lru_cache

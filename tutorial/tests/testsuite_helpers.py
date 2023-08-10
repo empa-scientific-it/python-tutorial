@@ -147,40 +147,40 @@ class TestResultOutput(ipywidgets.VBox):
                     )
                 )
 
-        # After 3 failed attempts or on success, reveal the proposed solution
-        # using a Code box inside an Accordion to display the str containing all code
+            # After 3 failed attempts or on success, reveal the proposed solution
+            # using a Code box inside an Accordion to display the str containing all code
 
-        solution_output = ipywidgets.Output()
-        with solution_output:
-            display(HTML("<h4>Proposed solution:</h4>"))
+            solution_output = ipywidgets.Output()
+            with solution_output:
+                display(HTML("<h4>Proposed solution:</h4>"))
 
-        solution_code = ipywidgets.Output()
-        with solution_code:
-            display(Code(language="python", data=f"{solution_body}"))
+            solution_code = ipywidgets.Output()
+            with solution_code:
+                display(Code(language="python", data=f"{solution_body}"))
 
-        solution_accordion = ipywidgets.Accordion(
-            titles=("Click here to reveal",), children=[solution_code]
-        )
-
-        solution_box = ipywidgets.Box(
-            children=[solution_output, solution_accordion],
-            layout={
-                "display": "block" if (cell_exec_count > 2 or success) else "none",
-                "padding": "0 20px 0 0",
-            },
-        )
-
-        # fix css styling
-        display(
-            Javascript(
-                """
-                    var divs = document.querySelectorAll(".jupyter-widget-Collapse-contents");
-                    for (let div of divs) {
-                        div.setAttribute("style", "padding: 0");
-                    }
-                """
+            solution_accordion = ipywidgets.Accordion(
+                titles=("Click here to reveal",), children=[solution_code]
             )
-        )
+
+            solution_box = ipywidgets.Box(
+                children=[solution_output, solution_accordion],
+                layout={
+                    "display": "block" if (cell_exec_count > 2 or success) else "none",
+                    "padding": "0 20px 0 0",
+                },
+            )
+
+            # fix css styling
+            display(
+                Javascript(
+                    """
+                        var divs = document.querySelectorAll(".jupyter-widget-Collapse-contents");
+                        for (let div of divs) {
+                            div.setAttribute("style", "padding: 0");
+                        }
+                    """
+                )
+            )
 
         super().__init__(children=[output_cell, solution_box])
 
@@ -293,11 +293,7 @@ class AstParser:
         whether coming from the same file or an imported one.
         """
 
-        solution_functions = [
-            val
-            for key, val in self.called_function_names.items()
-            if key in f"reference_{name}"
-        ][0]
+        solution_functions = self.called_function_names[f"reference_{name}"]
         solution_code = ""
 
         for f in solution_functions:

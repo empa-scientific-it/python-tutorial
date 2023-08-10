@@ -27,15 +27,25 @@ def my_print(text: str) -> None:
 
 
 def my_calc(num: int, power: int) -> int:
-    return num**power
+    return num ** power
 
 
-def reference_power(num: int, power: int) -> int:
-    """Compute num ^ pow"""
+def reference_power2(num: int) -> int:
+    """Compute num ^ 2"""
     if my_num():
         print("ok")
     my_print(my_str())
-    return my_calc(num, power)
+    return my_calc(num, 2)
+
+
+def reference_power3(num: int) -> int:
+    """Compute num ^ 3"""
+    return num ** 3
+
+
+def reference_power4(num: int) -> int:
+    """Compute num ^ 4"""
+    return num ** 4
 
 
 input_args = [1, 2, 3, 4, 32]
@@ -44,16 +54,16 @@ input_args = [1, 2, 3, 4, 32]
 @pytest.mark.parametrize("input_arg", input_args)
 def test_power2(input_arg, function_to_test):
     """The test case(s)"""
-    assert function_to_test(input_arg) == reference_power(input_arg, 2)
+    assert function_to_test(input_arg) == reference_power2(input_arg)
 
 
 @pytest.mark.parametrize("input_arg", input_args)
 def test_power3(input_arg, function_to_test):
     """The test case(s)"""
-    assert function_to_test(input_arg) == reference_power(input_arg, 3)
+    assert function_to_test(input_arg) == reference_power3(input_arg)
 
 
 @pytest.mark.parametrize("input_arg", input_args)
 def test_power4(input_arg, function_to_test):
     """The test case(s)"""
-    assert function_to_test(input_arg) == reference_power(input_arg, 4)
+    assert function_to_test(input_arg) == reference_power4(input_arg)
