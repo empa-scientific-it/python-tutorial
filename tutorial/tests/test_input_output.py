@@ -2,7 +2,7 @@ import contextlib
 import csv
 import itertools
 import pathlib as pl
-import sys
+from collections import Counter
 from io import StringIO
 
 import pytest
@@ -11,8 +11,25 @@ from .. import prepare_magic_file
 
 
 def get_data(name: str, data_dir: str = "data") -> pl.Path:
-    current_module = sys.modules[__name__]
-    return (pl.Path(current_module.__file__).parent / f"{data_dir}/{name}").resolve()
+    return (pl.Path.cwd() / f"tutorial/tests/{data_dir}/{name}").resolve()
+
+
+def reference_solution_print_odd(num: int) -> None:
+    for i in range(num):
+        if i % 2 != 0:
+            print(i)
+
+
+@pytest.mark.parametrize("num", [1, 2, 3, 4, 5])
+def test_print_odd(function_to_test, num: int):
+    with StringIO() as solution_stdout, StringIO() as reference_stdout:
+        with contextlib.redirect_stdout(solution_stdout):
+            function_to_test(num)
+
+        with contextlib.redirect_stdout(reference_stdout):
+            reference_solution_print_odd(num)
+
+        assert reference_stdout.getvalue() == solution_stdout.getvalue()
 
 
 def reference_solution_find_all_files(f: pl.Path) -> "list[pl.Path]":
@@ -24,84 +41,69 @@ def test_find_all_files(function_to_test):
     assert function_to_test(f) == reference_solution_find_all_files(f)
 
 
-def reference_solution_count_parents(f: pl.Path) -> int:
-    return len([ob for ob in f.parent.glob("*") if ob.is_dir()])
+def reference_solution_count_dirs(path: pl.Path) -> int:
+    return len([obj for obj in path.glob("*") if obj.is_dir()])
 
 
-def test_count_parents(function_to_test):
-    f = pl.Path(sys.modules[__name__].__file__).parent.parent
-    assert function_to_test(f) == reference_solution_count_parents(f)
+def test_count_dirs(function_to_test):
+    path = pl.Path.cwd()
+    assert function_to_test(path) == reference_solution_count_dirs(path)
 
 
-def reference_solution_read_file(f: pl.Path) -> "list[str]":
-    with open(f) as lines:
-        return [l for l in lines.readlines()]
+def reference_solution_read_file(file: pl.Path) -> "list[str]":
+    with file.open("r") as lines:
+        return list(lines.readlines())
 
 
 def test_read_file(function_to_test):
-    for fp in ["lines.txt", "example.csv"]:
-        data = get_data(fp)
+    for file in ["lines.txt", "example.csv"]:
+        data = get_data(file)
         assert function_to_test(data) == reference_solution_read_file(data)
 
 
-def reference_solution_write_file(f: pl.Path, lines: "list[str]") -> None:
-    with open(f, "w") as f:
-        f.writelines(lines)
+def reference_solution_write_file(file: pl.Path) -> None:
+    file.write_text("python tutorial 2023")
 
 
-def test_write_file(function_to_test):
-    lines = ["python tutorial 2023"]
-    f = pl.Path("test.txt")
-    function_to_test(f)
-    with open(f) as input_file:
-        assert input_file.readlines() == lines
+def test_write_file(function_to_test, tmp_path: pl.Path):
+    tmp_user = tmp_path / "user_write_file.txt"
+    tmp_test = tmp_path / "test_write_file.txt"
 
+    function_to_test(tmp_user)
+    reference_solution_write_file(tmp_test)
 
-def reference_solution_exercise1(f: pl.Path) -> "dict[str, list[int]]":
-    with open(f) as lines:
-        reader = csv.reader(lines)
-        headers = next(reader)
-        transposed = {
-            k: list(v)
-            for k, v in zip(headers, itertools.zip_longest(*(l for l in reader)))
-        }
-    return transposed
+    if not tmp_user.exists():
+        pytest.fail("Cannot read from inexistent file.")
 
-
-def reference_solution_print_odd(n: int) -> None:
-    for i in range(n):
-        if i % 2 != 0:
-            print(i)
-
-
-@pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
-def test_print_odd(function_to_test, n: int):
-    # redirect stdout of function_to_test to a string
-    solution_stdout = StringIO()
-    with contextlib.redirect_stdout(solution_stdout):
-        function_to_test(n)
-    reference_stdout = StringIO()
-    with contextlib.redirect_stdout(reference_stdout):
-        reference_solution_print_odd(n)
-    assert reference_stdout.getvalue() == solution_stdout.getvalue()
+    assert tmp_user.read_text() == tmp_test.read_text()
 
 
 def reference_solution_read_write_file(
     input_file: pl.Path, output_file: pl.Path
 ) -> None:
-    with open(input_file) as read_file, open(output_file, "w") as write_file:
+    with input_file.open("r") as read_file, output_file.open("w") as write_file:
         for line in read_file.readlines():
-            write_file.write(f"{line.strip(["\n","\r"])}, {len(line)}\n")
+            write_file.write("{}, {}\n".format(line.strip("\n\r"), len(line)))
 
 
-def test_read_write_file(function_to_test):
+def test_read_write_file(function_to_test, tmp_path: pl.Path):
     input_file = get_data("lines.txt")
-    output_file = pl.Path("output.txt")
-    test_output_file = pl.Path("test_output.txt")
+    output_file = tmp_path / "output_file.txt"
+    test_output_file = tmp_path / "test_output_file.txt"
+
     function_to_test(input_file, output_file)
     reference_solution_read_write_file(input_file, test_output_file)
-    with open(output_file) as output_file, open(test_output_file) as tes:
-        assert output_file.readlines() == tes.readlines()
+
+    assert output_file.read_text() == test_output_file.read_text()
+
+
+def reference_solution_exercise1(file: pl.Path) -> dict[str, list[str]]:
+    with file.open("r") as lines:
+        reader = csv.reader(lines)
+        headers = next(reader)
+        return {
+            k.strip(): list(v) for k, v in zip(headers, itertools.zip_longest(*reader))
+        }
 
 
 def test_exercise1(function_to_test):
@@ -109,8 +111,8 @@ def test_exercise1(function_to_test):
     assert function_to_test(f) == reference_solution_exercise1(f)
 
 
-def reference_solution_exercise2(f: pl.Path) -> int:
-    with open(f) as lines:
+def reference_solution_exercise2(file: pl.Path) -> int:
+    with file.open("r") as lines:
         return len(
             list(itertools.chain.from_iterable([l.split() for l in lines.readlines()]))
         )
@@ -121,21 +123,12 @@ def test_exercise2(function_to_test):
     assert function_to_test(f) == reference_solution_exercise2(f)
 
 
-def reference_solution_exercise3(f: pl.Path) -> "dict[str, int]":
-    with open(f) as lines:
-        res = {
-            k: len(list(v))
-            for k, v in itertools.groupby(
-                sorted(
-                    [
-                        l
-                        for l in itertools.chain(*itertools.chain(lines.readlines()))
-                        if l.isalpha()
-                    ]
-                )
-            )
-        }
-    return res
+def reference_solution_exercise3(file: pl.Path) -> "dict[str, int]":
+    with file.open("r") as lines:
+        res = sorted(
+            l for l in itertools.chain.from_iterable(lines.readlines()) if l.isalpha()
+        )
+    return Counter(res)
 
 
 def test_exercise3(function_to_test):
@@ -145,19 +138,21 @@ def test_exercise3(function_to_test):
 
 def reference_solution_exercise4(
     english: pl.Path, dictionary: pl.Path
-) -> "list[(str, str)]":
-    with open(english) as english_file:
-        english_reader = csv.reader(english_file)
-        english_words = [w for w, _ in english_reader]
-    with open(dictionary) as dict_file:
+) -> list[tuple[str, str]]:
+    english_words = english.read_text().splitlines()
+
+    with dictionary.open("r") as dict_file:
         dict_reader = csv.reader(dict_file)
-        next(dict_reader)
-        translations = {en: it for _, it, en, _ in dict_reader}
-    return [(e, translations[e]) for e in english_words if e in translations.keys()]
+        next(dict_reader)  # skip header
+        translations = {en: it for _, it, en in dict_reader}
+
+    return [
+        (word, translations[word]) for word in english_words if word in translations
+    ]
 
 
 def test_exercise4(function_to_test):
-    words = get_data("english.csv")
+    words = get_data("english.txt")
     dictionary = get_data("dict.csv")
     assert function_to_test(words, dictionary) == reference_solution_exercise4(
         words, dictionary
