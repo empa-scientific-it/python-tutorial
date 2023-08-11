@@ -1,9 +1,9 @@
 import pytest
 
 
-def reference_magic_example(num: int, pow: int) -> int:
-    """Compute num ^ pow"""
-    return num ** pow
+def reference_magic_example(num: int, power: int) -> int:
+    """Compute num ^ power"""
+    return num**power
 
 
 input_args = [1, 2, 3, 4, 32]

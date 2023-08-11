@@ -1,7 +1,7 @@
 import pathlib
 import sys
 from collections import Counter
-from math import isqrt, sqrt, isclose
+from math import isclose, isqrt, sqrt
 from typing import List, Tuple
 
 import pytest
@@ -156,10 +156,10 @@ def test_find_factors(num: int, function_to_test) -> None:
 # Exercise 2: Find the pair/triplet
 #
 
-nums_1, nums_2 = [
+nums_1, nums_2 = (
     [int(x) for x in read_data(f"2020_{i}.txt").read_text().splitlines()]
     for i in (1, 2)
-]
+)
 
 
 def reference_solution_find_pair(nums: List[int]) -> int:
@@ -238,7 +238,7 @@ def parse_data(filename: str) -> List[List[int]]:
     ]
 
 
-trees_1, trees_2 = [parse_data(f"trees_{num}.txt") for num in (1, 2)]
+trees_1, trees_2 = (parse_data(f"trees_{num}.txt") for num in (1, 2))
 
 
 def reference_solution_toboggan_p1(

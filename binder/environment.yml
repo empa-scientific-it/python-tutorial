@@ -1,16 +1,18 @@
+---
 name: python-tutorial
 channels:
-  - conda-forge
+    - conda-forge
 dependencies:
-  - python
-  - pip
-  - pip:
-    - numpy
-    - matplotlib
-    - pandas
-    - ipywidgets
-    - ipynbname
-    - jupyterlab
-    - pytest
-    - pytest-timeout
-    - markdown
+    - python
+    - pip
+    - pip:
+          - numpy
+          - matplotlib
+          - pandas
+          - ipywidgets
+          - ipynbname
+          - jupyterlab
+          - pytest
+          - pytest-timeout
+          - markdown
+          - pre-commit
