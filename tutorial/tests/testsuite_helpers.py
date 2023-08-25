@@ -71,7 +71,9 @@ def format_long_stdout(text: str) -> str:
     )
     stdout_str = "".join(f"<p>{line}</p>" for line in stdout_filtered)
     stdout_edited = re.sub(r"E\s+[\+\s]*", "", stdout_str)
-    stdout_edited = re.sub(r"\bfunction\ssolution_[\w\s\d]*", "your_solution", stdout_edited) 
+    stdout_edited = re.sub(
+        r"\bfunction\ssolution_[\w\s\d]*", "your_solution", stdout_edited
+    )
     stdout_edited = re.sub(r"\breference_\w+\(", "reference_solution(", stdout_edited)
 
     test_runs = f"""

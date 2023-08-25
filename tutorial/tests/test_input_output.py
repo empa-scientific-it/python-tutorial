@@ -4,8 +4,10 @@ import itertools
 import pathlib as pl
 from collections import Counter
 from io import StringIO
-from typing import List, Dict, Tuple
+from typing import Dict, List, Tuple
+
 import pytest
+
 from tutorial.prepare_magic_file import decode_secret_message
 
 
