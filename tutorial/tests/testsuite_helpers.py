@@ -69,12 +69,15 @@ def format_long_stdout(text: str) -> str:
     stdout_filtered = list(
         filter(re.compile(r".*>E\s").match, stdout_body.splitlines())
     )
-    html_body = "".join(f"<p>{line}</p>" for line in stdout_filtered)
+    stdout_str = "".join(f"<p>{line}</p>" for line in stdout_filtered)
+    stdout_edited = re.sub(r"E\s+[\+\s]*", "", stdout_str)
+    stdout_edited = re.sub(r"\bfunction\ssolution_[\w\s\d]*", "your_solution", stdout_edited) 
+    stdout_edited = re.sub(r"\breference_\w+\(", "reference_solution(", stdout_edited)
 
     test_runs = f"""
             <details style="overflow-y: auto; max-height: 200px;">
                 <summary><u style="cursor: pointer;">Click here to expand</u></summary>
-                <div style="padding-top: 15px;">{html_body}</div>
+                <div style="padding-top: 15px;">{stdout_edited}</div>
             </details>
         """
     return test_runs
@@ -92,15 +95,15 @@ class TestResultOutput(ipywidgets.VBox):
         cell_exec_count: int = 0,
         solution_body: str = "",
     ):
+        reveal_solution = cell_exec_count > 2 or success
         output_config = format_success_failure(syntax_error, success, name)
         output_cell = ipywidgets.Output()
 
         # For each test, create an alert box with the appropriate message,
         # print the code output and display code errors in case of failure
-
         with output_cell:
-            custom_div_style = '"border: 1px solid; border-color: lightgray; background-color: whitesmoke; margin: 5px; padding: 10px;"'
-            display(HTML("<h3>Test results</h3>"))
+            custom_div_style = '"border: 1px solid; border-color: lightgray; background-color: #FAFAFA; margin: 5px; padding: 10px;"'
+            display(HTML("<h3 style=>Test results</h3>"))
             display(
                 HTML(
                     f"""<div class="alert alert-box {output_config.style}"><h4>{output_config.name}</h4>{output_config.result}</div>"""
@@ -111,14 +114,17 @@ class TestResultOutput(ipywidgets.VBox):
                 if len(test_outputs) > 0 and test_outputs[0].stdout:
                     display(
                         HTML(
-                            f"<h4>Code output:</h4> <div style={custom_div_style}>{test_outputs[0].stdout}</div>"
+                            f"""
+                                <h4>&#128073; Code output:</h4>
+                                <div style={custom_div_style}>{test_outputs[0].stdout}</div>
+                            """
                         )
                     )
 
                 display(
                     HTML(
                         f"""
-                            <h4>We tested your solution <code>solution_{name}</code> with {'1 input' if len(test_outputs) == 1 else str(len(test_outputs)) + ' different inputs'}.
+                            <h4>&#128073; We tested your solution <code>solution_{name}</code> with {'1 input' if len(test_outputs) == 1 else str(len(test_outputs)) + ' different inputs'}.
                             {"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}
                         """
                     )
@@ -140,35 +146,36 @@ class TestResultOutput(ipywidgets.VBox):
                                 """
                             )
                         )
+
+                if not reveal_solution:
+                    display(
+                        HTML(
+                            "<h4>&#128221; A proposed solution will appear after 3 failed attempts.</h4>"
+                        )
+                    )
             else:
+                # display syntax error custom alert
                 display(
                     HTML(
-                        "<h4>Your code cannot run because of the following error:</h4>"
+                        "<h4>&#128073; Your code cannot run because of the following error:</h4>"
                     )
                 )
 
-            # After 3 failed attempts or on success, reveal the proposed solution
-            # using a Code box inside an Accordion to display the str containing all code
-
-            solution_output = ipywidgets.Output()
-            with solution_output:
-                display(HTML("<h4>Proposed solution:</h4>"))
-
-            solution_code = ipywidgets.Output()
-            with solution_code:
-                display(Code(language="python", data=f"{solution_body}"))
-
-            solution_accordion = ipywidgets.Accordion(
-                titles=("Click here to reveal",), children=[solution_code]
-            )
-
-            solution_box = ipywidgets.Box(
-                children=[solution_output, solution_accordion],
-                layout={
-                    "display": "block" if (cell_exec_count > 2 or success) else "none",
-                    "padding": "0 20px 0 0",
-                },
-            )
+                # fix syntax error styling
+                display(
+                    Javascript(
+                        """
+                            var syntax_error_containers = document.querySelectorAll('div[data-mime-type="application/vnd.jupyter.stderr"]');
+                            for (let container of syntax_error_containers) {
+                                var syntax_error_div = container.parentNode;
+                                var container_div = syntax_error_div.parentNode;
+                                const container_style = "position: relative; padding-bottom: " + syntax_error_div.clientHeight + "px;";
+                                container_div.setAttribute("style", container_style);
+                                syntax_error_div.setAttribute("style", "position: absolute; bottom: 0;");
+                            }
+                        """
+                    )
+                )
 
             # fix css styling
             display(
@@ -178,9 +185,49 @@ class TestResultOutput(ipywidgets.VBox):
                         for (let div of divs) {
                             div.setAttribute("style", "padding: 0");
                         }
+                        divs = document.querySelectorAll(".widget-vbox");
+                        for (let div of divs) {
+                            div.setAttribute("style", "background: #EAF0FB");
+                        }
                     """
                 )
             )
+
+            display(
+                Javascript(
+                    """
+                        var output_divs = document.querySelectorAll(".jp-Cell-outputArea");
+                        for (let div of output_divs) {
+                            var div_str = String(div.innerHTML);
+                            if (div_str.includes("alert-success") | div_str.includes("alert-danger")) {
+                                div.setAttribute("style", "padding-bottom: 0;");
+                            }
+                        }
+                    """
+                )
+            )
+
+        # After 3 failed attempts or on success, reveal the proposed solution
+        # using a Code box inside an Accordion to display the str containing all code
+        solution_output = ipywidgets.Output()
+        with solution_output:
+            display(HTML("<h4>&#128073; Proposed solution:</h4>"))
+
+        solution_code = ipywidgets.Output()
+        with solution_code:
+            display(Code(language="python", data=f"{solution_body}"))
+
+        solution_accordion = ipywidgets.Accordion(
+            titles=("Click here to reveal",), children=[solution_code]
+        )
+
+        solution_box = ipywidgets.Box(
+            children=[solution_output, solution_accordion],
+            layout={
+                "display": "block" if reveal_solution else "none",
+                "padding": "0 20px 0 0",
+            },
+        )
 
         super().__init__(children=[output_cell, solution_box])
 

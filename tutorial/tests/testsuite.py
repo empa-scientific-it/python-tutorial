@@ -142,50 +142,21 @@ class TestMagic(Magics):
             display(
                 Javascript(
                     """
-                var output_divs = document.querySelectorAll(".jp-OutputArea-executeResult");
-                for (let div of output_divs) {
-                    div.setAttribute("style", "display: none;");
-                }
-            """
-                )
-            )
-
-            # remove syntax error styling
-            display(
-                Javascript(
+                        var output_divs = document.querySelectorAll(".jp-OutputArea-executeResult");
+                        for (let div of output_divs) {
+                            div.setAttribute("style", "display: none;");
+                        }
                     """
-                var output_divs = document.querySelectorAll(".jp-Cell-outputArea");
-                for (let div of output_divs) {
-                    var div_str = String(div.innerHTML);
-                    if (div_str.includes("alert-success") | div_str.includes("alert-danger")) {
-                        div.setAttribute("style", "padding-bottom: 0;");
-                    }
-                }
-            """
                 )
             )
 
         except Exception:
-            # Catches syntax errors and creates a custom warning
+            # Catches syntax errors
             display(
                 TestResultOutput(
+                    test_outputs=None,
                     syntax_error=True,
                     success=False,
-                )
-            )
-
-            display(
-                Javascript(
-                    """
-                var syntax_error_containers = document.querySelectorAll('div[data-mime-type="application/vnd.jupyter.stderr"]');
-                for (let container of syntax_error_containers) {
-                    var syntax_error_div = container.parentNode;
-                    var container_div = syntax_error_div.parentNode;
-                    const container_style = "position: relative; padding-bottom: " + syntax_error_div.clientHeight + "px;";
-                    container_div.setAttribute("style", container_style);
-                    syntax_error_div.setAttribute("style", "position: absolute; bottom: 10px;");
-                }
-            """
                 )
             )
 

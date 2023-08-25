@@ -11,7 +11,7 @@ import requests
 from numpy.typing import NDArray
 
 
-def reference_exercise2(my_list: List[int], k: int):
+def reference_exercise2(my_list: List[int], k: int) -> List[int]:
     return [i for i in my_list if i % k == 0]
 
 
@@ -24,7 +24,7 @@ def check_for_loop_in_body(fun: Callable) -> bool:
     return False
 
 
-def reference_filter_even(my_list: "list[int]") -> "list[int]":
+def reference_filter_even(my_list: List[int]) -> List[int]:
     return list(filter(lambda x: x % 2 == 0, my_list))
 
 
@@ -76,7 +76,7 @@ def test_add_one(function_to_test: Callable, my_list: List[int]):
     ],
 )
 def test_exercise2(
-    function_to_test: Callable[[int, int], int],
+    function_to_test: Callable[[List[int]], int],
     my_list: List[int],
     k: int,
 ):
@@ -108,12 +108,12 @@ def reference_exercise4(my_list: List[List[Any]]) -> List[Any]:
 @pytest.mark.parametrize(
     "my_input",
     [
-        ([[1, 2, 3, 4], [4, 5, 5], [4, 5, 6]]),
-        ([["a", "b", "c"], ["d", "f", "e"], ["another"]]),
+        [[1, 2, 3, 4], [4, 5, 5], [4, 5, 6]],
+        [["a", "b", "c"], ["d", "f", "e"], ["another"]],
     ],
 )
 def test_exercise4(
-    function_to_test: Callable[[List[List[any]]], List[Any]],
+    function_to_test: Callable[[List[List[Any]]], List[Any]],
     my_input: List[List[Any]],
 ):
     assert function_to_test(my_input) == reference_exercise4(my_input)

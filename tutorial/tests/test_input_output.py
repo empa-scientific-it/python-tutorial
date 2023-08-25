@@ -4,9 +4,8 @@ import itertools
 import pathlib as pl
 from collections import Counter
 from io import StringIO
-
+from typing import List, Dict, Tuple
 import pytest
-
 from tutorial.prepare_magic_file import decode_secret_message
 
 
@@ -32,7 +31,7 @@ def test_print_odd(function_to_test, num: int):
         assert reference_stdout.getvalue() == solution_stdout.getvalue()
 
 
-def reference_find_all_files(f: pl.Path) -> "list[pl.Path]":
+def reference_find_all_files(f: pl.Path) -> List[pl.Path]:
     return list(f.parent.iterdir())
 
 
@@ -50,7 +49,7 @@ def test_count_dirs(function_to_test):
     assert function_to_test(path) == reference_count_dirs(path)
 
 
-def reference_read_file(file: pl.Path) -> "list[str]":
+def reference_read_file(file: pl.Path) -> List[str]:
     with file.open("r") as lines:
         return list(lines.readlines())
 
@@ -95,7 +94,7 @@ def test_read_write_file(function_to_test, tmp_path: pl.Path):
     assert output_file.read_text() == test_output_file.read_text()
 
 
-def reference_exercise1(file: pl.Path) -> dict[str, list[str]]:
+def reference_exercise1(file: pl.Path) -> Dict[str, List[str]]:
     with file.open("r") as lines:
         reader = csv.reader(lines)
         headers = next(reader)
@@ -125,7 +124,7 @@ def test_exercise2(function_to_test):
     assert function_to_test(f) == reference_exercise2(f)
 
 
-def reference_exercise3(file: pl.Path) -> "dict[str, int]":
+def reference_exercise3(file: pl.Path) -> Dict[str, int]:
     with file.open("r") as lines:
         res = sorted(
             line
@@ -140,7 +139,7 @@ def test_exercise3(function_to_test):
     assert function_to_test(f) == reference_exercise3(f)
 
 
-def reference_exercise4(english: pl.Path, dictionary: pl.Path) -> list[tuple[str, str]]:
+def reference_exercise4(english: pl.Path, dictionary: pl.Path) -> List[Tuple[str, str]]:
     english_words = english.read_text().splitlines()
 
     with dictionary.open("r") as dict_file:
