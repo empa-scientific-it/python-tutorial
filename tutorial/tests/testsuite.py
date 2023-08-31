@@ -68,7 +68,7 @@ class TestMagic(Magics):
         """The `%%ipytest` cell magic"""
         # Check that the magic is called from a notebook
         if not self.shell:
-            raise RuntimeError("ipytest magic called from a non-notebook context")
+            raise InstanceNotFoundError("InteractiveShell")
 
         # Get the module containing the test(s)
         module_name = get_module_name(line, self.shell.user_global_ns)
@@ -95,7 +95,7 @@ class TestMagic(Magics):
                     functions_to_run[name.removeprefix("solution_")] = function
 
             if not functions_to_run:
-                raise FunctionNotFoundError()
+                raise FunctionNotFoundError
 
             # Store execution count information for each cell
             if (ipython := get_ipython()) is None:

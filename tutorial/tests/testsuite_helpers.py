@@ -376,5 +376,5 @@ class FunctionNotFoundError(Exception):
 class InstanceNotFoundError(Exception):
     """Custom exception raised when an instance cannot be found"""
 
-    def __init__(self, name) -> None:
+    def __init__(self, name: str) -> None:
         super().__init__(f"Could not get {name} instance")
