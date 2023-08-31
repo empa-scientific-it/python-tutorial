@@ -3,5 +3,6 @@ ignore =
     E501
     W503
     E203
+    TRY301
 per-file-ignores =
     binder/ipython_config.py:E266
