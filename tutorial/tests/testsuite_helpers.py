@@ -2,7 +2,7 @@ import ast
 import pathlib
 import re
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Set, Optional
+from typing import Callable, Dict, List, Optional, Set
 
 import ipywidgets
 import pytest
