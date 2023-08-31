@@ -2,7 +2,7 @@ import ast
 import pathlib
 import re
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Set
+from typing import Callable, Dict, List, Set, Optional
 
 import ipywidgets
 import pytest
@@ -90,7 +90,7 @@ class TestResultOutput(ipywidgets.VBox):
 
     def __init__(
         self,
-        test_outputs: List[TestResult] | None,
+        test_outputs: Optional[List[TestResult]] = None,
         name: str = "",
         syntax_error: bool = False,
         success: bool = False,
@@ -112,7 +112,7 @@ class TestResultOutput(ipywidgets.VBox):
                 )
             )
 
-            if not syntax_error:
+            if not syntax_error and isinstance(test_outputs, List):
                 if len(test_outputs) > 0 and test_outputs[0].stdout:
                     display(
                         HTML(

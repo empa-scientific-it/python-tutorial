@@ -3,7 +3,7 @@ import io
 import pathlib
 import re
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Dict
+from typing import Dict, Optional
 
 import ipynbname
 import pytest
@@ -60,12 +60,16 @@ def get_module_name(line: str, globals_dict: Dict) -> str:
 class TestMagic(Magics):
     """Class to add the test cell magic"""
 
-    shell: InteractiveShell
+    shell: Optional[InteractiveShell]  # type: ignore
     cells: Dict[str, int] = {}
 
     @cell_magic
     def ipytest(self, line: str, cell: str):
         """The `%%ipytest` cell magic"""
+        # Check that the magic is called from a notebook
+        if not self.shell:
+            raise RuntimeError("ipytest magic called from a non-notebook context")
+
         # Get the module containing the test(s)
         module_name = get_module_name(line, self.shell.user_global_ns)
 
@@ -163,7 +167,6 @@ class TestMagic(Magics):
             # Catches syntax errors
             display(
                 TestResultOutput(
-                    test_outputs=None,
                     syntax_error=True,
                     success=False,
                 )

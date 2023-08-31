@@ -132,3 +132,4 @@ dmypy.json
 .DS_Store
 *_files/
 *.html
+.idea/
