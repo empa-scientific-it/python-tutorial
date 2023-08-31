@@ -1,6 +1,6 @@
 # Configuration file for ipython.
 
-c = get_config()  # noqua
+c = get_config()  # noqa
 
 # ------------------------------------------------------------------------------
 # InteractiveShellApp(Configurable) configuration
