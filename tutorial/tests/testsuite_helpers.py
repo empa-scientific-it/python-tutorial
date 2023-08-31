@@ -90,7 +90,7 @@ class TestResultOutput(ipywidgets.VBox):
 
     def __init__(
         self,
-        test_outputs: List[TestResult],
+        test_outputs: List[TestResult] | None,
         name: str = "",
         syntax_error: bool = False,
         success: bool = False,
@@ -152,7 +152,7 @@ class TestResultOutput(ipywidgets.VBox):
                 if not reveal_solution:
                     display(
                         HTML(
-                            "<h4>&#128221; A proposed solution will appear after 3 failed attempts.</h4>"
+                            f"<h4>&#128221; A proposed solution will appear after {3 - cell_exec_count} more failed attempt{'s' if cell_exec_count < 2 else ''}.</h4>"
                         )
                     )
             else:
@@ -285,13 +285,13 @@ class AstParser:
     For each reference solution store the names of all other functions used inside of it.
     """
 
-    def __init__(self, module_file) -> None:
+    def __init__(self, module_file: pathlib.Path) -> None:
         self.module_file = module_file
         self.function_defs = {}
         self.function_imports = {}
         self.called_function_names = {}
 
-        tree = ast.parse(open(self.module_file).read())
+        tree = ast.parse(self.module_file.read_text(encoding="utf-8"))
 
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -353,7 +353,7 @@ class AstParser:
                     f"{self.function_imports[f].replace('.', '/')}.py"
                 )
                 if function_file.exists():
-                    function_file_tree = ast.parse(open(function_file).read())
+                    function_file_tree = ast.parse(function_file.read_text(encoding="utf-8"))
                     for node in function_file_tree.body:
                         if (
                             isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))

@@ -7,7 +7,7 @@ from typing import Dict
 
 import ipynbname
 import pytest
-from IPython import get_ipython
+from IPython.core.getipython import get_ipython
 from IPython.core.display import Javascript
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
@@ -93,7 +93,10 @@ class TestMagic(Magics):
                 raise FunctionNotFoundError()
 
             # Store execution count information for each cell
-            cell_id = get_ipython().parent_header["metadata"]["cellId"]
+            if (ipython := get_ipython()) is None:
+                raise RuntimeError("Could not get IPython instance")
+
+            cell_id = ipython.parent_header["metadata"]["cellId"]
             if cell_id in self.cells:
                 self.cells[cell_id] += 1
             else:
@@ -125,12 +128,17 @@ class TestMagic(Magics):
                     pytest_stdout.getvalue()
                     pytest_stderr.getvalue()
 
+                # reset execution count on success
+                success = result == pytest.ExitCode.OK
+                if success:
+                    self.cells[cell_id] = 0
+
                 outputs.append(
                     TestResultOutput(
                         list(result_collector.tests.values()),
                         name,
                         False,
-                        result == pytest.ExitCode.OK,
+                        success,
                         self.cells[cell_id],
                         ast_parser.get_solution_code(name),
                     )
