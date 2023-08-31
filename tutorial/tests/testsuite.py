@@ -7,8 +7,8 @@ from typing import Dict
 
 import ipynbname
 import pytest
-from IPython.core.getipython import get_ipython
 from IPython.core.display import Javascript
+from IPython.core.getipython import get_ipython
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import display

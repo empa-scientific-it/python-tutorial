@@ -353,7 +353,9 @@ class AstParser:
                     f"{self.function_imports[f].replace('.', '/')}.py"
                 )
                 if function_file.exists():
-                    function_file_tree = ast.parse(function_file.read_text(encoding="utf-8"))
+                    function_file_tree = ast.parse(
+                        function_file.read_text(encoding="utf-8")
+                    )
                     for node in function_file_tree.body:
                         if (
                             isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
