@@ -17,6 +17,7 @@ from .testsuite_helpers import (
     AstParser,
     FunctionInjectionPlugin,
     FunctionNotFoundError,
+    InstanceNotFoundError,
     ResultCollector,
     TestResultOutput,
 )
@@ -94,7 +95,7 @@ class TestMagic(Magics):
 
             # Store execution count information for each cell
             if (ipython := get_ipython()) is None:
-                raise RuntimeError("Could not get IPython instance")
+                raise InstanceNotFoundError("IPython")
 
             cell_id = ipython.parent_header["metadata"]["cellId"]
             if cell_id in self.cells:
@@ -158,7 +159,7 @@ class TestMagic(Magics):
                 )
             )
 
-        except Exception:
+        except SyntaxError:
             # Catches syntax errors
             display(
                 TestResultOutput(

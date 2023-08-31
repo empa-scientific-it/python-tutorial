@@ -371,3 +371,10 @@ class FunctionNotFoundError(Exception):
 
     def __init__(self) -> None:
         super().__init__("No functions to test defined in the cell")
+
+
+class InstanceNotFoundError(Exception):
+    """Custom exception raised when an instance cannot be found"""
+
+    def __init__(self, name) -> None:
+        super().__init__(f"Could not get {name} instance")
