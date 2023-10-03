@@ -27,4 +27,4 @@ jobs:
                   DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
                   DOCKER_REGISTRY: ghcr.io
                   IMAGE_NAME: ${{ github.repository }}
-                  FORCE_REPO2DOCKER_VERSION: repo2docker==2023.06.0
+                  FORCE_REPO2DOCKER_VERSION: jupyter-repo2docker==2023.06.0
