@@ -17,21 +17,21 @@ repos:
           - id: isort
             args: [--profile, black, --filter-files]
     - repo: https://github.com/PyCQA/autoflake
-      rev: v2.2.0
+      rev: v2.2.1
       hooks:
           - id: autoflake
     - repo: https://github.com/asottile/pyupgrade
-      rev: v3.9.0
+      rev: v3.14.0
       hooks:
           - id: pyupgrade
             args: [--py38-plus]
     - repo: https://github.com/psf/black
-      rev: 23.7.0
+      rev: 23.9.1
       hooks:
           - id: black
             language_version: python3 # Should be a command that runs python3.6+
     - repo: https://github.com/PyCQA/flake8
-      rev: 6.0.0
+      rev: 6.1.0
       hooks:
           - id: flake8
             args: [--count, --show-source, --statistics]
@@ -45,7 +45,7 @@ repos:
                 - pyflakes
                 - tryceratops
     - repo: https://github.com/pre-commit/mirrors-mypy
-      rev: v1.4.1
+      rev: v1.5.1
       hooks:
           - id: mypy
             additional_dependencies:
@@ -58,7 +58,7 @@ repos:
       hooks:
           - id: yamlfmt
     - repo: https://github.com/asottile/setup-cfg-fmt
-      rev: v2.4.0
+      rev: v2.5.0
       hooks:
           - id: setup-cfg-fmt
     - repo: https://github.com/kynan/nbstripout
