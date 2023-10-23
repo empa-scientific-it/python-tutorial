@@ -140,7 +140,7 @@ def is_prime(num: int) -> bool:
     return True
 
 
-def reference_solution_find_factors(num: int) -> List[int]:
+def reference_find_factors(num: int) -> List[int]:
     """Dumb way to find the factors of an integer"""
     if is_prime(num):
         return [1, num]
@@ -149,7 +149,7 @@ def reference_solution_find_factors(num: int) -> List[int]:
 
 @pytest.mark.parametrize("num", [350, 487, 965, 816, 598, 443, 13, 17, 211])
 def test_find_factors(num: int, function_to_test) -> None:
-    assert function_to_test(num) == reference_solution_find_factors(num)
+    assert function_to_test(num) == reference_find_factors(num)
 
 
 #
@@ -162,7 +162,7 @@ nums_1, nums_2 = (
 )
 
 
-def reference_solution_find_pair(nums: List[int]) -> int:
+def reference_find_pair(nums: List[int]) -> int:
     """Reference solution (part 1)"""
     complements = {}
     for num in nums:
@@ -173,10 +173,10 @@ def reference_solution_find_pair(nums: List[int]) -> int:
 
 @pytest.mark.parametrize("nums", [nums_1, nums_2])
 def test_find_pair(nums: List[int], function_to_test) -> None:
-    assert function_to_test(nums) == reference_solution_find_pair(nums)
+    assert function_to_test(nums) == reference_find_pair(nums)
 
 
-def reference_solution_find_triplet_slow(nums: List[int]) -> int:
+def reference_find_triplet_slow(nums: List[int]) -> int:
     """Reference solution (part 2), O(n^3)"""
     n = len(nums)
     for i in range(n - 2):
@@ -186,7 +186,7 @@ def reference_solution_find_triplet_slow(nums: List[int]) -> int:
                     return nums[i] * nums_2[j] * nums[k]
 
 
-def reference_solution_find_triplet(nums: List[int]) -> int:
+def reference_find_triplet(nums: List[int]) -> int:
     """Reference solution (part 2), O(n^2)"""
     n = len(nums)
     for i in range(n - 1):
@@ -201,7 +201,7 @@ def reference_solution_find_triplet(nums: List[int]) -> int:
 
 @pytest.mark.parametrize("nums", [nums_1, nums_2])
 def test_find_triplet(nums: List[int], function_to_test) -> None:
-    assert function_to_test(nums) == reference_solution_find_triplet(nums)
+    assert function_to_test(nums) == reference_find_triplet(nums)
 
 
 #
@@ -209,7 +209,7 @@ def test_find_triplet(nums: List[int], function_to_test) -> None:
 #
 
 
-def reference_solution_cats_with_hats() -> int:
+def reference_cats_with_hats() -> int:
     """Solution with dictionaries"""
     cats = {i: False for i in range(1, 101)}
 
@@ -222,7 +222,7 @@ def reference_solution_cats_with_hats() -> int:
 
 
 def test_cats_with_hats(function_to_test) -> None:
-    assert function_to_test() == reference_solution_cats_with_hats()
+    assert function_to_test() == reference_cats_with_hats()
 
 
 #
@@ -241,9 +241,7 @@ def parse_data(filename: str) -> List[List[int]]:
 trees_1, trees_2 = (parse_data(f"trees_{num}.txt") for num in (1, 2))
 
 
-def reference_solution_toboggan_p1(
-    trees_map: List[List[int]], right: int, down: int
-) -> int:
+def reference_toboggan_p1(trees_map: List[List[int]], right: int, down: int) -> int:
     """Reference solution (part 1)"""
     start, trees, depth, width = [0, 0], 0, len(trees_map), len(trees_map[0])
     while start[0] < depth:
@@ -262,18 +260,16 @@ def reference_solution_toboggan_p1(
 def test_toboggan_p1(
     trees_map: List[List[int]], right: int, down: int, function_to_test
 ) -> None:
-    assert function_to_test(trees_map, right, down) == reference_solution_toboggan_p1(
+    assert function_to_test(trees_map, right, down) == reference_toboggan_p1(
         trees_map, right, down
     )
 
 
-def reference_solution_toboggan_p2(
-    trees_map: List[List[int]], slopes: Tuple[Tuple[int]]
-) -> int:
+def reference_toboggan_p2(trees_map: List[List[int]], slopes: Tuple[Tuple[int]]) -> int:
     """Reference solution (part 2)"""
     total = 1
     for right, down in slopes:
-        total *= reference_solution_toboggan_p1(trees_map, right, down)
+        total *= reference_toboggan_p1(trees_map, right, down)
     return total
 
 
@@ -293,6 +289,6 @@ def reference_solution_toboggan_p2(
 def test_toboggan_p2(
     trees_map: List[List[int]], slopes: Tuple[Tuple[int]], function_to_test
 ) -> None:
-    assert function_to_test(trees_map, slopes) == reference_solution_toboggan_p2(
+    assert function_to_test(trees_map, slopes) == reference_toboggan_p2(
         trees_map, slopes
     )
