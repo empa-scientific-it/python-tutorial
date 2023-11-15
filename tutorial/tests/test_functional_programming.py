@@ -38,7 +38,7 @@ def reference_filter_even(my_list: List[int]) -> List[int]:
 )
 def test_filter_even(function_to_test: Callable, my_list: List[int]):
     res = function_to_test(my_list)
-    assert type(res) == list, "The function you wrote does not return a list"
+    assert isinstance(res, list), "The function you wrote does not return a list"
     assert res == reference_filter_even(
         my_list
     ), "The list you return is not equal to the expected solution"
