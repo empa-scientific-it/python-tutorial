@@ -121,8 +121,9 @@ class TestMagic(Magics):
                 ) as pytest_stdout:
                     result = pytest.main(
                         [
-                            "-q",
-                            f"{module_file}::test_{name}",
+                            "-k",
+                            f"test_{name}",
+                            f"{module_file}",
                         ],
                         plugins=[
                             FunctionInjectionPlugin(function),
