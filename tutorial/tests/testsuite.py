@@ -1,8 +1,10 @@
 """A module to define the `%%ipytest` cell magic"""
+import inspect
 import io
 import pathlib
 import re
 from contextlib import redirect_stderr, redirect_stdout
+from multiprocessing import Process, Queue
 from typing import Dict, Optional
 
 import ipynbname
@@ -18,6 +20,7 @@ from .testsuite_helpers import (
     FunctionInjectionPlugin,
     FunctionNotFoundError,
     InstanceNotFoundError,
+    QueuedResultCollector,
     ResultCollector,
     TestResultOutput,
 )
@@ -91,7 +94,11 @@ class TestMagic(Magics):
             # Get the functions objects from user namespace
             functions_to_run = {}
             for name, function in self.shell.user_ns.items():
-                if name in functions_names and callable(function):
+                if (
+                    name in functions_names
+                    and callable(function)
+                    or inspect.iscoroutinefunction(function)
+                ):
                     functions_to_run[name.removeprefix("solution_")] = function
 
             if not functions_to_run:
@@ -114,33 +121,54 @@ class TestMagic(Magics):
             outputs = []
             for name, function in functions_to_run.items():
                 # Create the test collector
-                result_collector = ResultCollector()
+                q = Queue()
+                result_collector = QueuedResultCollector(q)
                 # Run the tests
                 with redirect_stderr(io.StringIO()) as pytest_stderr, redirect_stdout(
                     io.StringIO()
                 ) as pytest_stdout:
-                    result = pytest.main(
-                        [
-                            "-q",
-                            f"{module_file}::test_{name}",
-                        ],
-                        plugins=[
-                            FunctionInjectionPlugin(function),
-                            result_collector,
-                        ],
+                    p = Process(
+                        target=pytest.main,
+                        args=(
+                            [
+                                "-q",
+                                f"{module_file}::test_{name}",
+                            ],
+                        ),
+                        kwargs={
+                            "plugins": [
+                                FunctionInjectionPlugin(function),
+                                result_collector,
+                            ],
+                        },
                     )
+                    p.start()
+                    p.join()
+
+                    # result = pytest.main(
+                    #     [
+                    #         "-q",
+                    #         f"{module_file}::test_{name}",
+                    #     ],
+                    #     plugins=[
+                    #         FunctionInjectionPlugin(function),
+                    #         result_collector,
+                    #     ],
+                    # )
+
                     # Read pytest output to prevent it from being displayed
                     pytest_stdout.getvalue()
                     pytest_stderr.getvalue()
 
                 # reset execution count on success
-                success = result == pytest.ExitCode.OK
+                success = p.exitcode == pytest.ExitCode.OK
                 if success:
                     self.cells[cell_id] = 0
-
+                res = [q.get() for _ in range(q.qsize())]
+                print(p.exitcode)
                 outputs.append(
                     TestResultOutput(
-                        list(result_collector.tests.values()),
+                        list(res),
                         name,
                         False,
                         success,

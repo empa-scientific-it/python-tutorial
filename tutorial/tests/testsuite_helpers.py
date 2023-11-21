@@ -2,6 +2,7 @@ import ast
 import pathlib
 import re
 from dataclasses import dataclass
+from multiprocessing import Queue
 from typing import Callable, Dict, List, Optional, Set
 
 import ipywidgets
@@ -275,6 +276,22 @@ class ResultCollector:
                 report.nodeid,
                 False,
             )
+
+
+class QueuedResultCollector(ResultCollector):
+    """
+    A class that forwards the results to a queue. It is used to collect the results when the tests are run in a separate process.
+    """
+
+    def __init__(self, q: Queue) -> None:
+        super().__init__()
+        self.queue = q
+        self.queue.put("a")
+
+    def pytest_sessionfinish(self, session, exitstatus):
+        print("pytest_runtest_logfinish")
+        super().pytest_sessionfinish(session, exitstatus)
+        self.queue.put(self.tests)
 
 
 class AstParser:
