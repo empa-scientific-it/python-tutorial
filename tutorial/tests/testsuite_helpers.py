@@ -106,7 +106,7 @@ def format_assertion_error(exception_info: List[str]) -> str:
 
         if match:
             formatted_message = (
-                "<h3>Expected exception:</h3>"
+                "<h4>Expected exception:</h4>"
                 f"<p>Exception <code>{html.escape(match.group(1))}</code> was not raised.</p>"
             )
     else:
@@ -127,7 +127,7 @@ def format_assertion_error(exception_info: List[str]) -> str:
 
             # Formatting the output as HTML
             formatted_message = (
-                f"<h3>{assertion_type}:</h3>"
+                f"<h4>{assertion_type}:</h4>"
                 "<ul>"
                 f"<li>Failed Assertion: <strong>{actual_value} == {expected_value}</strong></li>"
                 f"<li>Actual Value: <strong>{actual_value}</strong> obtained from <code>{actual_expression}</code></li>"
@@ -187,7 +187,7 @@ class TestResultOutput(ipywidgets.VBox):
                 display(
                     HTML(
                         f"""
-                            <h4>&#128073; We tested your solution <code>solution_{name}</code> with {'1 input' if len(test_outputs) == 1 else str(len(test_outputs)) + ' different inputs'}.
+                            <h4>&#128073; We tested your solution <code>solution_{name}</code> {'' if len(test_outputs) == 1 else str(len(test_outputs)) + ' times'}.
                             {"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}
                         """
                     )
@@ -196,8 +196,8 @@ class TestResultOutput(ipywidgets.VBox):
                 if not success:
                     for test in test_outputs:
                         test_name = test.test_name
-                        if match := re.search(r"\[.*?\]", test_name):
-                            test_name = re.sub(r"\[|\]", "", match.group())
+                        if "::" in test_name:
+                            test_name = test_name.split("::")[1]
 
                         if not test.success and test.exception is not None:
                             test_exception_html = format_assertion_error(test.exception)
@@ -208,7 +208,7 @@ class TestResultOutput(ipywidgets.VBox):
                             HTML(
                                 f"""
                                     <div style={custom_div_style}>
-                                        <h5>{"&#x2705;" if test.success else "&#10060;"} Test {test_name}</h5>
+                                        <h3>{"&#x2705;" if test.success else "&#10060;"} Test {test_name}</h3>
                                         {test_exception_html}
                                     </div>
                                 """

@@ -101,7 +101,7 @@ class TestMagic(Magics):
             if (ipython := get_ipython()) is None:
                 raise InstanceNotFoundError("IPython")
 
-            cell_id = ipython.parent_header["metadata"]["cellId"]
+            cell_id = ipython.parent_header["metadata"]["cellId"]  # type: ignore
             if cell_id in self.cells:
                 self.cells[cell_id] += 1
             else:
