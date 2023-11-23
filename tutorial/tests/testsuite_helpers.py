@@ -84,6 +84,15 @@ def format_long_stdout(text: str) -> str:
         """
     return test_runs
 
+@dataclass
+class TestExecutionResult:
+    """Container class to store the test results when they are executed"""
+    stdout: str
+    stderr: str
+    test_name: str
+    success: bool
+    syntax_error: bool
+    test_result: Optional[List[TestResult]] = None
 
 class TestResultOutput(ipywidgets.VBox):
     """Class to display the test results in a structured way"""

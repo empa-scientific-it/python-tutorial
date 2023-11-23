@@ -3,10 +3,16 @@ import io
 import pathlib
 import re
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Dict, Optional
+from multiprocessing import Process, Queue
+from threading import Thread
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from typing import Dict, Optional, Callable
+
+from dataclasses import dataclass
 
 import ipynbname
 import pytest
+from pytest import ExitCode
 from IPython.core.display import Javascript
 from IPython.core.getipython import get_ipython
 from IPython.core.interactiveshell import InteractiveShell
@@ -20,6 +26,7 @@ from .testsuite_helpers import (
     InstanceNotFoundError,
     ResultCollector,
     TestResultOutput,
+    TestExecutionResult
 )
 
 
@@ -54,6 +61,33 @@ def get_module_name(line: str, globals_dict: Dict) -> str:
         raise ModuleNotFoundError(module_name)
 
     return module_name
+
+
+
+def run_test(module_name: str, function_name: str, function_to_test: Callable, q: Queue) -> TestExecutionResult:
+    rc = ResultCollector()
+    with redirect_stderr(io.StringIO()) as pytest_stderr, redirect_stdout(
+        io.StringIO()
+    ) as pytest_stdout:
+        test_name = f"test_{function_name}"
+        result = pytest.main(
+            [
+                "-q",
+                f"tutorial/tests/test_{module_name}.py::{test_name}",
+            ],
+            plugins=[rc, FunctionInjectionPlugin(function_to_test)],
+        )
+
+
+    res = TestExecutionResult(
+        pytest_stdout.getvalue(),
+        pytest_stderr.getvalue(),
+        test_name,
+        result == ExitCode.OK,
+        result == ExitCode.INTERNAL_ERROR,
+        list(rc.tests.values()))
+    q.put(res)
+    return res
 
 
 @magics_class
@@ -113,37 +147,23 @@ class TestMagic(Magics):
 
             outputs = []
             for name, function in functions_to_run.items():
-                # Create the test collector
-                result_collector = ResultCollector()
+                #Create the queue to store the result
+                q = Queue()
                 # Run the tests
-                with redirect_stderr(io.StringIO()) as pytest_stderr, redirect_stdout(
-                    io.StringIO()
-                ) as pytest_stdout:
-                    result = pytest.main(
-                        [
-                            "-q",
-                            f"{module_file}::test_{name}",
-                        ],
-                        plugins=[
-                            FunctionInjectionPlugin(function),
-                            result_collector,
-                        ],
-                    )
-                    # Read pytest output to prevent it from being displayed
-                    pytest_stdout.getvalue()
-                    pytest_stderr.getvalue()
-
+                p = Process(target=run_test, args=(module_name, name, function, q))
+                p.start()
+                p.join()
+                #Get the result
+                res = q.get()
                 # reset execution count on success
-                success = result == pytest.ExitCode.OK
-                if success:
+                if res.success:
                     self.cells[cell_id] = 0
-
                 outputs.append(
                     TestResultOutput(
-                        list(result_collector.tests.values()),
-                        name,
-                        False,
-                        success,
+                        res.test_result,
+                        res.test_name,
+                        res.syntax_error,
+                        res.success,
                         self.cells[cell_id],
                         ast_parser.get_solution_code(name),
                     )
@@ -181,3 +201,5 @@ def load_ipython_extension(ipython):
     """
 
     ipython.register_magics(TestMagic)
+
+
