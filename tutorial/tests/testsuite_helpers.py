@@ -95,6 +95,7 @@ def format_assertion_error(exception_info: List[str]) -> str:
     Takes the output of traceback.format_exception_only() for an AssertionError
     and returns a formatted string with clear, structured information.
     """
+    formatted_message = None
 
     # Join the list into a single string
     exception_str = "".join(exception_info)
@@ -104,13 +105,11 @@ def format_assertion_error(exception_info: List[str]) -> str:
         pattern = r"<class '(.*?)'>"
         match = re.search(pattern, exception_str)
 
-        if not match:
-            return f"<p>{html.escape(exception_str)}</p>"
-
-        formatted_message = (
-            "<h3>Expected exception:</h3>"
-            f"<p>Exception <code>{html.escape(match.group(1))}</code> was not raised.</p>"
-        )
+        if match:
+            formatted_message = (
+                "<h3>Expected exception:</h3>"
+                f"<p>Exception <code>{html.escape(match.group(1))}</code> was not raised.</p>"
+            )
     else:
         # Regex pattern to extract relevant parts of the assertion message
         pattern = (
@@ -118,26 +117,27 @@ def format_assertion_error(exception_info: List[str]) -> str:
         )
         match = re.search(pattern, exception_str)
 
-        if not match:
-            return f"<p>{html.escape(exception_str)}</p>"
+        if match:
+            (
+                assertion_type,
+                actual_value,
+                expected_value,
+                actual_expression,
+                expected_expression,
+            ) = (html.escape(m) for m in match.groups())
 
-        (
-            assertion_type,
-            actual_value,
-            expected_value,
-            actual_expression,
-            expected_expression,
-        ) = (html.escape(m) for m in match.groups())
+            # Formatting the output as HTML
+            formatted_message = (
+                f"<h3>{assertion_type}:</h3>"
+                "<ul>"
+                f"<li>Failed Assertion: <strong>{actual_value} == {expected_value}</strong></li>"
+                f"<li>Actual Value: <strong>{actual_value}</strong> obtained from <code>{actual_expression}</code></li>"
+                f"<li>Expected Value: <strong>{expected_value}</strong> obtained from <code>{expected_expression}</code></li>"
+                "</ul>"
+            )
 
-        # Formatting the output as HTML
-        formatted_message = (
-            f"<h3>{assertion_type}:</h3>"
-            "<ul>"
-            f"<li>Failed Assertion: <strong>{actual_value} == {expected_value}</strong></li>"
-            f"<li>Actual Value: <strong>{actual_value}</strong> obtained from <code>{actual_expression}</code></li>"
-            f"<li>Expected Value: <strong>{expected_value}</strong> obtained from <code>{expected_expression}</code></li>"
-            "</ul>"
-        )
+    # If we couldn't parse the exception message, just display it as is
+    formatted_message = formatted_message or f"<p>{html.escape(exception_str)}</p>"
 
     return f"""
             <details style="overflow-y: auto; max-height: 200px;">
