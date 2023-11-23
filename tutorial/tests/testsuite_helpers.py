@@ -10,7 +10,6 @@ import ipywidgets
 import pytest
 from IPython.core.display import HTML, Javascript
 from IPython.display import Code, display
-from nbconvert import filters
 
 
 @dataclass
