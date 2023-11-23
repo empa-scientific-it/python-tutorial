@@ -1,6 +1,8 @@
 import ast
+import html
 import pathlib
 import re
+import traceback
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Set
 
@@ -15,10 +17,12 @@ from nbconvert import filters
 class TestResult:
     """Container class to store the test results when we collect them"""
 
-    stdout: str
-    stderr: str
     test_name: str
     success: bool
+    stdout: str | None
+    stderr: str | None
+    exception: List[str] | None
+    traceback: List[str] | None
 
 
 @dataclass
@@ -59,6 +63,7 @@ def format_success_failure(
     )
 
 
+# TODO: this should be deleted if the new format_assertion_error() is used
 def format_long_stdout(text: str) -> str:
     """
     Format the error message lines of a long test stdout
@@ -83,6 +88,63 @@ def format_long_stdout(text: str) -> str:
             </details>
         """
     return test_runs
+
+
+def format_assertion_error(exception_info: List[str]) -> str:
+    """
+    Takes the output of traceback.format_exception_only() for an AssertionError
+    and returns a formatted string with clear, structured information.
+    """
+
+    # Join the list into a single string
+    exception_str = "".join(exception_info)
+
+    # Handle the case where we were expecting an exception but none was raised
+    if "DID NOT RAISE" in exception_str:
+        pattern = r"<class '(.*?)'>"
+        match = re.search(pattern, exception_str)
+
+        if not match:
+            return f"<p>{html.escape(exception_str)}</p>"
+
+        formatted_message = (
+            "<h3>Expected exception:</h3>"
+            f"<p>Exception <code>{html.escape(match.group(1))}</code> was not raised.</p>"
+        )
+    else:
+        # Regex pattern to extract relevant parts of the assertion message
+        pattern = (
+            r"(\w+): assert (.*?) == (.*?)\n \+  where .*? = (.*?)\n \+  and .*? = (.*)"
+        )
+        match = re.search(pattern, exception_str)
+
+        if not match:
+            return f"<p>{html.escape(exception_str)}</p>"
+
+        (
+            assertion_type,
+            actual_value,
+            expected_value,
+            actual_expression,
+            expected_expression,
+        ) = (html.escape(m) for m in match.groups())
+
+        # Formatting the output as HTML
+        formatted_message = (
+            f"<h3>{assertion_type}:</h3>"
+            "<ul>"
+            f"<li>Failed Assertion: <strong>{actual_value} == {expected_value}</strong></li>"
+            f"<li>Actual Value: <strong>{actual_value}</strong> obtained from <code>{actual_expression}</code></li>"
+            f"<li>Expected Value: <strong>{expected_value}</strong> obtained from <code>{expected_expression}</code></li>"
+            "</ul>"
+        )
+
+    return f"""
+            <details style="overflow-y: auto; max-height: 200px;">
+                <summary><u style="cursor: pointer;">Click here to expand</u></summary>
+                <div style="padding-top: 15px;">{formatted_message}</div>
+            </details>
+        """
 
 
 class TestResultOutput(ipywidgets.VBox):
@@ -138,12 +200,17 @@ class TestResultOutput(ipywidgets.VBox):
                         if match := re.search(r"\[.*?\]", test_name):
                             test_name = re.sub(r"\[|\]", "", match.group())
 
+                        if not test.success and test.exception is not None:
+                            test_exception_html = format_assertion_error(test.exception)
+                        else:
+                            test_exception_html = "All good!"
+
                         display(
                             HTML(
                                 f"""
                                     <div style={custom_div_style}>
-                                        <h5>{"&#10004" if test.success else "&#10060"} Test {test_name}</h5>
-                                        {format_long_stdout(filters.ansi.ansi2html(test.stderr)) if not test.success else ""}
+                                        <h5>{"&#x2705;" if test.success else "&#10060;"} Test {test_name}</h5>
+                                        {test_exception_html}
                                     </div>
                                 """
                             )
@@ -257,24 +324,45 @@ class ResultCollector:
     def __init__(self) -> None:
         self.tests: Dict[str, TestResult] = {}
 
+    def pytest_runtest_makereport(self, item: pytest.Item, call: pytest.CallInfo):
+        if call.when == "call":
+            if call.excinfo is None:
+                self.tests[item.nodeid] = TestResult(
+                    test_name=item.nodeid,
+                    success=True,
+                    stdout=call.result,
+                    stderr=call.result,
+                    exception=None,
+                    traceback=None,
+                )
+            else:
+                self.tests[item.nodeid] = TestResult(
+                    test_name=item.nodeid,
+                    success=False,
+                    stdout=None,
+                    stderr=None,
+                    exception=traceback.format_exception_only(call.excinfo.value),
+                    traceback=traceback.format_tb(call.excinfo.tb),
+                )
+
     def pytest_runtest_logreport(self, report: pytest.TestReport):
         # Only collect the results if it did not fail
-        if report.when == "teardown" and report.nodeid not in self.tests:
-            self.tests[report.nodeid] = TestResult(
-                report.capstdout, report.capstderr, report.nodeid, not report.failed
-            )
+        if report.when == "teardown" and report.nodeid in self.tests:
+            test_result = self.tests[report.nodeid]
+            test_result.stdout = report.capstdout
+            test_result.stderr = report.capstderr
 
-    def pytest_exception_interact(
-        self, node: pytest.Item, call: pytest.CallInfo, report: pytest.TestReport
-    ):
-        # We need to collect the results and the stderr if the test failed
-        if report.failed:
-            self.tests[node.nodeid] = TestResult(
-                report.capstdout,
-                str(call.excinfo.getrepr() if call.excinfo else ""),
-                report.nodeid,
-                False,
-            )
+    # def pytest_exception_interact(
+    #     self, node: pytest.Item, call: pytest.CallInfo, report: pytest.TestReport
+    # ):
+    #     # We need to collect the results and the stderr if the test failed
+    #     if report.failed:
+    #         self.tests[node.nodeid] = TestResult(
+    #             report.capstdout,
+    #             str(call.excinfo.getrepr() if call.excinfo else ""),
+    #             report.nodeid,
+    #             False,
+    #         )
 
 
 class AstParser:
