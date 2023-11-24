@@ -4,20 +4,21 @@ import pathlib
 import re
 import traceback
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Callable, Dict, List, Optional, Set
 
 import ipywidgets
 import pytest
 from IPython.core.display import HTML, Javascript
 from IPython.display import Code, display
-from enum import Enum
+
 
 class TestOutcome(Enum):
     PASS = 1
     FAIL = 2
     SYNTAX_ERROR = 3
     TEST_ERROR = 4
-    
+
 
 @dataclass
 class TestCaseResult:
@@ -37,13 +38,13 @@ class IpytestStatus(Enum):
     SOLUTION_FUNCTION_MISSING = 2
     NO_TEST_FOUND = 3
 
+
 @dataclass
 class IpytestResult:
     status: IpytestStatus
     test_results: List[TestCaseResult] | None = None
     exception: List[BaseException] | None = None
     cell_execution_count: Dict[str, int] = field(default_factory=dict)
-
 
 
 @dataclass
@@ -227,10 +228,18 @@ class TestResultOutput(ipywidgets.VBox):
                         if "::" in test_name:
                             test_name = test_name.split("::")[1]
 
-                        if  test.success == TestOutcome.FAIL and test.exception is not None:
+                        if (
+                            test.success == TestOutcome.FAIL
+                            and test.exception is not None
+                        ):
                             test_exception_html = format_assertion_error(test.exception)
-                        elif test.success == TestOutcome.SYNTAX_ERROR and test.exception is not None:
-                            test_exception_html = f"<p>{html.escape(''.join(test.exception))}</p>"
+                        elif (
+                            test.success == TestOutcome.SYNTAX_ERROR
+                            and test.exception is not None
+                        ):
+                            test_exception_html = (
+                                f"<p>{html.escape(''.join(test.exception))}</p>"
+                            )
                         else:
                             test_exception_html = "All good!"
 
@@ -354,10 +363,10 @@ class ResultCollector:
         self.tests: Dict[str, TestCaseResult] = {}
 
     def pytest_runtest_makereport(self, item: pytest.Item, call: pytest.CallInfo):
-        #Test run is finished without error
+        # Test run is finished without error
         if call.when == "call":
             if call.excinfo is None:
-                #Test passes
+                # Test passes
                 self.tests[item.nodeid] = TestCaseResult(
                     test_name=item.nodeid,
                     success=TestOutcome.PASS,
@@ -367,7 +376,7 @@ class ResultCollector:
                     traceback=None,
                 )
             else:
-                #Test fails
+                # Test fails
                 self.tests[item.nodeid] = TestCaseResult(
                     test_name=item.nodeid,
                     success=TestOutcome.FAIL,
@@ -377,7 +386,7 @@ class ResultCollector:
                     traceback=traceback.format_tb(call.excinfo.tb),
                 )
         if call.when == "collect":
-            #Test fails to run because of syntax error
+            # Test fails to run because of syntax error
             if call.excinfo is not None:
                 self.tests[item.nodeid] = TestCaseResult(
                     test_name=item.nodeid,
@@ -394,7 +403,6 @@ class ResultCollector:
             test_result = self.tests[report.nodeid]
             test_result.stdout = report.capstdout
             test_result.stderr = report.capstderr
-
 
 
 class AstParser:
