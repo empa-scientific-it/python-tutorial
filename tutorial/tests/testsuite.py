@@ -3,26 +3,25 @@ import io
 import pathlib
 import re
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Dict, Optional
+from typing import DefaultDict, Dict, List, Optional
 
 import ipynbname
 import pytest
-from IPython.core.display import Javascript
-from IPython.core.getipython import get_ipython
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
-from IPython.display import display
 
 from .testsuite_helpers import (
     AstParser,
     FunctionInjectionPlugin,
     FunctionNotFoundError,
     InstanceNotFoundError,
-    IpytestResult,
-    IpytestStatus,
+    IPytestResult,
+    IPytestStatus,
     ResultCollector,
-    TestResultOutput,
+    TestCaseResult,
 )
+
+# from IPython.display import display as ipython_display
 
 
 def _name_from_line(line: str = ""):
@@ -62,25 +61,25 @@ def get_module_name(line: str, globals_dict: Dict) -> str:
 class TestMagic(Magics):
     """Class to add the test cell magic"""
 
-    shell: Optional[InteractiveShell]  # type: ignore
-    module_file: Optional[pathlib.Path]
-    module_name: Optional[str]
-    cells: Dict[str, int]
-
     def __init__(self, shell):
         super().__init__(shell)
-        self.shell = shell
-        self.module_file = None
-        self.module_name = None
-        self.cells = {}
+        self.max_execution_count = 3
+        self.shell: InteractiveShell = shell
+        self.module_file: Optional[pathlib.Path] = None
+        self.module_name: Optional[str] = None
+        self.cell_execution_count: Dict[str, int] = DefaultDict(int)
+        self.ast_parser: Optional[AstParser] = None
 
-    def run_cell(self, cell: str) -> IpytestResult:
+    def run_cell(self, cell: str) -> IPytestResult:
         # Run the cell through IPython
         try:
-            result = self.shell.run_cell(cell, silent=True)
+            result = self.shell.run_cell(cell, silent=True)  # type: ignore
             result.raise_error()
-        except Exception as e:
-            return IpytestResult(status=IpytestStatus.SYNTAX_ERROR, exception=e)
+        except Exception as err:
+            return IPytestResult(
+                status=IPytestStatus.SYNTAX_ERROR,
+                exceptions=[err],
+            )
 
         # Retrieve the functions names defined in the current cell
         # Only functions with names starting with `solution_` will be candidates for tests
@@ -88,37 +87,30 @@ class TestMagic(Magics):
 
         # Get the functions objects from user namespace
         functions_to_run = {}
-        for name, function in self.shell.user_ns.items():
+        for name, function in self.shell.user_ns.items():  # type: ignore
             if name in functions_names and callable(function):
                 functions_to_run[name.removeprefix("solution_")] = function
 
         if not functions_to_run:
-            return IpytestResult(
-                status=IpytestStatus.SOLUTION_FUNCTION_MISSING,
-                exception=FunctionNotFoundError,
+            return IPytestResult(
+                status=IPytestStatus.SOLUTION_FUNCTION_MISSING,
+                exceptions=[FunctionNotFoundError()],
             )
 
         # TODO: verify if this is needed: probably not because the shell must exist for ipytest to be called
-        if (ipython := get_ipython()) is None:
-            raise InstanceNotFoundError("IPython")
+        # if (ipython := get_ipython()) is None:
+        #     raise InstanceNotFoundError("IPython")
 
+        # TODO: write a function to update the cell execution count
         # Store execution count information for each cell
-        cell_id = ipython.parent_header["metadata"]["cellId"]  # type: ignore
-        if cell_id in self.cells:
-            self.cells[cell_id] += 1
-        else:
-            self.cells[cell_id] = 1
+        cell_id = self.shell.parent_header["metadata"]["cellId"]  # type: ignore
+        self.cell_execution_count[cell_id] += 1
 
-        # Parse the AST tree of the file containing the test functions,
-        # to extract and store all information of function definitions and imports
-        AstParser(self.module_file)
+        # Run the tests for each function
+        outputs: List[TestCaseResult] = []
+        exit_codes: List[int | pytest.ExitCode] = []
 
-        # Run the test for each function
-        outputs = []
-        exit_codes = []
-        with redirect_stdout(io.StringIO()) as stdout, redirect_stderr(
-            io.StringIO()
-        ) as stderr:
+        with redirect_stdout(io.StringIO()) as _, redirect_stderr(io.StringIO()) as _:
             # TODO: test a single function, not multiple solutions
             for name, function in functions_to_run.items():
                 # Create the test collector
@@ -135,17 +127,18 @@ class TestMagic(Magics):
                 # reset execution count on success
                 success = result == pytest.ExitCode.OK
                 exit_codes.append(result)
-                if success:
-                    self.cells[cell_id] = 0
 
-                outputs.append(list(result_collector.tests.values()))
+                if success:
+                    self.cell_execution_count[cell_id] = 0
+
+                outputs.extend(result_collector.tests.values())
+
         if all(
             exit_code == pytest.ExitCode.NO_TESTS_COLLECTED for exit_code in exit_codes
         ):
-            return IpytestResult(status=IpytestStatus.NO_TEST_FOUND, exception=None)
-        return IpytestResult(
-            status=IpytestStatus.FINISHED, test_results=sum(outputs, [])
-        )
+            return IPytestResult(status=IPytestStatus.NO_TEST_FOUND, exceptions=None)
+
+        return IPytestResult(status=IPytestStatus.FINISHED, test_results=outputs)
 
     @cell_magic
     def ipytest(self, line: str, cell: str):
@@ -153,10 +146,12 @@ class TestMagic(Magics):
         # Check that the magic is called from a notebook
         if not self.shell:
             raise InstanceNotFoundError("InteractiveShell")
+
         # Get the module containing the test(s)
         module_name = get_module_name(line, self.shell.user_global_ns)
         self.module_name = module_name
         module_file = pathlib.Path(f"tutorial/tests/test_{self.module_name}.py")
+
         # Check that the test module file exists
         if not module_file.exists():
             raise FileNotFoundError(f"Module file '{module_file}' does not exist")
@@ -164,9 +159,14 @@ class TestMagic(Magics):
 
         result = self.run_cell(cell)
 
+        # Parse the AST tree of the file containing the test functions,
+        # to extract and store all information of function definitions and imports
+        self.ast_parser = AstParser(self.module_file)
+
+        # Display the results
         self.display(result)
 
-    def display(self, result: IpytestResult) -> None:
+    def display(self, ipytest_result: IPytestResult) -> None:
         # Display the results
         # TODO : display the results in a more readable way. This function should return HTML
         # - If synatx error, display the error message in the same style as the rest
@@ -174,16 +174,20 @@ class TestMagic(Magics):
         # - If the test finish, iterate over the test results and display each case
         #   - If all tests pass, display a message informing the user that all tests passed
         #   - If some tests fail, display a message informing the user that some tests failed
-        match result.status:
-            case IpytestStatus.SYNTAX_ERROR:
-                display(f"alert('Syntax error: {result.exception}')")
-            case IpytestStatus.SOLUTION_FUNCTION_MISSING:
-                display(f"alert('Solution function missing: {result.exception}')")
-            case IpytestStatus.FINISHED:
-                for test_result in result.test_results:
-                    display(test_result)
-            case IpytestStatus.NO_TEST_FOUND:
-                display(f"alert(no test found)')")
+        match ipytest_result.status:
+            case IPytestStatus.SYNTAX_ERROR:
+                # Syntax error
+                ...
+            case IPytestStatus.SOLUTION_FUNCTION_MISSING:
+                # Solution function missing
+                ...
+            case IPytestStatus.FINISHED if ipytest_result.test_results:
+                # Tests finished. Display the results
+                # for test_result in ipytest_result.test_results:
+                ...
+            case IPytestStatus.NO_TEST_FOUND:
+                # No test found
+                ...
 
 
 def load_ipython_extension(ipython):

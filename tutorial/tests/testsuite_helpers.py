@@ -3,7 +3,7 @@ import html
 import pathlib
 import re
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Dict, List, Optional, Set
 
@@ -20,6 +20,13 @@ class TestOutcome(Enum):
     TEST_ERROR = 4
 
 
+class IPytestStatus(Enum):
+    FINISHED = 0
+    SYNTAX_ERROR = 1
+    SOLUTION_FUNCTION_MISSING = 2
+    NO_TEST_FOUND = 3
+
+
 @dataclass
 class TestCaseResult:
     """Container class to store the test results when we collect them"""
@@ -32,19 +39,12 @@ class TestCaseResult:
     traceback: List[str] | None
 
 
-class IpytestStatus(Enum):
-    FINISHED = 0
-    SYNTAX_ERROR = 1
-    SOLUTION_FUNCTION_MISSING = 2
-    NO_TEST_FOUND = 3
-
-
 @dataclass
-class IpytestResult:
-    status: IpytestStatus
-    test_results: List[TestCaseResult] | None = None
-    exception: List[BaseException] | None = None
-    cell_execution_count: Dict[str, int] = field(default_factory=dict)
+class IPytestResult:
+    status: IPytestStatus
+    test_results: Optional[List[TestCaseResult]] = None
+    exceptions: Optional[List[BaseException]] = None
+    cell_execution_count: Optional[Dict[str, int]] = None
 
 
 @dataclass
@@ -385,6 +385,7 @@ class ResultCollector:
                     exception=traceback.format_exception_only(call.excinfo.value),
                     traceback=traceback.format_tb(call.excinfo.tb),
                 )
+
         if call.when == "collect":
             # Test fails to run because of syntax error
             if call.excinfo is not None:
