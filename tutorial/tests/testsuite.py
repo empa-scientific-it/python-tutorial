@@ -4,11 +4,10 @@ import pathlib
 import re
 from contextlib import redirect_stderr, redirect_stdout
 from multiprocessing import Process, Queue
-from threading import Thread
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from typing import Dict, Optional, Callable
 
 from dataclasses import dataclass
+import inspect
 
 import ipynbname
 import pytest
@@ -64,7 +63,7 @@ def get_module_name(line: str, globals_dict: Dict) -> str:
 
 
 
-def run_test(module_name: str, function_name: str, function_to_test: Callable, q: Queue) -> TestExecutionResult:
+def run_test(module_name: pathlib.Path, function_name: str, function_to_test: Callable, q: Queue) -> TestExecutionResult:
     rc = ResultCollector()
     with redirect_stderr(io.StringIO()) as pytest_stderr, redirect_stdout(
         io.StringIO()
@@ -72,8 +71,9 @@ def run_test(module_name: str, function_name: str, function_to_test: Callable, q
         test_name = f"test_{function_name}"
         result = pytest.main(
             [
-                "-q",
-                f"tutorial/tests/test_{module_name}.py::{test_name}",
+                "-k",
+                test_name,
+                f"{module_name}",
             ],
             plugins=[rc, FunctionInjectionPlugin(function_to_test)],
         )
@@ -120,12 +120,13 @@ class TestMagic(Magics):
 
             # Retrieve the functions names defined in the current cell
             # Only functions with names starting with `solution_` will be candidates for tests
-            functions_names = re.findall(r"^def\s+(solution_.*?)\s*\(", cell, re.M)
+            functions_names = re.findall(r"^(?:async\s+)?def\s+(solution_.*?)\s*\(", cell, re.M)
 
-            # Get the functions objects from user namespace
+            # Get the functions objects from user namespace 
             functions_to_run = {}
             for name, function in self.shell.user_ns.items():
-                if name in functions_names and callable(function):
+                #Check if the function is a solution function
+                if name in functions_names and (inspect.isfunction(function) | inspect.iscoroutinefunction(function)):
                     functions_to_run[name.removeprefix("solution_")] = function
 
             if not functions_to_run:
@@ -148,13 +149,13 @@ class TestMagic(Magics):
             outputs = []
             for name, function in functions_to_run.items():
                 #Create the queue to store the result
-                q = Queue()
-                # Run the tests
-                p = Process(target=run_test, args=(module_name, name, function, q))
-                p.start()
-                p.join()
-                #Get the result
-                res = q.get()
+                test_result_queue = Queue()
+                # Run the tests, pass the queue to store the result as an argument
+                test_process = Process(target=run_test, args=(module_file, name, function, test_result_queue))
+                test_process.start()
+                test_process.join()
+                #Get the result from the queue
+                res = test_result_queue.get()
                 # reset execution count on success
                 if res.success:
                     self.cells[cell_id] = 0

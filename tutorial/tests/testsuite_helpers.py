@@ -10,6 +10,7 @@ from IPython.core.display import HTML, Javascript
 from IPython.display import Code, display
 from nbconvert import filters
 
+import traceback
 
 @dataclass
 class TestResult:
@@ -18,6 +19,7 @@ class TestResult:
     stdout: str
     stderr: str
     test_name: str
+    assertions: str
     success: bool
 
 
@@ -152,7 +154,7 @@ class TestResultOutput(ipywidgets.VBox):
                                 f"""
                                     <div style={custom_div_style}>
                                         <h5>{"&#10004" if test.success else "&#10060"} Test {test_name}</h5>
-                                        {format_long_stdout(filters.ansi.ansi2html(test.stderr)) if not test.success else ""}
+                                        {test.assertions if not test.success else ""}
                                     </div>
                                 """
                             )
@@ -266,24 +268,27 @@ class ResultCollector:
     def __init__(self) -> None:
         self.tests: Dict[str, TestResult] = {}
 
-    def pytest_runtest_logreport(self, report: pytest.TestReport):
+    def pytest_runtest_logreport(self , report: pytest.TestReport) -> None:
         # Only collect the results if it did not fail
-        if report.when == "teardown" and report.nodeid not in self.tests:
-            self.tests[report.nodeid] = TestResult(
-                report.capstdout, report.capstderr, report.nodeid, not report.failed
-            )
+        if report.when == "call":
+            if not report.failed:
+                self.tests[report.nodeid] = TestResult("success success", "success", report.nodeid, "", True)
+            else:   
+                # match report.longrepr:
+                #     case str(x):
+                #         res = x
+                #     case (x, y, z):
+                #         res = x
+                #     case pytest.ExceptionInfo as x: 
+                #         res = str(x)
+                #     case pytest.TerminalRep as x:
+                #         res = str(x)
+                #     case _:
+                #         res = "unknown error"
+                self.tests[report.nodeid] = TestResult("failure failure", "failure", report.nodeid, str(report.longrepr) , False)
 
-    def pytest_exception_interact(
-        self, node: pytest.Item, call: pytest.CallInfo, report: pytest.TestReport
-    ):
-        # We need to collect the results and the stderr if the test failed
-        if report.failed:
-            self.tests[node.nodeid] = TestResult(
-                report.capstdout,
-                str(call.excinfo.getrepr() if call.excinfo else ""),
-                report.nodeid,
-                False,
-            )
+   
+
 
 
 class AstParser:

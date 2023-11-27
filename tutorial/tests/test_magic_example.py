@@ -1,5 +1,5 @@
 import pytest
-
+import asyncio
 
 def my_num() -> int:
     return 1
@@ -48,6 +48,10 @@ def reference_power4(num: int) -> int:
     return num**4
 
 
+async def reference_async(x: int) -> int:
+    return x
+
+
 input_args = [1, 2, 3, 4, 32]
 
 
@@ -67,3 +71,10 @@ def test_power3(input_arg, function_to_test):
 def test_power4(input_arg, function_to_test):
     """The test case(s)"""
     assert function_to_test(input_arg) == reference_power4(input_arg)
+
+@pytest.mark.parametrize("input_arg", [1,2,3,4,5])
+def test_async(function_to_test, input_arg):
+    """The test case(s)"""
+    res = asyncio.run(function_to_test(input_arg))
+    reference_res = asyncio.run(reference_async(input_arg))
+    assert res  == reference_res
