@@ -2,9 +2,9 @@ import ast
 import html
 import pathlib
 import re
-import traceback
 from dataclasses import dataclass
 from enum import Enum
+from types import TracebackType
 from typing import Callable, Dict, List, Optional, Set
 
 import ipywidgets
@@ -32,11 +32,36 @@ class TestCaseResult:
     """Container class to store the test results when we collect them"""
 
     test_name: str
-    success: TestOutcome
+    outcome: TestOutcome
     stdout: str | None
     stderr: str | None
-    exception: List[str] | None
-    traceback: List[str] | None
+    exception: BaseException | None
+    traceback: TracebackType | None
+    _html_format_string: str = """<div class="alert alert-box {}"><h4>{}</h4>{}</div>"""
+
+    def __format__(self) -> str:
+        """Format a test result as a string"""
+
+        if self.outcome == TestOutcome.FAIL:
+            return self._html_format_string.format(
+                "alert-danger",
+                f"Tests <strong>FAILED</strong> for the function <code>{self.test_name}</code>",
+                "&#x1F631 Your solution was not correct!",
+            )
+        elif self.outcome == TestOutcome.SYNTAX_ERROR:
+            return self._html_format_string.format(
+                "alert-warning",
+                "Tests <strong>COULD NOT RUN</strong> for this cell.",
+                "&#129300 Careful, looks like you have a syntax error.",
+            )
+        elif self.outcome == TestOutcome.PASS:
+            return self._html_format_string.format(
+                "alert-success",
+                f"Tests <strong>PASSED</strong> for the function <code>{self.test_name}</code>",
+                "&#x1F389 Congratulations!",
+            )
+        else:
+            return self.__str__()
 
 
 @dataclass
@@ -45,50 +70,6 @@ class IPytestResult:
     test_results: Optional[List[TestCaseResult]] = None
     exceptions: Optional[List[BaseException]] = None
     cell_execution_count: Optional[Dict[str, int]] = None
-
-
-@dataclass
-class OutputConfig:
-    """Container class to store the information to display in the test output"""
-
-    style: str
-    name: str
-    result: str
-
-
-def format_success_failure(
-    syntax_error: bool, success: TestOutcome, name: str
-) -> OutputConfig:
-    """
-    Depending on the test results, returns a fragment that represents
-    either an error message, a success message, or a syntax error warning
-    """
-
-    if syntax_error:
-        return OutputConfig(
-            "alert-warning",
-            "Tests <strong>COULD NOT RUN</strong> for this cell.",
-            "&#129300 Careful, looks like you have a syntax error.",
-        )
-
-    if success == TestOutcome.FAIL:
-        return OutputConfig(
-            "alert-danger",
-            f"Tests <strong>FAILED</strong> for the function <code>{name}</code>",
-            "&#x1F631 Your solution was not correct!",
-        )
-    elif success == TestOutcome.SYNTAX_ERROR:
-        return OutputConfig(
-            "alert-danger",
-            f"Tests <strong>FAILED</strong> for the function <code>{name}</code>",
-            "&#x1F631 Your solution was not correct!",
-        )
-    else:
-        return OutputConfig(
-            "alert-success",
-            f"Tests <strong>PASSED</strong> for the function <code>{name}</code>",
-            "&#x1F64C Congratulations, your solution was correct!",
-        )
 
 
 # TODO: this should be deleted if the new format_assertion_error() is used
@@ -188,7 +169,6 @@ class TestResultOutput(ipywidgets.VBox):
         solution_body: str = "",
     ):
         reveal_solution = cell_exec_count > 2 or success
-        output_config = format_success_failure(syntax_error, success, name)
         output_cell = ipywidgets.Output()
 
         # For each test, create an alert box with the appropriate message,
@@ -196,11 +176,7 @@ class TestResultOutput(ipywidgets.VBox):
         with output_cell:
             custom_div_style = '"border: 1px solid; border-color: lightgray; background-color: #FAFAFA; margin: 5px; padding: 10px;"'
             display(HTML("<h3 style=>Test results</h3>"))
-            display(
-                HTML(
-                    f"""<div class="alert alert-box {output_config.style}"><h4>{output_config.name}</h4>{output_config.result}</div>"""
-                )
-            )
+            # TODO: format a test result as a string with __format__
 
             if not syntax_error and isinstance(test_outputs, List):
                 if len(test_outputs) > 0 and test_outputs[0].stdout:
@@ -229,12 +205,12 @@ class TestResultOutput(ipywidgets.VBox):
                             test_name = test_name.split("::")[1]
 
                         if (
-                            test.success == TestOutcome.FAIL
+                            test.outcome == TestOutcome.FAIL
                             and test.exception is not None
                         ):
                             test_exception_html = format_assertion_error(test.exception)
                         elif (
-                            test.success == TestOutcome.SYNTAX_ERROR
+                            test.outcome == TestOutcome.SYNTAX_ERROR
                             and test.exception is not None
                         ):
                             test_exception_html = (
@@ -247,7 +223,7 @@ class TestResultOutput(ipywidgets.VBox):
                             HTML(
                                 f"""
                                     <div style={custom_div_style}>
-                                        <h3>{"&#x2705;" if test.success else "&#10060;"} Test {test_name}</h3>
+                                        <h3>{"&#x2705;" if test.outcome else "&#10060;"} Test {test_name}</h3>
                                         {test_exception_html}
                                     </div>
                                 """
@@ -369,7 +345,7 @@ class ResultCollector:
                 # Test passes
                 self.tests[item.nodeid] = TestCaseResult(
                     test_name=item.nodeid,
-                    success=TestOutcome.PASS,
+                    outcome=TestOutcome.PASS,
                     stdout=call.result,
                     stderr=call.result,
                     exception=None,
@@ -379,11 +355,11 @@ class ResultCollector:
                 # Test fails
                 self.tests[item.nodeid] = TestCaseResult(
                     test_name=item.nodeid,
-                    success=TestOutcome.FAIL,
+                    outcome=TestOutcome.FAIL,
                     stdout=None,
                     stderr=None,
-                    exception=traceback.format_exception_only(call.excinfo.value),
-                    traceback=traceback.format_tb(call.excinfo.tb),
+                    exception=call.excinfo.value,
+                    traceback=call.excinfo.tb,
                 )
 
         if call.when == "collect":
@@ -391,11 +367,11 @@ class ResultCollector:
             if call.excinfo is not None:
                 self.tests[item.nodeid] = TestCaseResult(
                     test_name=item.nodeid,
-                    success=TestOutcome.TEST_ERROR,
+                    outcome=TestOutcome.TEST_ERROR,
                     stdout=None,
                     stderr=None,
-                    exception=traceback.format_exception_only(call.excinfo.value),
-                    traceback=traceback.format_tb(call.excinfo.tb),
+                    exception=call.excinfo.value,
+                    traceback=call.excinfo.tb,
                 )
 
     def pytest_runtest_logreport(self, report: pytest.TestReport):
