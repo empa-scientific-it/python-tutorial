@@ -160,35 +160,33 @@ class TestResultOutput(ipywidgets.VBox):
 
     def __init__(self, ipytest_result: IPytestResult):
         self.ipytest_result = ipytest_result
-        # self.output_cell = None
-        # self.solution_output = None
-        # self.solution_box: Optional[ipywidgets.Box] = None
-
-        # self._ipython_display_()
-
+        
+        solution_output = ipywidgets.Output()
+        solution_box = ipywidgets.VBox()
         output_cell = ipywidgets.Output()
-        with output_cell:
-            match self.ipytest_result.status:
-                case IPytestOutcome.SYNTAX_ERROR:
-                    # Syntax error
-                    display(HTML("<h3>Syntax Error</h3>"))
-                case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
-                    # Solution function missing
-                    display(HTML("<h3>Solution Function Missing</h3>"))
-                case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
-                    display(HTML("<h3>Test Finished</h3>"))
-                case IPytestOutcome.NO_TEST_FOUND:
-                    display(HTML("<h3>No Test Found</h3>"))
+         
+        output_cell.append_display_data(HTML("<h2>Test Results</h2>"))
+        match self.ipytest_result.status:
+            case IPytestOutcome.SYNTAX_ERROR:
+                # Syntax error
+                output_cell.append_display_data(HTML("<h3>Syntax Error</h3>"))
+            case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
+                # Solution function missing
+                output_cell.append_display_data(HTML("<h3>Solution Function Missing</h3>"))
+            case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
+                output_cell.append_display_data(HTML("<h3>Test Finished</h3>"))
+            case IPytestOutcome.NO_TEST_FOUND:
+                output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))
 
         super().__init__(
             children=[
                 output_cell,
+                solution_box,
+                solution_output
             ]
         )
 
-    def _ipython_display_(self):
-        """Display the test results"""
-        self.ipytest_result.test_results
+
 
 
 @pytest.fixture

@@ -10,6 +10,7 @@ import pytest
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import display as ipython_display
+import sys
 
 from .testsuite_helpers import (
     AstParser,
@@ -69,6 +70,14 @@ class TestMagic(Magics):
         self.module_name: Optional[str] = None
         self.cell_execution_count: Dict[str, int] = DefaultDict(int)
         self.ast_parser: Optional[AstParser] = None
+        #This is monkey patching the showtraceback function to hide the traceback
+        #https://stackoverflow.com/questions/61075760/how-to-hide-the-error-traceback-in-jupyter-lab-notebook
+        #TODO: improve this with a cleaer solution
+        def hide_traceback(exc_tuple=None, filename=None, tb_offset=None,
+                   exception_only=False, running_compiled_code=False):
+            etype, value, tb = sys.exc_info()
+            return self.shell._showtraceback(etype, value, shell.InteractiveTB.get_exception_only(etype, value))
+        self.shell._showtraceback = hide_traceback
 
     def run_cell(self, cell: str) -> IPytestResult:
         # Run the cell through IPython
@@ -97,9 +106,6 @@ class TestMagic(Magics):
                 exceptions=[FunctionNotFoundError()],
             )
 
-        # TODO: verify if this is needed: probably not because the shell must exist for ipytest to be called
-        # if (ipython := get_ipython()) is None:
-        #     raise InstanceNotFoundError("IPython")
 
         # TODO: write a function to update the cell execution count
         # Store execution count information for each cell
@@ -164,7 +170,8 @@ class TestMagic(Magics):
         self.ast_parser = AstParser(self.module_file)
 
         # Display the results
-        ipython_display(TestResultOutput(result))
+
+        ipython_display(*TestResultOutput(result).children)
 
 
 def load_ipython_extension(ipython):
