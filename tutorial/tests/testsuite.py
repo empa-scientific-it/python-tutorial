@@ -21,7 +21,7 @@ from .testsuite_helpers import (
     IPytestResult,
     ResultCollector,
     TestCaseResult,
-    TestResultOutput,
+    show_test_result_output,
 )
 
 
@@ -72,11 +72,9 @@ class TestMagic(Magics):
         self.ast_parser: Optional[AstParser] = None
         #This is monkey patching the showtraceback function to hide the traceback
         #https://stackoverflow.com/questions/61075760/how-to-hide-the-error-traceback-in-jupyter-lab-notebook
-        #TODO: improve this with a cleaer solution
         def hide_traceback(exc_tuple=None, filename=None, tb_offset=None,
                    exception_only=False, running_compiled_code=False):
-            etype, value, tb = sys.exc_info()
-            return self.shell._showtraceback(etype, value, shell.InteractiveTB.get_exception_only(etype, value))
+            return None
         self.shell._showtraceback = hide_traceback
 
     def run_cell(self, cell: str) -> IPytestResult:
@@ -170,8 +168,7 @@ class TestMagic(Magics):
         self.ast_parser = AstParser(self.module_file)
 
         # Display the results
-
-        ipython_display(*TestResultOutput(result).children)
+        ipython_display(show_test_result_output(result))
 
 
 def load_ipython_extension(ipython):
