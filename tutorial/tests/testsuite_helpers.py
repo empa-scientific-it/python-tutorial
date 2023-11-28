@@ -9,18 +9,17 @@ from typing import Callable, Dict, List, Optional, Set
 
 import ipywidgets
 import pytest
-from IPython.core.display import HTML, Javascript
-from IPython.display import Code, display
+from IPython.core.display import HTML
+from IPython.display import display
 
 
 class TestOutcome(Enum):
     PASS = 1
     FAIL = 2
-    SYNTAX_ERROR = 3
-    TEST_ERROR = 4
+    TEST_ERROR = 3
 
 
-class IPytestStatus(Enum):
+class IPytestOutcome(Enum):
     FINISHED = 0
     SYNTAX_ERROR = 1
     SOLUTION_FUNCTION_MISSING = 2
@@ -48,7 +47,7 @@ class TestCaseResult:
                 f"Tests <strong>FAILED</strong> for the function <code>{self.test_name}</code>",
                 "&#x1F631 Your solution was not correct!",
             )
-        elif self.outcome == TestOutcome.SYNTAX_ERROR:
+        elif self.outcome == TestOutcome.TEST_ERROR:
             return self._html_format_string.format(
                 "alert-warning",
                 "Tests <strong>COULD NOT RUN</strong> for this cell.",
@@ -66,7 +65,7 @@ class TestCaseResult:
 
 @dataclass
 class IPytestResult:
-    status: IPytestStatus
+    status: IPytestOutcome
     test_results: Optional[List[TestCaseResult]] = None
     exceptions: Optional[List[BaseException]] = None
     cell_execution_count: Optional[Dict[str, int]] = None
@@ -159,160 +158,37 @@ def format_assertion_error(exception_info: List[str]) -> str:
 class TestResultOutput(ipywidgets.VBox):
     """Class to display the test results in a structured way"""
 
-    def __init__(
-        self,
-        test_outputs: Optional[List[TestCaseResult]] = None,
-        name: str = "",
-        syntax_error: bool = False,
-        success: bool = False,
-        cell_exec_count: int = 0,
-        solution_body: str = "",
-    ):
-        reveal_solution = cell_exec_count > 2 or success
+    def __init__(self, ipytest_result: IPytestResult):
+        self.ipytest_result = ipytest_result
+        # self.output_cell = None
+        # self.solution_output = None
+        # self.solution_box: Optional[ipywidgets.Box] = None
+
+        # self._ipython_display_()
+
         output_cell = ipywidgets.Output()
-
-        # For each test, create an alert box with the appropriate message,
-        # print the code output and display code errors in case of failure
         with output_cell:
-            custom_div_style = '"border: 1px solid; border-color: lightgray; background-color: #FAFAFA; margin: 5px; padding: 10px;"'
-            display(HTML("<h3 style=>Test results</h3>"))
-            # TODO: format a test result as a string with __format__
+            match self.ipytest_result.status:
+                case IPytestOutcome.SYNTAX_ERROR:
+                    # Syntax error
+                    display(HTML("<h3>Syntax Error</h3>"))
+                case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
+                    # Solution function missing
+                    display(HTML("<h3>Solution Function Missing</h3>"))
+                case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
+                    display(HTML("<h3>Test Finished</h3>"))
+                case IPytestOutcome.NO_TEST_FOUND:
+                    display(HTML("<h3>No Test Found</h3>"))
 
-            if not syntax_error and isinstance(test_outputs, List):
-                if len(test_outputs) > 0 and test_outputs[0].stdout:
-                    display(
-                        HTML(
-                            f"""
-                                <h4>&#128073; Code output:</h4>
-                                <div style={custom_div_style}>{test_outputs[0].stdout}</div>
-                            """
-                        )
-                    )
-
-                display(
-                    HTML(
-                        f"""
-                            <h4>&#128073; We tested your solution <code>solution_{name}</code> {'' if len(test_outputs) == 1 else str(len(test_outputs)) + ' times'}.
-                            {"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}
-                        """
-                    )
-                )
-
-                if not success:
-                    for test in test_outputs:
-                        test_name = test.test_name
-                        if "::" in test_name:
-                            test_name = test_name.split("::")[1]
-
-                        if (
-                            test.outcome == TestOutcome.FAIL
-                            and test.exception is not None
-                        ):
-                            test_exception_html = format_assertion_error(test.exception)
-                        elif (
-                            test.outcome == TestOutcome.SYNTAX_ERROR
-                            and test.exception is not None
-                        ):
-                            test_exception_html = (
-                                f"<p>{html.escape(''.join(test.exception))}</p>"
-                            )
-                        else:
-                            test_exception_html = "All good!"
-
-                        display(
-                            HTML(
-                                f"""
-                                    <div style={custom_div_style}>
-                                        <h3>{"&#x2705;" if test.outcome else "&#10060;"} Test {test_name}</h3>
-                                        {test_exception_html}
-                                    </div>
-                                """
-                            )
-                        )
-
-                if not reveal_solution:
-                    display(
-                        HTML(
-                            f"<h4>&#128221; A proposed solution will appear after {3 - cell_exec_count} more failed attempt{'s' if cell_exec_count < 2 else ''}.</h4>"
-                        )
-                    )
-            else:
-                # display syntax error custom alert
-                display(
-                    HTML(
-                        "<h4>&#128073; Your code cannot run because of the following error:</h4>"
-                    )
-                )
-
-                # fix syntax error styling
-                display(
-                    Javascript(
-                        """
-                            var syntax_error_containers = document.querySelectorAll('div[data-mime-type="application/vnd.jupyter.stderr"]');
-                            for (let container of syntax_error_containers) {
-                                var syntax_error_div = container.parentNode;
-                                var container_div = syntax_error_div.parentNode;
-                                const container_style = "position: relative; padding-bottom: " + syntax_error_div.clientHeight + "px;";
-                                container_div.setAttribute("style", container_style);
-                                syntax_error_div.setAttribute("style", "position: absolute; bottom: 0;");
-                            }
-                        """
-                    )
-                )
-
-            # fix css styling
-            display(
-                Javascript(
-                    """
-                        var divs = document.querySelectorAll(".jupyter-widget-Collapse-contents");
-                        for (let div of divs) {
-                            div.setAttribute("style", "padding: 0");
-                        }
-                        divs = document.querySelectorAll(".widget-vbox");
-                        for (let div of divs) {
-                            div.setAttribute("style", "background: #EAF0FB");
-                        }
-                    """
-                )
-            )
-
-            display(
-                Javascript(
-                    """
-                        var output_divs = document.querySelectorAll(".jp-Cell-outputArea");
-                        for (let div of output_divs) {
-                            var div_str = String(div.innerHTML);
-                            if (div_str.includes("alert-success") | div_str.includes("alert-danger")) {
-                                div.setAttribute("style", "padding-bottom: 0;");
-                            }
-                        }
-                    """
-                )
-            )
-
-        # After 3 failed attempts or on success, reveal the proposed solution
-        # using a Code box inside an Accordion to display the str containing all code
-        solution_output = ipywidgets.Output()
-        with solution_output:
-            display(HTML("<h4>&#128073; Proposed solution:</h4>"))
-
-        solution_code = ipywidgets.Output()
-        with solution_code:
-            display(Code(language="python", data=f"{solution_body}"))
-
-        solution_accordion = ipywidgets.Accordion(
-            titles=("Click here to reveal",), children=[solution_code]
+        super().__init__(
+            children=[
+                output_cell,
+            ]
         )
 
-        solution_box = ipywidgets.Box(
-            children=[solution_output, solution_accordion],
-            layout={
-                "display": "block" if reveal_solution else "none",
-                "padding": "0 20px 0 0",
-            },
-        )
-
-        super().__init__(children=[output_cell, solution_box])
+    def _ipython_display_(self):
+        """Display the test results"""
+        self.ipytest_result.test_results
 
 
 @pytest.fixture

@@ -9,19 +9,19 @@ import ipynbname
 import pytest
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
+from IPython.display import display as ipython_display
 
 from .testsuite_helpers import (
     AstParser,
     FunctionInjectionPlugin,
     FunctionNotFoundError,
     InstanceNotFoundError,
+    IPytestOutcome,
     IPytestResult,
-    IPytestStatus,
     ResultCollector,
     TestCaseResult,
+    TestResultOutput,
 )
-
-# from IPython.display import display as ipython_display
 
 
 def _name_from_line(line: str = ""):
@@ -77,7 +77,7 @@ class TestMagic(Magics):
             result.raise_error()
         except Exception as err:
             return IPytestResult(
-                status=IPytestStatus.SYNTAX_ERROR,
+                status=IPytestOutcome.SYNTAX_ERROR,
                 exceptions=[err],
             )
 
@@ -93,7 +93,7 @@ class TestMagic(Magics):
 
         if not functions_to_run:
             return IPytestResult(
-                status=IPytestStatus.SOLUTION_FUNCTION_MISSING,
+                status=IPytestOutcome.SOLUTION_FUNCTION_MISSING,
                 exceptions=[FunctionNotFoundError()],
             )
 
@@ -136,9 +136,9 @@ class TestMagic(Magics):
         if all(
             exit_code == pytest.ExitCode.NO_TESTS_COLLECTED for exit_code in exit_codes
         ):
-            return IPytestResult(status=IPytestStatus.NO_TEST_FOUND, exceptions=None)
+            return IPytestResult(status=IPytestOutcome.NO_TEST_FOUND, exceptions=None)
 
-        return IPytestResult(status=IPytestStatus.FINISHED, test_results=outputs)
+        return IPytestResult(status=IPytestOutcome.FINISHED, test_results=outputs)
 
     @cell_magic
     def ipytest(self, line: str, cell: str):
@@ -164,30 +164,7 @@ class TestMagic(Magics):
         self.ast_parser = AstParser(self.module_file)
 
         # Display the results
-        self.display(result)
-
-    def display(self, ipytest_result: IPytestResult) -> None:
-        # Display the results
-        # TODO : display the results in a more readable way. This function should return HTML
-        # - If synatx error, display the error message in the same style as the rest
-        # - If the solution (function_to_test) is missing, display a message informing the user that the solution is missing
-        # - If the test finish, iterate over the test results and display each case
-        #   - If all tests pass, display a message informing the user that all tests passed
-        #   - If some tests fail, display a message informing the user that some tests failed
-        match ipytest_result.status:
-            case IPytestStatus.SYNTAX_ERROR:
-                # Syntax error
-                ...
-            case IPytestStatus.SOLUTION_FUNCTION_MISSING:
-                # Solution function missing
-                ...
-            case IPytestStatus.FINISHED if ipytest_result.test_results:
-                # Tests finished. Display the results
-                # for test_result in ipytest_result.test_results:
-                ...
-            case IPytestStatus.NO_TEST_FOUND:
-                # No test found
-                ...
+        ipython_display(TestResultOutput(result))
 
 
 def load_ipython_extension(ipython):
