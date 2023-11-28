@@ -3,16 +3,15 @@ import io
 import pathlib
 import re
 from contextlib import redirect_stderr, redirect_stdout
-from typing import DefaultDict, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import ipynbname
 import pytest
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
-from IPython.display import display as ipython_display
 
+from .ast_parser import AstParser
 from .testsuite_helpers import (
-    AstParser,
     FunctionInjectionPlugin,
     FunctionNotFoundError,
     InstanceNotFoundError,
@@ -20,7 +19,7 @@ from .testsuite_helpers import (
     IPytestResult,
     ResultCollector,
     TestCaseResult,
-    show_test_result_output,
+    TestResultOutput,
 )
 
 
@@ -67,23 +66,15 @@ class TestMagic(Magics):
         self.shell: InteractiveShell = shell
         self.module_file: Optional[pathlib.Path] = None
         self.module_name: Optional[str] = None
-        self.cell_execution_count: Dict[str, int] = DefaultDict(int)
         self.ast_parser: Optional[AstParser] = None
 
-        # This is monkey patching the showtraceback function to hide the traceback
-        # https://stackoverflow.com/questions/61075760/how-to-hide-the-error-traceback-in-jupyter-lab-notebook
-        def hide_traceback(
-            exc_tuple=None,
-            filename=None,
-            tb_offset=None,
-            exception_only=False,
-            running_compiled_code=False,
-        ):
-            return None
-
-        self.shell._showtraceback = hide_traceback
+        # This is monkey-patching suppress printing any exception or traceback
+        self.shell._showtraceback = lambda *args, **kwargs: None
 
     def run_cell(self, cell: str) -> IPytestResult:
+        # The IPytestResult object to return
+        ipytest_result = IPytestResult()
+
         # Run the cell through IPython
         try:
             result = self.shell.run_cell(cell, silent=True)  # type: ignore
@@ -110,10 +101,9 @@ class TestMagic(Magics):
                 exceptions=[FunctionNotFoundError()],
             )
 
-        # TODO: write a function to update the cell execution count
         # Store execution count information for each cell
         cell_id = self.shell.parent_header["metadata"]["cellId"]  # type: ignore
-        self.cell_execution_count[cell_id] += 1
+        ipytest_result.cell_execution_count[cell_id] += 1
 
         # Run the tests for each function
         outputs: List[TestCaseResult] = []
@@ -138,16 +128,19 @@ class TestMagic(Magics):
                 exit_codes.append(result)
 
                 if success:
-                    self.cell_execution_count[cell_id] = 0
+                    ipytest_result.cell_execution_count[cell_id] = 0
 
                 outputs.extend(result_collector.tests.values())
 
         if all(
             exit_code == pytest.ExitCode.NO_TESTS_COLLECTED for exit_code in exit_codes
         ):
-            return IPytestResult(status=IPytestOutcome.NO_TEST_FOUND, exceptions=None)
+            ipytest_result.status = IPytestOutcome.NO_TEST_FOUND
+        else:
+            ipytest_result.status = IPytestOutcome.FINISHED
+            ipytest_result.test_results = outputs
 
-        return IPytestResult(status=IPytestOutcome.FINISHED, test_results=outputs)
+        return ipytest_result
 
     @cell_magic
     def ipytest(self, line: str, cell: str):
@@ -168,12 +161,13 @@ class TestMagic(Magics):
 
         result = self.run_cell(cell)
 
+        # TODO: this should be passed somehow to the TestResultOutput class
         # Parse the AST tree of the file containing the test functions,
         # to extract and store all information of function definitions and imports
         self.ast_parser = AstParser(self.module_file)
 
-        # Display the results
-        ipython_display(show_test_result_output(result))
+        # Display the test results and the solution code
+        TestResultOutput(result).display_results()
 
 
 def load_ipython_extension(ipython):

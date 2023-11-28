@@ -1,15 +1,16 @@
-import ast
 import html
-import pathlib
 import re
-from dataclasses import dataclass
+import traceback
+from collections import defaultdict
+from dataclasses import dataclass, field
 from enum import Enum
 from types import TracebackType
-from typing import Callable, Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional
 
 import ipywidgets
 import pytest
 from IPython.core.display import HTML
+from IPython.display import display as ipython_display
 
 
 class TestOutcome(Enum):
@@ -64,48 +65,23 @@ class TestCaseResult:
 
 @dataclass
 class IPytestResult:
-    status: IPytestOutcome
+    status: Optional[IPytestOutcome] = None
     test_results: Optional[List[TestCaseResult]] = None
     exceptions: Optional[List[BaseException]] = None
-    cell_execution_count: Optional[Dict[str, int]] = None
-
-
-# TODO: this should be deleted if the new format_assertion_error() is used
-def format_long_stdout(text: str) -> str:
-    """
-    Format the error message lines of a long test stdout
-    as an HTML that expands, by using the <details> element
-    """
-
-    stdout_body = re.split(r"_\s{3,}", text)[-1]
-    stdout_filtered = list(
-        filter(re.compile(r".*>E\s").match, stdout_body.splitlines())
+    cell_execution_count: Dict[str, int] = field(
+        default_factory=lambda: defaultdict(int)
     )
-    stdout_str = "".join(f"<p>{line}</p>" for line in stdout_filtered)
-    stdout_edited = re.sub(r"E\s+[\+\s]*", "", stdout_str)
-    stdout_edited = re.sub(
-        r"\bfunction\ssolution_[\w\s\d]*", "your_solution", stdout_edited
-    )
-    stdout_edited = re.sub(r"\breference_\w+\(", "reference_solution(", stdout_edited)
-
-    test_runs = f"""
-            <details style="overflow-y: auto; max-height: 200px;">
-                <summary><u style="cursor: pointer;">Click here to expand</u></summary>
-                <div style="padding-top: 15px;">{stdout_edited}</div>
-            </details>
-        """
-    return test_runs
 
 
-def format_assertion_error(exception_info: List[str]) -> str:
+def format_error(exception: BaseException) -> str:
     """
     Takes the output of traceback.format_exception_only() for an AssertionError
     and returns a formatted string with clear, structured information.
     """
     formatted_message = None
 
-    # Join the list into a single string
-    exception_str = "".join(exception_info)
+    # Get a string representation of the exception, without the traceback
+    exception_str = "".join(traceback.format_exception_only(exception))
 
     # Handle the case where we were expecting an exception but none was raised
     if "DID NOT RAISE" in exception_str:
@@ -154,27 +130,56 @@ def format_assertion_error(exception_info: List[str]) -> str:
         """
 
 
-def show_test_result_output(ipytest_result: IPytestResult) -> ipywidgets.VBox:
-    """
-    Display the test results in an output widget as a VBox
-    """
-    solution_output = ipywidgets.Output()
-    solution_box = ipywidgets.VBox()
-    output_cell = ipywidgets.Output()
+@dataclass
+class TestResultOutput:
+    """Class to prepare and display test results in a Jupyter notebook"""
 
-    output_cell.append_display_data(HTML("<h2>Test Results</h2>"))
-    match ipytest_result.status:
-        case IPytestOutcome.SYNTAX_ERROR:
-            # Syntax error
-            output_cell.append_display_data(HTML("<h3>Syntax Error</h3>"))
-        case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
-            # Solution function missing
-            output_cell.append_display_data(HTML("<h3>Solution Function Missing</h3>"))
-        case IPytestOutcome.FINISHED if ipytest_result.test_results:
-            output_cell.append_display_data(HTML("<h3>Test Finished</h3>"))
-        case IPytestOutcome.NO_TEST_FOUND:
-            output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))
-    return ipywidgets.VBox(children=[output_cell, solution_box, solution_output])
+    ipytest_result: IPytestResult
+    cells: List[ipywidgets.Widget] = field(default_factory=list, init=False)
+
+    def add_cells_to_output(self, *cells: ipywidgets.Widget) -> None:
+        """Add output cells to the result display"""
+        self.cells.extend(cells)
+
+    def display_results(self) -> None:
+        """Display the test results in an output widget as a VBox"""
+        self.prepare_output_cell().prepare_solution_cell()
+
+        ipython_display(ipywidgets.VBox(children=self.cells))
+
+    def prepare_solution_cell(self) -> "TestResultOutput":
+        """Prepare the cell to display the solution code"""
+        solution_cell = ipywidgets.Output()
+        solution_cell.append_display_data(HTML("<h2>Solution Code</h2>"))
+
+        # Check how many times a cell has been executed
+        # TODO
+
+        self.add_cells_to_output(solution_cell)
+
+        return self
+
+    def prepare_output_cell(self) -> "TestResultOutput":
+        """Prepare the cell to display the test results"""
+        output_cell = ipywidgets.Output()
+        output_cell.append_display_data(HTML("<h2>Test Results</h2>"))
+
+        # TODO: the following is just a placeholder
+        match self.ipytest_result.status:
+            case IPytestOutcome.SYNTAX_ERROR:
+                output_cell.append_display_data(HTML("<h3>Syntax Error</h3>"))
+            case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
+                output_cell.append_display_data(
+                    HTML("<h3>Solution Function Missing</h3>")
+                )
+            case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
+                output_cell.append_display_data(HTML("<h3>Test Finished</h3>"))
+            case IPytestOutcome.NO_TEST_FOUND:
+                output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))
+
+        self.add_cells_to_output(output_cell)
+
+        return self
 
 
 @pytest.fixture
@@ -242,95 +247,6 @@ class ResultCollector:
             test_result = self.tests[report.nodeid]
             test_result.stdout = report.capstdout
             test_result.stderr = report.capstderr
-
-
-class AstParser:
-    """
-    Helper class for extraction of function definitions and imports.
-    To find all reference solutions:
-    Parse the module file using the AST module and retrieve all function definitions and imports.
-    For each reference solution store the names of all other functions used inside of it.
-    """
-
-    def __init__(self, module_file: pathlib.Path) -> None:
-        self.module_file = module_file
-        self.function_defs = {}
-        self.function_imports = {}
-        self.called_function_names = {}
-
-        tree = ast.parse(self.module_file.read_text(encoding="utf-8"))
-
-        for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                self.function_defs[node.name] = node
-            elif isinstance(node, (ast.Import, ast.ImportFrom)) and hasattr(
-                node, "module"
-            ):
-                for n in node.names:
-                    self.function_imports[n.name] = node.module
-
-        for node in tree.body:
-            if (
-                node in self.function_defs.values()
-                and hasattr(node, "name")
-                and node.name.startswith("reference_")
-            ):
-                self.called_function_names[node.name] = self.retrieve_functions(
-                    {**self.function_defs, **self.function_imports}, node, {node.name}
-                )
-
-    def retrieve_functions(
-        self, all_functions: Dict, node: object, called_functions: Set[object]
-    ) -> Set[object]:
-        """
-        Recursively walk the AST tree to retrieve all function definitions in a file
-        """
-
-        if isinstance(node, ast.AST):
-            for n in ast.walk(node):
-                match n:
-                    case ast.Call(ast.Name(id=name)):
-                        called_functions.add(name)
-                        if name in all_functions:
-                            called_functions = self.retrieve_functions(
-                                all_functions, all_functions[name], called_functions
-                            )
-                for child in ast.iter_child_nodes(n):
-                    called_functions = self.retrieve_functions(
-                        all_functions, child, called_functions
-                    )
-
-        return called_functions
-
-    def get_solution_code(self, name):
-        """
-        Find the respective reference solution for the executed function.
-        Create a str containing its code and the code of all other functions used,
-        whether coming from the same file or an imported one.
-        """
-
-        solution_functions = self.called_function_names[f"reference_{name}"]
-        solution_code = ""
-
-        for f in solution_functions:
-            if f in self.function_defs:
-                solution_code += ast.unparse(self.function_defs[f]) + "\n\n"
-            elif f in self.function_imports:
-                function_file = pathlib.Path(
-                    f"{self.function_imports[f].replace('.', '/')}.py"
-                )
-                if function_file.exists():
-                    function_file_tree = ast.parse(
-                        function_file.read_text(encoding="utf-8")
-                    )
-                    for node in function_file_tree.body:
-                        if (
-                            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-                            and node.name == f
-                        ):
-                            solution_code += ast.unparse(node) + "\n\n"
-
-        return solution_code
 
 
 class FunctionNotFoundError(Exception):
