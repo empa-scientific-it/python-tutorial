@@ -10,7 +10,6 @@ from typing import Callable, Dict, List, Optional, Set
 import ipywidgets
 import pytest
 from IPython.core.display import HTML
-from IPython.display import display
 
 
 class TestOutcome(Enum):
@@ -154,36 +153,28 @@ def format_assertion_error(exception_info: List[str]) -> str:
             </details>
         """
 
+
 def show_test_result_output(ipytest_result: IPytestResult) -> ipywidgets.VBox:
-        """
-        Display the test results in an output widget as a VBox
-        """
-        solution_output = ipywidgets.Output()
-        solution_box = ipywidgets.VBox()
-        output_cell = ipywidgets.Output()
-         
-        output_cell.append_display_data(HTML("<h2>Test Results</h2>"))
-        match ipytest_result.status:
-            case IPytestOutcome.SYNTAX_ERROR:
-                # Syntax error
-                output_cell.append_display_data(HTML("<h3>Syntax Error</h3>"))
-            case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
-                # Solution function missing
-                output_cell.append_display_data(HTML("<h3>Solution Function Missing</h3>"))
-            case IPytestOutcome.FINISHED if ipytest_result.test_results:
-                output_cell.append_display_data(HTML("<h3>Test Finished</h3>"))
-            case IPytestOutcome.NO_TEST_FOUND:
-                output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))
-        return ipywidgets.VBox(
-            children=[
-                output_cell,
-                solution_box,
-                solution_output
-            ]
-        )
+    """
+    Display the test results in an output widget as a VBox
+    """
+    solution_output = ipywidgets.Output()
+    solution_box = ipywidgets.VBox()
+    output_cell = ipywidgets.Output()
 
-
-
+    output_cell.append_display_data(HTML("<h2>Test Results</h2>"))
+    match ipytest_result.status:
+        case IPytestOutcome.SYNTAX_ERROR:
+            # Syntax error
+            output_cell.append_display_data(HTML("<h3>Syntax Error</h3>"))
+        case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
+            # Solution function missing
+            output_cell.append_display_data(HTML("<h3>Solution Function Missing</h3>"))
+        case IPytestOutcome.FINISHED if ipytest_result.test_results:
+            output_cell.append_display_data(HTML("<h3>Test Finished</h3>"))
+        case IPytestOutcome.NO_TEST_FOUND:
+            output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))
+    return ipywidgets.VBox(children=[output_cell, solution_box, solution_output])
 
 
 @pytest.fixture
