@@ -2,6 +2,7 @@
 import io
 import pathlib
 import re
+import sys
 from contextlib import redirect_stderr, redirect_stdout
 from typing import DefaultDict, Dict, List, Optional
 
@@ -10,7 +11,6 @@ import pytest
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import display as ipython_display
-import sys
 
 from .testsuite_helpers import (
     AstParser,
@@ -70,13 +70,22 @@ class TestMagic(Magics):
         self.module_name: Optional[str] = None
         self.cell_execution_count: Dict[str, int] = DefaultDict(int)
         self.ast_parser: Optional[AstParser] = None
-        #This is monkey patching the showtraceback function to hide the traceback
-        #https://stackoverflow.com/questions/61075760/how-to-hide-the-error-traceback-in-jupyter-lab-notebook
-        #TODO: improve this with a cleaer solution
-        def hide_traceback(exc_tuple=None, filename=None, tb_offset=None,
-                   exception_only=False, running_compiled_code=False):
+
+        # This is monkey patching the showtraceback function to hide the traceback
+        # https://stackoverflow.com/questions/61075760/how-to-hide-the-error-traceback-in-jupyter-lab-notebook
+        # TODO: improve this with a cleaer solution
+        def hide_traceback(
+            exc_tuple=None,
+            filename=None,
+            tb_offset=None,
+            exception_only=False,
+            running_compiled_code=False,
+        ):
             etype, value, tb = sys.exc_info()
-            return self.shell._showtraceback(etype, value, shell.InteractiveTB.get_exception_only(etype, value))
+            return self.shell._showtraceback(
+                etype, value, shell.InteractiveTB.get_exception_only(etype, value)
+            )
+
         self.shell._showtraceback = hide_traceback
 
     def run_cell(self, cell: str) -> IPytestResult:
@@ -105,7 +114,6 @@ class TestMagic(Magics):
                 status=IPytestOutcome.SOLUTION_FUNCTION_MISSING,
                 exceptions=[FunctionNotFoundError()],
             )
-
 
         # TODO: write a function to update the cell execution count
         # Store execution count information for each cell
