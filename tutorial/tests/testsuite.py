@@ -19,7 +19,6 @@ from .testsuite_helpers import (
     IPytestOutcome,
     IPytestResult,
     ResultCollector,
-    TestCaseResult,
     TestResultOutput,
 )
 
@@ -123,14 +122,16 @@ class TestMagic(Magics):
 
         if result == pytest.ExitCode.NO_TESTS_COLLECTED:
             return IPytestResult(
+                function_name=function_name,
                 status=IPytestOutcome.NO_TEST_FOUND,
                 exceptions=[FunctionNotFoundError()],
             )
 
         return IPytestResult(
+            function_name=function_name,
             status=IPytestOutcome.FINISHED,
             test_results=list(result_collector.tests.values()),
-            cell_execution_count=self.cell_execution_count[cell_id][function_name],
+            test_attempts=self.cell_execution_count[cell_id][function_name],
         )
 
     def run_cell(self) -> List[IPytestResult]:
@@ -157,10 +158,10 @@ class TestMagic(Magics):
             ]
 
         # Run the tests for each function
-        test_results: List[IPytestResult] = []
-
-        for name, function in self.functions_to_run.items():
-            test_results.append(self.run_test(name, function))
+        test_results = [
+            self.run_test(name, function)
+            for name, function in self.functions_to_run.items()
+        ]
 
         return test_results
 
@@ -184,19 +185,25 @@ class TestMagic(Magics):
             raise FileNotFoundError(f"Module file '{module_file}' does not exist")
         self.module_file = module_file
 
-        result = self.run_cell()
+        results = self.run_cell()
 
         # TODO: this should be passed somehow to the TestResultOutput class
         # Parse the AST tree of the file containing the test functions,
         # to extract and store all information of function definitions and imports
         ast_parser = AstParser(self.module_file)
-        solutions = [
-            ast_parser.get_solution_code(function_name)
-            for function_name in self.functions_to_run
-        ]
+        # solutions = [
+        #     ast_parser.get_solution_code(function_name)
+        #     for function_name in self.functions_to_run
+        # ]
 
         # Display the test results and the solution code
-        TestResultOutput(result).display_results()
+        for result in results:
+            solution = (
+                ast_parser.get_solution_code(result.function_name)
+                if result.function_name
+                else None
+            )
+            TestResultOutput(result, solution).display_results()
 
 
 def load_ipython_extension(ipython):

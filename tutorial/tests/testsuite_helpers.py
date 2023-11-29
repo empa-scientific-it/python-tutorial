@@ -4,11 +4,12 @@ import traceback
 from dataclasses import dataclass
 from enum import Enum
 from types import TracebackType
-from typing import Callable, Dict, List, Optional
+from typing import Callable, ClassVar, Dict, List, Optional
 
 import ipywidgets
 import pytest
 from IPython.core.display import HTML
+from IPython.display import Code
 from IPython.display import display as ipython_display
 
 
@@ -64,10 +65,11 @@ class TestCaseResult:
 
 @dataclass
 class IPytestResult:
+    function_name: Optional[str] = None
     status: Optional[IPytestOutcome] = None
     test_results: Optional[List[TestCaseResult]] = None
     exceptions: Optional[List[BaseException]] = None
-    cell_execution_count: int = 0
+    test_attempts: int = 0
 
 
 def format_error(exception: BaseException) -> str:
@@ -132,6 +134,8 @@ class TestResultOutput:
     """Class to prepare and display test results in a Jupyter notebook"""
 
     ipytest_result: IPytestResult
+    solution: Optional[str] = None
+    MAX_ATTEMPTS: ClassVar[int] = 3
 
     def display_results(self) -> None:
         """Display the test results in an output widget as a VBox"""
@@ -144,17 +148,23 @@ class TestResultOutput:
 
         success = (
             all(
-                map(
-                    lambda x: x.outcome == TestOutcome.PASS,
-                    self.ipytest_result.test_results,
-                )
+                test.outcome == TestOutcome.PASS
+                for test in self.ipytest_result.test_results
             )
             if self.ipytest_result.test_results
             else False
         )
 
-        if self.ipytest_result.cell_execution_count > 2 or success:
+        if self.ipytest_result.test_attempts > 2 or success:
             cells.append(solution_cell)
+        else:
+            cells.append(
+                ipywidgets.HTML(
+                    "<h4>&#128221; A proposed solution will appear after "
+                    f"{TestResultOutput.MAX_ATTEMPTS - self.ipytest_result.test_attempts} "
+                    f"more failed attempt{'s' if self.ipytest_result.test_attempts < 2 else ''}.</h4>"
+                )
+            )
 
         ipython_display(ipywidgets.VBox(children=cells))
 
@@ -165,9 +175,8 @@ class TestResultOutput:
 
         solution_cell.append_display_data(HTML("<h4>&#128073; Proposed solution:</h4>"))
 
-        # FIXME: parse the AST tree to get the function body
         solution_code.append_display_data(
-            Code(language="python", data=f"{solution_body}")
+            Code(language="python", data=f"{self.solution}")
         )
 
         solution_accordion = ipywidgets.Accordion(
