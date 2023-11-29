@@ -8,10 +8,9 @@ from typing import Callable, ClassVar, Dict, List, Optional
 
 import ipywidgets
 import pytest
-
-# from IPython.core.display import HTML
-from IPython.display import HTML, Code
+from IPython.display import Code
 from IPython.display import display as ipython_display
+from ipywidgets import HTML
 
 
 class TestOutcome(Enum):
@@ -39,6 +38,7 @@ class TestCaseResult:
     traceback: TracebackType | None
     _html_format_string: str = """<div class="alert alert-box {}"><h4>{}</h4>{}</div>"""
 
+    # FIXME: this is unused
     def __format__(self) -> str:
         """Format a test result as a string"""
 
@@ -199,11 +199,24 @@ class TestResultOutput:
         output_cell = ipywidgets.Output()
         output_cell.append_display_data(HTML("<h2>Test Results</h2>"))
 
-        # TODO: display stderr and stdout
-
         match self.ipytest_result.status:
             case IPytestOutcome.SYNTAX_ERROR:
-                output_cell.append_display_data(HTML("<h3>Syntax Error</h3>"))
+                # We know that there is exactly one exception
+                # TODO: improve the formatting of the error message
+                exceptions_str = (
+                    format_error(self.ipytest_result.exceptions[0])
+                    if self.ipytest_result.exceptions
+                    else ""
+                )
+
+                output_cell.append_display_data(
+                    ipywidgets.VBox(
+                        children=[
+                            HTML("<h3>Syntax Error</h3>"),
+                            HTML(exceptions_str),
+                        ]
+                    )
+                )
 
             case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
                 output_cell.append_display_data(
@@ -211,10 +224,28 @@ class TestResultOutput:
                 )
 
             case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
+                test_stdout = (
+                    [
+                        HTML(test.stdout)
+                        for test in self.ipytest_result.test_results
+                        if test.stdout
+                    ]
+                    if self.ipytest_result.test_results
+                    else []
+                )
+
+                output_cell.append_display_data(
+                    ipywidgets.Accordion(
+                        children=[ipywidgets.VBox(children=test_stdout)],
+                        titles=("Code output",),
+                    )
+                )
+
                 success = all(
                     test.outcome == TestOutcome.PASS
                     for test in self.ipytest_result.test_results
                 )
+
                 output_cell.append_display_data(
                     HTML(
                         f"<h4>&#128073; We ran {len(self.ipytest_result.test_results)} tests "

@@ -75,12 +75,6 @@ class TestMagic(Magics):
         # This is monkey-patching suppress printing any exception or traceback
         # self.shell._showtraceback = lambda *args, **kwargs: None
 
-    # TODO: ideally we want to run the tests for a single function, not multiple solutions
-    #   So we need to split the run_cell into multiple functions:
-    #       1. extract_function_names: extract the names of all functions to test defined in the cell
-    #       2. run_tests: run the tests on a single function
-    #       3. run_cell: run the tests on all functions defined in the cell
-
     def extract_functions_to_test(self) -> None:
         """"""
         # Retrieve the functions names defined in the current cell
