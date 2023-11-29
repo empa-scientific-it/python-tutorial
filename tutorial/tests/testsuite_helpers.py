@@ -1,8 +1,7 @@
 import html
 import re
 import traceback
-from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from types import TracebackType
 from typing import Callable, Dict, List, Optional

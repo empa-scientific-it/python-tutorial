@@ -4,7 +4,7 @@ import pathlib
 import re
 from collections import defaultdict
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional
 
 import ipynbname
 import pytest
