@@ -8,8 +8,9 @@ from typing import Callable, ClassVar, Dict, List, Optional
 
 import ipywidgets
 import pytest
-from IPython.core.display import HTML
-from IPython.display import Code
+
+# from IPython.core.display import HTML
+from IPython.display import HTML, Code
 from IPython.display import display as ipython_display
 
 
@@ -89,7 +90,7 @@ def format_error(exception: BaseException) -> str:
 
         if match:
             formatted_message = (
-                "<h4>Expected exception:</h4>"
+                "<h3>Expected exception:</h3>"
                 f"<p>Exception <code>{html.escape(match.group(1))}</code> was not raised.</p>"
             )
     else:
@@ -110,7 +111,7 @@ def format_error(exception: BaseException) -> str:
 
             # Formatting the output as HTML
             formatted_message = (
-                f"<h4>{assertion_type}:</h4>"
+                f"<h3>{assertion_type}:</h3>"
                 "<ul>"
                 f"<li>Failed Assertion: <strong>{actual_value} == {expected_value}</strong></li>"
                 f"<li>Actual Value: <strong>{actual_value}</strong> obtained from <code>{actual_expression}</code></li>"
@@ -121,12 +122,7 @@ def format_error(exception: BaseException) -> str:
     # If we couldn't parse the exception message, just display it as is
     formatted_message = formatted_message or f"<p>{html.escape(exception_str)}</p>"
 
-    return f"""
-            <details style="overflow-y: auto; max-height: 200px;">
-                <summary><u style="cursor: pointer;">Click here to expand</u></summary>
-                <div style="padding-top: 15px;">{formatted_message}</div>
-            </details>
-        """
+    return formatted_message
 
 
 @dataclass
@@ -162,11 +158,22 @@ class TestResultOutput:
                 ipywidgets.HTML(
                     "<h4>&#128221; A proposed solution will appear after "
                     f"{TestResultOutput.MAX_ATTEMPTS - self.ipytest_result.test_attempts} "
-                    f"more failed attempt{'s' if self.ipytest_result.test_attempts < 2 else ''}.</h4>"
+                    f"more failed attempt{'s' if self.ipytest_result.test_attempts < 2 else ''}.</h4>",
                 )
             )
 
-        ipython_display(ipywidgets.VBox(children=cells))
+        ipython_display(
+            ipywidgets.VBox(
+                children=cells,
+                # CSS: "border: 1px solid; border-color: lightgray; background-color: #FAFAFA; margin: 5px; padding: 10px;"
+                layout={
+                    "border": "1px solid lightgray",
+                    "background-color": "#FAFAFA",
+                    "margin": "5px",
+                    "padding": "10px",
+                },
+            )
+        )
 
     def prepare_solution_cell(self) -> ipywidgets.Widget:
         """Prepare the cell to display the solution code"""
@@ -183,11 +190,7 @@ class TestResultOutput:
             titles=("Click here to reveal",), children=[solution_code]
         )
 
-        solution_cell.append_display_data(
-            ipywidgets.Box(
-                children=[solution_accordion],
-            )
-        )
+        solution_cell.append_display_data(ipywidgets.Box(children=[solution_accordion]))
 
         return solution_cell
 
@@ -196,16 +199,62 @@ class TestResultOutput:
         output_cell = ipywidgets.Output()
         output_cell.append_display_data(HTML("<h2>Test Results</h2>"))
 
-        # TODO: the following is just a placeholder
+        # TODO: display stderr and stdout
+
         match self.ipytest_result.status:
             case IPytestOutcome.SYNTAX_ERROR:
                 output_cell.append_display_data(HTML("<h3>Syntax Error</h3>"))
+
             case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
                 output_cell.append_display_data(
                     HTML("<h3>Solution Function Missing</h3>")
                 )
+
             case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
-                output_cell.append_display_data(HTML("<h3>Test Finished</h3>"))
+                success = all(
+                    test.outcome == TestOutcome.PASS
+                    for test in self.ipytest_result.test_results
+                )
+                output_cell.append_display_data(
+                    HTML(
+                        f"<h4>&#128073; We ran {len(self.ipytest_result.test_results)} tests "
+                        f"on your <code>solution_{self.ipytest_result.function_name}</code>. "
+                        f"""{"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}"""
+                    )
+                )
+
+                if not success:
+                    for result in self.ipytest_result.test_results:
+                        test_succeded = result.outcome == TestOutcome.PASS
+                        test_name = result.test_name.split("::")[-1]
+
+                        output_box_children: List[ipywidgets.Widget] = [
+                            ipywidgets.HTML(
+                                f'<h3>{"&#10004" if test_succeded else "&#10060"} Test <code>{test_name}</code></h3>',
+                                style={
+                                    "background": "rgba(251, 59, 59, 0.25)"
+                                    if not test_succeded
+                                    else "rgba(207, 249, 179, 0.60)"
+                                },
+                            )
+                        ]
+
+                        if not test_succeded:
+                            assert result.exception is not None
+
+                            output_box_children.append(
+                                ipywidgets.Accordion(
+                                    children=[
+                                        ipywidgets.HTML(format_error(result.exception))
+                                    ],
+                                    titles=("Test results",),
+                                )
+                            )
+
+                        output_cell.append_display_data(
+                            ipywidgets.VBox(children=output_box_children)
+                        )
+
             case IPytestOutcome.NO_TEST_FOUND:
                 output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))
 

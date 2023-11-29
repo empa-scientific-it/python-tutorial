@@ -73,7 +73,7 @@ class TestMagic(Magics):
         self.functions_to_run: Dict[str, Callable] = {}
 
         # This is monkey-patching suppress printing any exception or traceback
-        self.shell._showtraceback = lambda *args, **kwargs: None
+        # self.shell._showtraceback = lambda *args, **kwargs: None
 
     # TODO: ideally we want to run the tests for a single function, not multiple solutions
     #   So we need to split the run_cell into multiple functions:
