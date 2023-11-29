@@ -68,9 +68,7 @@ class IPytestResult:
     status: Optional[IPytestOutcome] = None
     test_results: Optional[List[TestCaseResult]] = None
     exceptions: Optional[List[BaseException]] = None
-    cell_execution_count: Dict[str, int] = field(
-        default_factory=lambda: defaultdict(int)
-    )
+    cell_execution_count: int = 0
 
 
 def format_error(exception: BaseException) -> str:
@@ -135,31 +133,57 @@ class TestResultOutput:
     """Class to prepare and display test results in a Jupyter notebook"""
 
     ipytest_result: IPytestResult
-    cells: List[ipywidgets.Widget] = field(default_factory=list, init=False)
-
-    def add_cells_to_output(self, *cells: ipywidgets.Widget) -> None:
-        """Add output cells to the result display"""
-        self.cells.extend(cells)
 
     def display_results(self) -> None:
         """Display the test results in an output widget as a VBox"""
-        self.prepare_output_cell().prepare_solution_cell()
+        cells = []
 
-        ipython_display(ipywidgets.VBox(children=self.cells))
+        output_cell = self.prepare_output_cell()
+        solution_cell = self.prepare_solution_cell()
 
-    def prepare_solution_cell(self) -> "TestResultOutput":
+        cells.append(output_cell)
+
+        success = (
+            all(
+                map(
+                    lambda x: x.outcome == TestOutcome.PASS,
+                    self.ipytest_result.test_results,
+                )
+            )
+            if self.ipytest_result.test_results
+            else False
+        )
+
+        if self.ipytest_result.cell_execution_count > 2 or success:
+            cells.append(solution_cell)
+
+        ipython_display(ipywidgets.VBox(children=cells))
+
+    def prepare_solution_cell(self) -> ipywidgets.Widget:
         """Prepare the cell to display the solution code"""
+        solution_code = ipywidgets.Output()
         solution_cell = ipywidgets.Output()
-        solution_cell.append_display_data(HTML("<h2>Solution Code</h2>"))
 
-        # Check how many times a cell has been executed
-        # TODO
+        solution_cell.append_display_data(HTML("<h4>&#128073; Proposed solution:</h4>"))
 
-        self.add_cells_to_output(solution_cell)
+        # FIXME: parse the AST tree to get the function body
+        solution_code.append_display_data(
+            Code(language="python", data=f"{solution_body}")
+        )
 
-        return self
+        solution_accordion = ipywidgets.Accordion(
+            titles=("Click here to reveal",), children=[solution_code]
+        )
 
-    def prepare_output_cell(self) -> "TestResultOutput":
+        solution_cell.append_display_data(
+            ipywidgets.Box(
+                children=[solution_accordion],
+            )
+        )
+
+        return solution_cell
+
+    def prepare_output_cell(self) -> ipywidgets.Output:
         """Prepare the cell to display the test results"""
         output_cell = ipywidgets.Output()
         output_cell.append_display_data(HTML("<h2>Test Results</h2>"))
@@ -177,9 +201,7 @@ class TestResultOutput:
             case IPytestOutcome.NO_TEST_FOUND:
                 output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))
 
-        self.add_cells_to_output(output_cell)
-
-        return self
+        return output_cell
 
 
 @pytest.fixture

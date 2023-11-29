@@ -61,7 +61,7 @@ class AstParser:
 
         return called_functions
 
-    def get_solution_code(self, name):
+    def get_solution_code(self, name: str) -> str:
         """
         Find the respective reference solution for the executed function.
         Create a str containing its code and the code of all other functions used,
