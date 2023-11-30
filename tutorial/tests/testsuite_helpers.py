@@ -21,9 +21,11 @@ class TestOutcome(Enum):
 
 class IPytestOutcome(Enum):
     FINISHED = 0
-    SYNTAX_ERROR = 1
+    COMPILE_ERROR = 1
     SOLUTION_FUNCTION_MISSING = 2
     NO_TEST_FOUND = 3
+    PYTEST_ERROR = 4
+    UNKNOWN_ERROR = 5
 
 
 @dataclass
@@ -32,36 +34,37 @@ class TestCaseResult:
 
     test_name: str
     outcome: TestOutcome
-    stdout: str | None
-    stderr: str | None
     exception: BaseException | None
     traceback: TracebackType | None
-    _html_format_string: str = """<div class="alert alert-box {}"><h4>{}</h4>{}</div>"""
+    stdout: str = ""
+    stderr: str = ""
 
     # FIXME: this is unused
-    def __format__(self) -> str:
-        """Format a test result as a string"""
+    # _html_format_string: str = """<div class="alert alert-box {}"><h4>{}</h4>{}</div>"""
 
-        if self.outcome == TestOutcome.FAIL:
-            return self._html_format_string.format(
-                "alert-danger",
-                f"Tests <strong>FAILED</strong> for the function <code>{self.test_name}</code>",
-                "&#x1F631 Your solution was not correct!",
-            )
-        elif self.outcome == TestOutcome.TEST_ERROR:
-            return self._html_format_string.format(
-                "alert-warning",
-                "Tests <strong>COULD NOT RUN</strong> for this cell.",
-                "&#129300 Careful, looks like you have a syntax error.",
-            )
-        elif self.outcome == TestOutcome.PASS:
-            return self._html_format_string.format(
-                "alert-success",
-                f"Tests <strong>PASSED</strong> for the function <code>{self.test_name}</code>",
-                "&#x1F389 Congratulations!",
-            )
-        else:
-            return self.__str__()
+    # def __format__(self) -> str:
+    #     """Format a test result as a string"""
+
+    #     if self.outcome == TestOutcome.FAIL:
+    #         return self._html_format_string.format(
+    #             "alert-danger",
+    #             f"Tests <strong>FAILED</strong> for the function <code>{self.test_name}</code>",
+    #             "&#x1F631 Your solution was not correct!",
+    #         )
+    #     elif self.outcome == TestOutcome.TEST_ERROR:
+    #         return self._html_format_string.format(
+    #             "alert-warning",
+    #             "Tests <strong>COULD NOT RUN</strong> for this cell.",
+    #             "&#129300 Careful, looks like you have a syntax error.",
+    #         )
+    #     elif self.outcome == TestOutcome.PASS:
+    #         return self._html_format_string.format(
+    #             "alert-success",
+    #             f"Tests <strong>PASSED</strong> for the function <code>{self.test_name}</code>",
+    #             "&#x1F389 Congratulations!",
+    #         )
+    #     else:
+    #         return self.__str__()
 
 
 @dataclass
@@ -200,19 +203,17 @@ class TestResultOutput:
         output_cell.append_display_data(HTML("<h2>Test Results</h2>"))
 
         match self.ipytest_result.status:
-            case IPytestOutcome.SYNTAX_ERROR:
+            case IPytestOutcome.COMPILE_ERROR | IPytestOutcome.PYTEST_ERROR | IPytestOutcome.UNKNOWN_ERROR:
                 # We know that there is exactly one exception
-                # TODO: improve the formatting of the error message
+                assert self.ipytest_result.exceptions is not None
+                exception = self.ipytest_result.exceptions[0]
                 exceptions_str = (
-                    format_error(self.ipytest_result.exceptions[0])
-                    if self.ipytest_result.exceptions
-                    else ""
+                    format_error(exception) if self.ipytest_result.exceptions else ""
                 )
-
                 output_cell.append_display_data(
                     ipywidgets.VBox(
                         children=[
-                            HTML("<h3>Syntax Error</h3>"),
+                            HTML(f"<h3>{type(exception).__name__}</h3>"),
                             HTML(exceptions_str),
                         ]
                     )
@@ -224,20 +225,52 @@ class TestResultOutput:
                 )
 
             case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
-                test_stdout = (
-                    [
-                        HTML(test.stdout)
-                        for test in self.ipytest_result.test_results
-                        if test.stdout
-                    ]
-                    if self.ipytest_result.test_results
-                    else []
-                )
+                captures: Dict[str, Dict[str, str]] = {}
+
+                for test in self.ipytest_result.test_results:
+                    captures[test.test_name.split("::")[-1]] = {
+                        "stdout": test.stdout,
+                        "stderr": test.stderr,
+                    }
+
+                # Create lists of HTML outs and errs
+                outs = [
+                    f"<h3>{test_name}</h3><br>{captures[test_name]['stdout']}"
+                    for test_name in captures
+                    if captures[test_name]["stdout"]
+                ]
+                errs = [
+                    f"<h3>{test_name}</h3><br>{captures[test_name]['stderr']}"
+                    for test_name in captures
+                    if captures[test_name]["stderr"]
+                ]
 
                 output_cell.append_display_data(
-                    ipywidgets.Accordion(
-                        children=[ipywidgets.VBox(children=test_stdout)],
-                        titles=("Code output",),
+                    ipywidgets.VBox(
+                        children=(
+                            ipywidgets.Accordion(
+                                children=(
+                                    ipywidgets.VBox(
+                                        children=[
+                                            HTML(o, style={"background": "#FAFAFA"})
+                                            for o in outs
+                                        ]
+                                    ),
+                                ),
+                                titles=("Captured output",),
+                            ),
+                            ipywidgets.Accordion(
+                                children=(
+                                    ipywidgets.VBox(
+                                        children=[
+                                            HTML(e, style={"background": "#FAFAFA"})
+                                            for e in errs
+                                        ]
+                                    ),
+                                ),
+                                titles=("Captured error",),
+                            ),
+                        )
                     )
                 )
 
@@ -316,7 +349,7 @@ class ResultCollector:
         self.tests: Dict[str, TestCaseResult] = {}
 
     def pytest_runtest_makereport(self, item: pytest.Item, call: pytest.CallInfo):
-        # Test run is finished without error
+        """Called when an individual test item has finished execution."""
         if call.when == "call":
             if call.excinfo is None:
                 # Test passes
@@ -333,28 +366,25 @@ class ResultCollector:
                 self.tests[item.nodeid] = TestCaseResult(
                     test_name=item.nodeid,
                     outcome=TestOutcome.FAIL,
-                    stdout=None,
-                    stderr=None,
                     exception=call.excinfo.value,
                     traceback=call.excinfo.tb,
                 )
 
-        if call.when == "collect":
-            # Test fails to run because of syntax error
-            if call.excinfo is not None:
-                self.tests[item.nodeid] = TestCaseResult(
-                    test_name=item.nodeid,
-                    outcome=TestOutcome.TEST_ERROR,
-                    stdout=None,
-                    stderr=None,
-                    exception=call.excinfo.value,
-                    traceback=call.excinfo.tb,
-                )
+    def pytest_exception_interact(
+        self, call: pytest.CallInfo, report: pytest.TestReport
+    ):
+        """Called when an exception was raised which can potentially be interactively handled."""
+        if call.excinfo is not None:
+            self.tests[report.nodeid] = TestCaseResult(
+                test_name=report.nodeid,
+                outcome=TestOutcome.TEST_ERROR,
+                exception=call.excinfo.value,
+                traceback=call.excinfo.tb,
+            )
 
     def pytest_runtest_logreport(self, report: pytest.TestReport):
-        # Only collect the results if it did not fail
-        if report.when == "teardown" and report.nodeid in self.tests:
-            test_result = self.tests[report.nodeid]
+        """Called to log the report of a test item."""
+        if test_result := self.tests.get(report.nodeid):
             test_result.stdout = report.capstdout
             test_result.stderr = report.capstderr
 

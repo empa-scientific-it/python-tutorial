@@ -111,21 +111,32 @@ class TestMagic(Magics):
             # reset execution count on success
             success = result == pytest.ExitCode.OK
 
-            if success:
-                self.cell_execution_count[cell_id][function_name] = 0
+        if success:
+            self.cell_execution_count[cell_id][function_name] = 0
 
-        if result == pytest.ExitCode.NO_TESTS_COLLECTED:
-            return IPytestResult(
-                function_name=function_name,
-                status=IPytestOutcome.NO_TEST_FOUND,
-                exceptions=[FunctionNotFoundError()],
-            )
+        match result:
+            case pytest.ExitCode.OK | pytest.ExitCode.TESTS_FAILED:
+                return IPytestResult(
+                    function_name=function_name,
+                    status=IPytestOutcome.FINISHED,
+                    test_results=list(result_collector.tests.values()),
+                    test_attempts=self.cell_execution_count[cell_id][function_name],
+                )
+            case pytest.ExitCode.INTERNAL_ERROR:
+                return IPytestResult(
+                    function_name=function_name,
+                    status=IPytestOutcome.PYTEST_ERROR,
+                    exceptions=[Exception("Internal error")],
+                )
+            case pytest.ExitCode.NO_TESTS_COLLECTED:
+                return IPytestResult(
+                    function_name=function_name,
+                    status=IPytestOutcome.NO_TEST_FOUND,
+                    exceptions=[FunctionNotFoundError()],
+                )
 
         return IPytestResult(
-            function_name=function_name,
-            status=IPytestOutcome.FINISHED,
-            test_results=list(result_collector.tests.values()),
-            test_attempts=self.cell_execution_count[cell_id][function_name],
+            status=IPytestOutcome.UNKNOWN_ERROR, exceptions=[Exception("Unknown error")]
         )
 
     def run_cell(self) -> List[IPytestResult]:
@@ -136,7 +147,7 @@ class TestMagic(Magics):
         except Exception as err:
             return [
                 IPytestResult(
-                    status=IPytestOutcome.SYNTAX_ERROR,
+                    status=IPytestOutcome.COMPILE_ERROR,
                     exceptions=[err],
                 )
             ]
