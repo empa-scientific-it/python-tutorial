@@ -1,9 +1,12 @@
 """A module to define the `%%ipytest` cell magic"""
+import dataclasses
 import io
 import pathlib
 import re
 from collections import defaultdict
 from contextlib import redirect_stderr, redirect_stdout
+from queue import Queue as TQueue
+from threading import Thread
 from typing import Callable, Dict, List, Optional
 
 import ipynbname
@@ -20,7 +23,6 @@ from .testsuite_helpers import (
     IPytestResult,
     ResultCollector,
     TestResultOutput,
-    TestExecutionResult
 )
 
 
@@ -57,32 +59,56 @@ def get_module_name(line: str, globals_dict: Dict) -> str:
     return module_name
 
 
-
-def run_test(module_name: pathlib.Path, function_name: str, function_to_test: Callable, q: Queue) -> TestExecutionResult:
-    rc = ResultCollector()
+def run_test(
+    module_file: pathlib.Path, function_name: str, function_to_test: Callable, q: TQueue
+) -> IPytestOutcome:
+    """
+    Run the tests for a single function, use a queue to return the result to make the function compatible with multiprocessing
+    """
+    result_collector = ResultCollector()
     with redirect_stderr(io.StringIO()) as pytest_stderr, redirect_stdout(
         io.StringIO()
     ) as pytest_stdout:
-        test_name = f"test_{function_name}"
+        # Run the tests
         result = pytest.main(
-            [
-                "-k",
-                test_name,
-                f"{module_name}",
+            ["-k", f"test_{function_name}", f"{module_file}"],
+            plugins=[
+                FunctionInjectionPlugin(function_to_test),
+                result_collector,
             ],
-            plugins=[rc, FunctionInjectionPlugin(function_to_test)],
         )
+        match result:
+            case pytest.ExitCode.OK | pytest.ExitCode.TESTS_FAILED:
+                res = IPytestResult(
+                    function_name=function_name,
+                    status=IPytestOutcome.FINISHED,
+                    test_results=list(result_collector.tests.values()),
+                )
+            case pytest.ExitCode.INTERNAL_ERROR:
+                res = IPytestResult(
+                    function_name=function_name,
+                    status=IPytestOutcome.PYTEST_ERROR,
+                    exceptions=[Exception("Internal error")],
+                )
+            case pytest.ExitCode.NO_TESTS_COLLECTED:
+                res = IPytestResult(
+                    function_name=function_name,
+                    status=IPytestOutcome.NO_TEST_FOUND,
+                    exceptions=[FunctionNotFoundError()],
+                )
+            case _:
+                res = IPytestResult(
+                    function_name=function_name,
+                    status=IPytestOutcome.UNKNOWN_ERROR,
+                    exceptions=[
+                        Exception(
+                            f"Unknown error: {result}, {pytest_stderr.read()}, {pytest_stdout.read()}"
+                        )
+                    ],
+                )
 
-
-    res = TestExecutionResult(
-        pytest_stdout.getvalue(),
-        pytest_stderr.getvalue(),
-        test_name,
-        result == ExitCode.OK,
-        result == ExitCode.INTERNAL_ERROR,
-        list(rc.tests.values()))
     q.put(res)
-    return res
+    return result_collector
 
 
 @magics_class
@@ -124,49 +150,31 @@ class TestMagic(Magics):
 
         self.cell_execution_count[cell_id][function_name] += 1
 
-        with redirect_stdout(io.StringIO()) as _, redirect_stderr(io.StringIO()) as _:
-            # Create the test collector
-            result_collector = ResultCollector()
+        # Run the tests
+        result_queue: TQueue[IPytestResult] = TQueue()
+        test_process = Thread(
+            target=run_test,
+            args=(self.module_file, function_name, function_object, result_queue),
+        )
+        test_process.start()
+        test_process.join()
+        result = result_queue.get()
 
-            # Run the tests
-            result = pytest.main(
-                ["-k", f"test_{function_name}", f"{self.module_file}"],
-                plugins=[
-                    FunctionInjectionPlugin(function_object),
-                    result_collector,
-                ],
+        # Check if the tests were successful
+        if result.status == IPytestOutcome.FINISHED:
+            success = all(
+                test_result.outcome == "passed" for test_result in result.test_results
             )
-
-            # reset execution count on success
-            success = result == pytest.ExitCode.OK
+        else:
+            success = False
 
         if success:
             self.cell_execution_count[cell_id][function_name] = 0
-
-        match result:
-            case pytest.ExitCode.OK | pytest.ExitCode.TESTS_FAILED:
-                return IPytestResult(
-                    function_name=function_name,
-                    status=IPytestOutcome.FINISHED,
-                    test_results=list(result_collector.tests.values()),
-                    test_attempts=self.cell_execution_count[cell_id][function_name],
-                )
-            case pytest.ExitCode.INTERNAL_ERROR:
-                return IPytestResult(
-                    function_name=function_name,
-                    status=IPytestOutcome.PYTEST_ERROR,
-                    exceptions=[Exception("Internal error")],
-                )
-            case pytest.ExitCode.NO_TESTS_COLLECTED:
-                return IPytestResult(
-                    function_name=function_name,
-                    status=IPytestOutcome.NO_TEST_FOUND,
-                    exceptions=[FunctionNotFoundError()],
-                )
-
-        return IPytestResult(
-            status=IPytestOutcome.UNKNOWN_ERROR, exceptions=[Exception("Unknown error")]
-        )
+            return dataclasses.replace(result, test_attempts=0)
+        else:
+            return dataclasses.replace(
+                result, test_attempts=self.cell_execution_count[cell_id][function_name]
+            )
 
     def run_cell(self) -> List[IPytestResult]:
         # Run the cell through IPython
@@ -196,7 +204,6 @@ class TestMagic(Magics):
             self.run_test(name, function)
             for name, function in self.functions_to_run.items()
         ]
-
         return test_results
 
     @cell_magic
@@ -225,10 +232,6 @@ class TestMagic(Magics):
         # Parse the AST tree of the file containing the test functions,
         # to extract and store all information of function definitions and imports
         ast_parser = AstParser(self.module_file)
-        # solutions = [
-        #     ast_parser.get_solution_code(function_name)
-        #     for function_name in self.functions_to_run
-        # ]
 
         # Display the test results and the solution code
         for result in results:
@@ -248,5 +251,3 @@ def load_ipython_extension(ipython):
     """
 
     ipython.register_magics(TestMagic)
-
-
