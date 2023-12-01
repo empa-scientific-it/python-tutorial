@@ -19,6 +19,7 @@ from .testsuite_helpers import (
     IPytestOutcome,
     IPytestResult,
     ResultCollector,
+    TestOutcome,
     TestResultOutput,
 )
 
@@ -116,7 +117,28 @@ class TestMagic(Magics):
             self.cell_execution_count[cell_id][function_name] = 0
 
         match result:
-            case pytest.ExitCode.OK | pytest.ExitCode.TESTS_FAILED:
+            case pytest.ExitCode.OK:
+                return IPytestResult(
+                    function_name=function_name,
+                    status=IPytestOutcome.FINISHED,
+                    test_results=list(result_collector.tests.values()),
+                    test_attempts=self.cell_execution_count[cell_id][function_name],
+                )
+            case pytest.ExitCode.TESTS_FAILED:
+                if any(
+                    test.outcome == TestOutcome.TEST_ERROR
+                    for test in result_collector.tests.values()
+                ):
+                    return IPytestResult(
+                        function_name=function_name,
+                        status=IPytestOutcome.PYTEST_ERROR,
+                        exceptions=[
+                            test.exception
+                            for test in result_collector.tests.values()
+                            if test.exception
+                        ],
+                    )
+
                 return IPytestResult(
                     function_name=function_name,
                     status=IPytestOutcome.FINISHED,
@@ -167,6 +189,8 @@ class TestMagic(Magics):
         test_results = [
             self.run_test(name, function) for name, function in functions_to_run.items()
         ]
+
+        print(test_results)
 
         return test_results
 

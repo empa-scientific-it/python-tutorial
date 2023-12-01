@@ -145,6 +145,7 @@ class TestResultOutput:
 
         cells.append(output_cell)
 
+        tests_finished = self.ipytest_result.status == IPytestOutcome.FINISHED
         success = (
             all(
                 test.outcome == TestOutcome.PASS
@@ -154,16 +155,23 @@ class TestResultOutput:
             else False
         )
 
-        if self.ipytest_result.test_attempts > 2 or success:
+        if success or self.ipytest_result.test_attempts > 2:
             cells.append(solution_cell)
         else:
-            cells.append(
-                ipywidgets.HTML(
-                    "<h4>&#128221; A proposed solution will appear after "
-                    f"{TestResultOutput.MAX_ATTEMPTS - self.ipytest_result.test_attempts} "
-                    f"more failed attempt{'s' if self.ipytest_result.test_attempts < 2 else ''}.</h4>",
+            if tests_finished:
+                cells.append(
+                    HTML(
+                        "<h4>&#128221; A proposed solution will appear after "
+                        f"{TestResultOutput.MAX_ATTEMPTS - self.ipytest_result.test_attempts} "
+                        f"more failed attempt{'s' if self.ipytest_result.test_attempts < 2 else ''}.</h4>",
+                    )
                 )
-            )
+            else:
+                cells.append(
+                    HTML(
+                        "<h4>&#9888;&#65039; Your code could not run because of an error. Please, double-check it.</h4>"
+                    )
+                )
 
         ipython_display(
             ipywidgets.VBox(
@@ -298,7 +306,7 @@ class TestResultOutput:
                         test_name = result.test_name.split("::")[-1]
 
                         output_box_children: List[ipywidgets.Widget] = [
-                            ipywidgets.HTML(
+                            HTML(
                                 f'<h3>{"&#10004" if test_succeded else "&#10060"} Test <code>{test_name}</code></h3>',
                                 style={
                                     "background": "rgba(251, 59, 59, 0.25)"
@@ -313,9 +321,7 @@ class TestResultOutput:
 
                             output_box_children.append(
                                 ipywidgets.Accordion(
-                                    children=[
-                                        ipywidgets.HTML(format_error(result.exception))
-                                    ],
+                                    children=[HTML(format_error(result.exception))],
                                     titles=("Test results",),
                                 )
                             )
@@ -379,12 +385,18 @@ class ResultCollector:
         self, call: pytest.CallInfo, report: pytest.TestReport
     ):
         """Called when an exception was raised which can potentially be interactively handled."""
-        if call.excinfo is not None:
+        if (exc := call.excinfo) is not None:
+            # TODO: extract a stack summary from the traceback to inspect if the function to test raise an exception
+            outcome = (
+                TestOutcome.FAIL
+                if exc.errisinstance(AssertionError)
+                else TestOutcome.TEST_ERROR
+            )
             self.tests[report.nodeid] = TestCaseResult(
                 test_name=report.nodeid,
-                outcome=TestOutcome.TEST_ERROR,
-                exception=call.excinfo.value,
-                traceback=call.excinfo.tb,
+                outcome=outcome,
+                exception=exc.value,
+                traceback=exc.tb,
             )
 
     def pytest_runtest_logreport(self, report: pytest.TestReport):
