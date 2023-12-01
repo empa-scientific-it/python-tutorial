@@ -48,8 +48,10 @@ def reference_power4(num: int) -> int:
     return num**4
 
 
-async def reference_async(x: int) -> int:
-    return x
+def test_power2_raise(function_to_test):
+    """The test case(s)"""
+    with pytest.raises(TypeError):
+        function_to_test("a")
 
 
 input_args = [1, 2, 3, 4, 32]
