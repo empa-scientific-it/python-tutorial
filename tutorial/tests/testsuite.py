@@ -70,12 +70,12 @@ class TestMagic(Magics):
         self.cell_execution_count: Dict[str, Dict[str, int]] = defaultdict(
             lambda: defaultdict(int)
         )
-        self.functions_to_run: Dict[str, Callable] = {}
+        # self.functions_to_run: Dict[str, Callable] = {}
 
         # This is monkey-patching suppress printing any exception or traceback
         # self.shell._showtraceback = lambda *args, **kwargs: None
 
-    def extract_functions_to_test(self) -> None:
+    def extract_functions_to_test(self) -> Dict[str, Callable]:
         """"""
         # Retrieve the functions names defined in the current cell
         # Only functions with names starting with `solution_` will be candidates for tests
@@ -83,10 +83,11 @@ class TestMagic(Magics):
             r"^def\s+(solution_.*?)\s*\(", self.cell, re.M
         )
 
-        # Get the functions objects from user namespace
-        for name, function in self.shell.user_ns.items():  # type: ignore
-            if name in functions_names and callable(function):
-                self.functions_to_run[name.removeprefix("solution_")] = function
+        return {
+            name.removeprefix("solution_"): function
+            for name, function in self.shell.user_ns.items()
+            if name in functions_names and callable(function)
+        }
 
     def run_test(self, function_name: str, function_object: Callable) -> IPytestResult:
         """Run the tests for a single function"""
@@ -152,9 +153,9 @@ class TestMagic(Magics):
                 )
             ]
 
-        self.extract_functions_to_test()
+        functions_to_run = self.extract_functions_to_test()
 
-        if not self.functions_to_run:
+        if not functions_to_run:
             return [
                 IPytestResult(
                     status=IPytestOutcome.SOLUTION_FUNCTION_MISSING,
@@ -164,8 +165,7 @@ class TestMagic(Magics):
 
         # Run the tests for each function
         test_results = [
-            self.run_test(name, function)
-            for name, function in self.functions_to_run.items()
+            self.run_test(name, function) for name, function in functions_to_run.items()
         ]
 
         return test_results
@@ -192,14 +192,7 @@ class TestMagic(Magics):
 
         results = self.run_cell()
 
-        # TODO: this should be passed somehow to the TestResultOutput class
-        # Parse the AST tree of the file containing the test functions,
-        # to extract and store all information of function definitions and imports
         ast_parser = AstParser(self.module_file)
-        # solutions = [
-        #     ast_parser.get_solution_code(function_name)
-        #     for function_name in self.functions_to_run
-        # ]
 
         # Display the test results and the solution code
         for result in results:
