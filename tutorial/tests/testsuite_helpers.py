@@ -200,7 +200,11 @@ class TestResultOutput:
     def prepare_output_cell(self) -> ipywidgets.Output:
         """Prepare the cell to display the test results"""
         output_cell = ipywidgets.Output()
-        output_cell.append_display_data(HTML("<h2>Test Results</h2>"))
+        output_cell.append_display_data(
+            HTML(
+                f'<h2>Test Results for <span style="color: #00f;">solution_{self.ipytest_result.function_name}</span></h2>'
+            )
+        )
 
         match self.ipytest_result.status:
             case IPytestOutcome.COMPILE_ERROR | IPytestOutcome.PYTEST_ERROR | IPytestOutcome.UNKNOWN_ERROR:
@@ -279,10 +283,11 @@ class TestResultOutput:
                     for test in self.ipytest_result.test_results
                 )
 
+                num_results = len(self.ipytest_result.test_results)
+
                 output_cell.append_display_data(
                     HTML(
-                        f"<h4>&#128073; We ran {len(self.ipytest_result.test_results)} tests "
-                        f"on your <code>solution_{self.ipytest_result.function_name}</code>. "
+                        f"<h4>&#128073; We ran {num_results} test{'s' if num_results > 1 else ''}. "
                         f"""{"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}"""
                     )
                 )
