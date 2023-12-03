@@ -17,7 +17,7 @@ def reference_once(func: t.Callable) -> t.Callable:
     allowed_time = 15
     timer = 0.0
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs) -> t.Any:
         """Wrapper"""
         nonlocal timer
 
@@ -38,33 +38,33 @@ def reference_once(func: t.Callable) -> t.Callable:
 
 
 def test_once_simple(function_to_test: t.Callable) -> None:
-    at_hello = function_to_test(hello)
-    assert at_hello("world") == "Hello world!"
+    _hello = function_to_test(hello)
+    assert _hello("world") == "Hello world!"
 
 
 def test_once_twice(function_to_test: t.Callable, capsys) -> None:
-    at_hello = function_to_test(hello)
+    _hello = function_to_test(hello)
 
     with capsys.disabled():
         print("Waiting to run...")
 
     time.sleep(15)
-    assert at_hello("world") == "Hello world!"
+    assert _hello("world") == "Hello world!"
 
     with pytest.raises(TooSoonError):
-        at_hello("world 2")
+        _hello("world 2")
 
 
 def test_once_waiting_14_sec(function_to_test: t.Callable, capsys) -> None:
-    at_hello = function_to_test(hello)
+    _hello = function_to_test(hello)
 
     with capsys.disabled():
         print("Waiting to run...")
 
     time.sleep(15)
-    assert at_hello("world") == "Hello world!"
+    assert _hello("world") == "Hello world!"
     time.sleep(14)
 
     with pytest.raises(TooSoonError) as err:
-        at_hello("world 2")
+        _hello("world 2")
         assert "Wait another 1." in str(err)
