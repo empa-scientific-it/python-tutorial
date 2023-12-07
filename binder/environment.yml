@@ -17,3 +17,4 @@ dependencies:
           - markdown
           - pre-commit
           - geostatspy
+          - gstools
