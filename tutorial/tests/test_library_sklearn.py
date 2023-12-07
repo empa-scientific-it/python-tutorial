@@ -1,10 +1,144 @@
+import numpy as np
 import pytest
+from sklearn import datasets, model_selection, preprocessing
 
 
-def reference_equal_to_one(a):
-    return 1 == a
+def get_scaled_dataset(dataset_type: str):
+    if dataset_type == "classification":
+        data = datasets.load_breast_cancer()
+    else:
+        data = datasets.load_diabetes()
+
+    features = data["data"]
+    targets = data["target"]
+    (
+        features_train,
+        features_test,
+        targets_train,
+        targets_test,
+    ) = model_selection.train_test_split(
+        features, targets, test_size=0.20, random_state=42
+    )
+    (
+        features_train,
+        features_test,
+        targets_train,
+        targets_test,
+    ) = model_selection.train_test_split(
+        features_train, targets_train, test_size=0.25, random_state=42
+    )
+    standard_scaler = preprocessing.StandardScaler()
+    standard_scaler.fit(features_train)
+    features_train_standardised = standard_scaler.transform(features_train)
+    features_test_standardised = standard_scaler.transform(features_test)
+
+    return (
+        features_train_standardised,
+        targets_train,
+        features_test_standardised,
+        targets_test,
+    )
 
 
-@pytest.mark.parametrize("a", [1, 2, 3, 4])
-def test_equal_to_one(a, function_to_test):
-    assert reference_equal_to_one(a) == function_to_test(a)
+def reference_obtain_five_best_features(dataset):
+    from sklearn import feature_selection
+
+    features, targets = dataset
+    select_kbest_model = feature_selection.SelectKBest(
+        score_func=feature_selection.mutual_info_classif, k=5
+    )
+    select_kbest_model.fit(features, targets)
+    return select_kbest_model.get_support(indices=True)
+
+
+@pytest.mark.parametrize("dataset", [get_scaled_dataset("classification")])
+def test_obtain_five_best_features(dataset, function_to_test):
+    features_train, targets_train, _, _ = dataset
+    train_set = [features_train, targets_train]
+    assert np.array_equal(
+        reference_obtain_five_best_features(train_set), function_to_test(train_set)
+    )
+
+
+def reference_obtain_total_explained_variance_ratio(dataset):
+    from sklearn import decomposition
+
+    features, _ = dataset
+    pca_model = decomposition.PCA(n_components=5, random_state=42)
+    pca_model.fit(features)
+    explained_variance_ratio_by_component = pca_model.explained_variance_ratio_
+    total_explained_variance_ratio = sum(explained_variance_ratio_by_component)
+    return total_explained_variance_ratio
+
+
+@pytest.mark.parametrize(
+    "dataset", [get_scaled_dataset("classification"), get_scaled_dataset("regression")]
+)
+def test_obtain_total_explained_variance_ratio(dataset, function_to_test):
+    features_train, targets_train, _, _ = dataset
+    train_set = [features_train, targets_train]
+    assert reference_obtain_total_explained_variance_ratio(
+        train_set
+    ) == function_to_test(train_set)
+
+
+def reference_obtain_clustering_labels(dataset):
+    from sklearn import cluster
+
+    features, _ = dataset
+    clustering_model = cluster.AgglomerativeClustering()
+    clustering_model.fit(features)
+    return clustering_model.labels_
+
+
+@pytest.mark.parametrize("dataset", [get_scaled_dataset("classification")])
+def test_obtain_clustering_labels(dataset, function_to_test):
+    features_train, targets_train, _, _ = dataset
+    train_set = [features_train, targets_train]
+    assert np.array_equal(
+        reference_obtain_clustering_labels(train_set), function_to_test(train_set)
+    )
+
+
+def reference_train_classifier_and_obtain_accuracy(train_set, test_set):
+    from sklearn import metrics, svm
+
+    features_train, targets_train = train_set
+    features_test, targets_test = test_set
+    svm_model = svm.SVC(C=0.5, kernel="linear", random_state=42)
+    svm_model.fit(features_train, targets_train)
+    predicted_test = svm_model.predict(features_test)
+    accuracy_test = metrics.accuracy_score(targets_test, predicted_test)
+    return accuracy_test
+
+
+@pytest.mark.parametrize("dataset", [get_scaled_dataset("classification")])
+def test_train_classifier_and_obtain_accuracy(dataset, function_to_test):
+    features_train, targets_train, features_test, targets_test = dataset
+    train_set = [features_train, targets_train]
+    test_set = [features_test, targets_test]
+    assert reference_train_classifier_and_obtain_accuracy(
+        train_set, test_set
+    ) == function_to_test(train_set, test_set)
+
+
+def reference_train_regressor_and_obtain_rmse(train_set, test_set):
+    from sklearn import ensemble, metrics
+
+    features_train, targets_train = train_set
+    features_test, targets_test = test_set
+    rfr_model = ensemble.RandomForestRegressor(n_estimators=32, random_state=42)
+    rfr_model.fit(features_train, targets_train)
+    predicted_test = rfr_model.predict(features_test)
+    rmse_test = metrics.mean_squared_error(targets_test, predicted_test, squared=False)
+    return rmse_test
+
+
+@pytest.mark.parametrize("dataset", [get_scaled_dataset("regression")])
+def test_train_regressor_and_obtain_rmse(dataset, function_to_test):
+    features_train, targets_train, features_test, targets_test = dataset
+    train_set = [features_train, targets_train]
+    test_set = [features_test, targets_test]
+    assert reference_train_regressor_and_obtain_rmse(
+        train_set, test_set
+    ) == function_to_test(train_set, test_set)
