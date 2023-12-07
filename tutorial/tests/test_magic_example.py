@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 
@@ -73,3 +75,16 @@ def test_power3(input_arg, function_to_test):
 def test_power4(input_arg, function_to_test):
     """The test case(s)"""
     assert function_to_test(input_arg) == reference_power4(input_arg)
+
+
+async def reference_async() -> int:
+    await asyncio.sleep(1)
+    return 1
+
+
+def test_async():
+    async def async_test():
+        return 1
+
+    result = asyncio.run(async_test())
+    assert result == 1
