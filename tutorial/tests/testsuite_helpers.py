@@ -404,17 +404,3 @@ class ResultCollector:
         if test_result := self.tests.get(report.nodeid):
             test_result.stdout = report.capstdout
             test_result.stderr = report.capstderr
-
-
-class FunctionNotFoundError(Exception):
-    """Custom exception raised when the solution code cannot be parsed"""
-
-    def __init__(self) -> None:
-        super().__init__("No functions to test defined in the cell")
-
-
-class InstanceNotFoundError(Exception):
-    """Custom exception raised when an instance cannot be found"""
-
-    def __init__(self, name: str) -> None:
-        super().__init__(f"Could not get {name} instance")

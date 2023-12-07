@@ -16,10 +16,13 @@ from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 
 from .ast_parser import AstParser
-from .testsuite_helpers import (
-    FunctionInjectionPlugin,
+from .testsuite_exceptions import (
     FunctionNotFoundError,
     InstanceNotFoundError,
+    TestModuleNotFoundError,
+)
+from .testsuite_helpers import (
+    FunctionInjectionPlugin,
     IPytestOutcome,
     IPytestResult,
     ResultCollector,
@@ -120,7 +123,7 @@ def _name_from_globals(globals_dict: Dict) -> str | None:
     return pathlib.Path(module_path).stem if module_path else None
 
 
-def get_module_name(line: str, globals_dict: Dict) -> str:
+def get_module_name(line: str, globals_dict: Dict) -> str | None:
     """Fetch the test module name"""
 
     module_name = (
@@ -129,9 +132,6 @@ def get_module_name(line: str, globals_dict: Dict) -> str:
         or _name_from_globals(globals_dict)
     )
 
-    if not module_name:
-        raise ModuleNotFoundError(module_name)
-
     return module_name
 
 
@@ -139,20 +139,18 @@ def get_module_name(line: str, globals_dict: Dict) -> str:
 class TestMagic(Magics):
     """Class to add the test cell magic"""
 
-    def __init__(self, shell, threded: bool = True):
+    def __init__(self, shell):
         super().__init__(shell)
         self.max_execution_count = 3
         self.shell: InteractiveShell = shell
         self.cell: str = ""
         self.module_file: Optional[pathlib.Path] = None
         self.module_name: Optional[str] = None
-        self.threaded = threded
-        if self.threaded:
-            self.test_queue = Queue[IPytestResult]()
+        self.threaded: Optional[bool] = None
+        self.test_queue: Optional[Queue[IPytestResult]] = None
         self.cell_execution_count: Dict[str, Dict[str, int]] = defaultdict(
             lambda: defaultdict(int)
         )
-        # self.functions_to_run: Dict[str, Callable] = {}
 
         # This is monkey-patching suppress printing any exception or traceback
         # self.shell._showtraceback = lambda *args, **kwargs: None
@@ -169,16 +167,20 @@ class TestMagic(Magics):
             name.removeprefix("solution_"): function
             for name, function in self.shell.user_ns.items()
             if name in functions_names
-            and (callable(function) or inspect.is_coroutine_function(function))
+            and (callable(function) or inspect.iscoroutinefunction(function))
         }
 
     def run_test(self, function_name: str, function_object: Callable) -> IPytestResult:
         """Run the tests for a single function"""
+        assert isinstance(self.module_file, pathlib.Path)
+
         # Store execution count information for each cell
         cell_id = str(self.shell.parent_header["metadata"]["cellId"])  # type: ignore
         self.cell_execution_count[cell_id][function_name] += 1
+
         # Run the tests on a separate thread
         if self.threaded:
+            assert isinstance(self.test_queue, Queue)
             thread = Thread(
                 target=run_test_in_thread,
                 args=(
@@ -193,7 +195,7 @@ class TestMagic(Magics):
             result = self.test_queue.get()
         else:
             result = run_test(self.module_file, function_name, function_object)
-        # Increment the
+
         match result.status:
             case IPytestOutcome.FINISHED:
                 return dataclasses.replace(
@@ -231,8 +233,6 @@ class TestMagic(Magics):
             self.run_test(name, function) for name, function in functions_to_run.items()
         ]
 
-        print(test_results)
-
         return test_results
 
     @cell_magic
@@ -245,18 +245,30 @@ class TestMagic(Magics):
         # Store the cell content
         self.cell = cell
 
+        # Check if we need to run the tests on a separate thread
+        if "async" in line:
+            line = line.removeprefix("async")
+            self.threaded = True
+            self.test_queue = Queue()
+
         # Get the module containing the test(s)
-        module_name = get_module_name(line, self.shell.user_global_ns)
+        if (module_name := get_module_name(line, self.shell.user_global_ns)) is None:
+            raise TestModuleNotFoundError
+
         self.module_name = module_name
-        module_file = pathlib.Path(f"tutorial/tests/test_{self.module_name}.py")
 
         # Check that the test module file exists
-        if not module_file.exists():
+        if not (
+            module_file := pathlib.Path(f"tutorial/tests/test_{self.module_name}.py")
+        ).exists():
             raise FileNotFoundError(f"Module file '{module_file}' does not exist")
+
         self.module_file = module_file
 
+        # Run the cell
         results = self.run_cell()
 
+        # Parse the AST of the test module to retrieve the solution code
         ast_parser = AstParser(self.module_file)
 
         # Display the test results and the solution code
