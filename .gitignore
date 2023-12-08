@@ -133,3 +133,4 @@ dmypy.json
 *_files/
 *.html
 .idea/
+drafts/
