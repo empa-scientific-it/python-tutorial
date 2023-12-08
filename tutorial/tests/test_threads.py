@@ -116,15 +116,20 @@ def find_word(letters: list[str], separator: str) -> bool:
     return [w for w in "".join(letters).split(separator) if len(w) > 0]
 
 
-# async def reference_solution_exercise2(server: SecretServer) -> str:
-#     """Write your solution here"""
-#     rng = 30
-#     letters = await asyncio.gather(*[server.get_value() for _ in range(rng)])
-#     async def check_key(key: str):
-#         valid = await server.check_key(key)
-#         return valid, key
-#     res = await asyncio.gather(*[check_key(key) for key in find_word(letters, "/")])
-#     return [key for valid, key in res if valid][0]
+async def reference_exercise2(server: SecretServer) -> str:
+    """Write your solution here"""
+    rng = 30
+    # Concurrently get 30 letters from the server
+    letters = await asyncio.gather(*[server.get_value() for _ in range(rng)])
+
+    # Function to concurrently check if the key is valid
+    async def check_key(key: str):
+        valid = await server.check_key(key)
+        return valid, key
+
+    res = await asyncio.gather(*[check_key(key) for key in find_word(letters, "/")])
+    # Return the first valid key
+    return [key for valid, key in res if valid][0]
 
 
 @pytest.mark.parametrize("key", ["Secret", "Very secret", "Extremely secret"])
