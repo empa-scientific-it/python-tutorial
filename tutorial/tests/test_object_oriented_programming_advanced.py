@@ -246,5 +246,5 @@ def test_music_streaming_service(song_info, function_to_test):
 
 
 #
-# Exercise 4:
+# Exercise 4: Banking System
 #
