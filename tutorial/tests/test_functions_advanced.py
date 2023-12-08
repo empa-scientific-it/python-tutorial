@@ -123,10 +123,6 @@ def hello(name):
     return f"Hello {name}!"
 
 
-class TooSoonError(Exception):
-    """Error raised when a function is called too soon"""
-
-
 def reference_once(func: t.Callable) -> t.Callable:
     """Decorator to run a function at most once"""
     allowed_time = 15
@@ -141,7 +137,7 @@ def reference_once(func: t.Callable) -> t.Callable:
             return func(*args, **kwargs)
 
         if (stop := time.perf_counter()) - timer < allowed_time:
-            raise TooSoonError(
+            raise RuntimeError(
                 f"Wait another {allowed_time - (stop - timer):.2f} seconds"
             )
 
@@ -157,32 +153,31 @@ def test_once_simple(function_to_test: t.Callable) -> None:
     assert _hello("world") == "Hello world!"
 
 
-def test_once_twice(function_to_test: t.Callable, capsys) -> None:
+def test_once_twice(function_to_test: t.Callable) -> None:
     _hello = function_to_test(hello)
-
-    with capsys.disabled():
-        print("Waiting to run...")
 
     time.sleep(15)
     assert _hello("world") == "Hello world!"
 
-    with pytest.raises(TooSoonError):
+    with pytest.raises(RuntimeError) as err:
         _hello("world 2")
 
+    assert err.type is RuntimeError
+    assert "Wait another 1." in err.value.args[0]
 
-def test_once_waiting_14_sec(function_to_test: t.Callable, capsys) -> None:
+
+def test_once_waiting_not_enough_time(function_to_test: t.Callable) -> None:
     _hello = function_to_test(hello)
-
-    with capsys.disabled():
-        print("Waiting to run...")
 
     time.sleep(15)
     assert _hello("world") == "Hello world!"
     time.sleep(14)
 
-    with pytest.raises(TooSoonError) as err:
+    with pytest.raises(RuntimeError) as err:
         _hello("world 2")
-        assert "Wait another 1." in str(err)
+
+    assert err.type is RuntimeError
+    assert "Wait another 1." in err.value.args[0]
 
 
 #
