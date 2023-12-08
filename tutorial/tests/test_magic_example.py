@@ -82,9 +82,20 @@ async def reference_async() -> int:
     return 1
 
 
-def test_async():
+def test_async(function_to_test):
     async def async_test():
         return 1
 
     result = asyncio.run(async_test())
-    assert result == 1
+    user_result = asyncio.run(function_to_test())
+    assert result == user_result
+
+
+def reference_debug() -> int:
+    print("I print here")
+    return 1
+
+
+def test_debug(function_to_test):
+    print("I print here")
+    assert function_to_test() == 1

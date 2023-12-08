@@ -151,9 +151,8 @@ class TestMagic(Magics):
         self.cell_execution_count: Dict[str, Dict[str, int]] = defaultdict(
             lambda: defaultdict(int)
         )
-
+        self._orig_traceback = self.shell._showtraceback  # type: ignore
         # This is monkey-patching suppress printing any exception or traceback
-        self.shell._showtraceback = lambda *args, **kwargs: None
 
     def extract_functions_to_test(self) -> Dict[str, Callable]:
         """"""
@@ -244,15 +243,27 @@ class TestMagic(Magics):
 
         # Store the cell content
         self.cell = cell
+        line_contents = set(line.split())
 
         # Check if we need to run the tests on a separate thread
-        if "async" in line:
-            line = line.removeprefix("async")
+        if "async" in line_contents:
+            line_contents.remove("async")
             self.threaded = True
             self.test_queue = Queue()
 
+        # If debug is in the line, then we want to show the traceback
+        if "debug" in line_contents:
+            line_contents.remove("debug")
+            self.shell._showtraceback = self._orig_traceback
+        else:
+            self.shell._showtraceback = lambda *args, **kwargs: None
+
         # Get the module containing the test(s)
-        if (module_name := get_module_name(line, self.shell.user_global_ns)) is None:
+        if (
+            module_name := get_module_name(
+                " ".join(line_contents), self.shell.user_global_ns
+            )
+        ) is None:
             raise TestModuleNotFoundError
 
         self.module_name = module_name
