@@ -1,3 +1,6 @@
+from abc import ABC, abstractmethod
+from datetime import datetime
+
 import pytest
 
 #
@@ -45,7 +48,7 @@ def test_child_eye_color(mother_eye_color, father_eye_color, function_to_test):
 
 
 #
-# Exercise 2: Online Store Inventory System
+# Exercise 2: Store Inventory
 #
 
 
@@ -127,7 +130,7 @@ def test_store_inventory(computers, function_to_test):
 
 
 #
-# Exercise 3:
+# Exercise 3: Music Streaming Service
 #
 
 
@@ -248,3 +251,89 @@ def test_music_streaming_service(song_info, function_to_test):
 #
 # Exercise 4: Banking System
 #
+
+
+def reference_banking_system(
+    tax_rate: float,
+    interest_rate: float,
+    gross_salary: int,
+    savings_precentage: float,
+    years_passed: int,
+) -> float:
+    class Account(ABC):
+        def __init__(self, account_number):
+            self.account_number = account_number
+            self.balance = 0
+
+        @abstractmethod
+        def credit(self, amount):
+            pass
+
+        @abstractmethod
+        def get_balance(self):
+            pass
+
+        def debit(self, amount):
+            if self.balance >= amount:
+                self.balance -= amount
+            else:
+                print("Insufficient funds.")
+
+    class SalaryAccount(Account):
+        def __init__(self, account_number, tax_rate):
+            super().__init__(account_number)
+            self.tax_rate = tax_rate
+
+        def credit(self, amount):
+            self.balance += amount - amount * self.tax_rate
+
+        def get_balance(self):
+            return self.balance
+
+    class SavingsAccount(Account):
+        def __init__(self, account_number, interest_rate):
+            super().__init__(account_number)
+            self.interest_rate = interest_rate
+            self.creation_year = datetime.now().year
+
+        def credit(self, amount):
+            self.balance += amount
+
+        def get_balance(self, years_passed):
+            interest = self.balance * self.interest_rate * years_passed
+            return self.balance + interest
+
+    salary_account = SalaryAccount("SAL-001", tax_rate)
+    savings_account = SavingsAccount("SAV-001", interest_rate)
+
+    salary_account.credit(gross_salary)
+
+    amount_to_transfer = salary_account.get_balance() * savings_precentage
+
+    salary_account.debit(amount_to_transfer)
+    savings_account.credit(amount_to_transfer)
+
+    return savings_account.get_balance(years_passed)
+
+
+@pytest.mark.parametrize(
+    "tax_rate, interest_rate, gross_salary, savings_precentage, years_passed",
+    [
+        (0.20, 0.05, 10000, 0.3, 2),
+        (0.18, 0.04, 9300, 0.15, 3),
+        (0.13, 0.07, 8500, 0.18, 4),
+    ],
+)
+def test_banking_system(
+    tax_rate,
+    interest_rate,
+    gross_salary,
+    savings_precentage,
+    years_passed,
+    function_to_test,
+):
+    assert function_to_test(
+        tax_rate, interest_rate, gross_salary, savings_precentage, years_passed
+    ) == reference_banking_system(
+        tax_rate, interest_rate, gross_salary, savings_precentage, years_passed
+    )
