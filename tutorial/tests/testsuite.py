@@ -1,29 +1,108 @@
 """A module to define the `%%ipytest` cell magic"""
+import dataclasses
 import inspect
 import io
 import pathlib
 import re
+from collections import defaultdict
 from contextlib import redirect_stderr, redirect_stdout
-from multiprocessing import Process, Queue
-from typing import Dict, Optional
+from queue import Queue
+from threading import Thread
+from typing import Callable, Dict, List, Optional
 
 import ipynbname
 import pytest
-from IPython.core.display import Javascript
-from IPython.core.getipython import get_ipython
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
-from IPython.display import display
 
-from .testsuite_helpers import (
-    AstParser,
-    FunctionInjectionPlugin,
+from .ast_parser import AstParser
+from .testsuite_exceptions import (
     FunctionNotFoundError,
     InstanceNotFoundError,
-    QueuedResultCollector,
+    TestModuleNotFoundError,
+)
+from .testsuite_helpers import (
+    FunctionInjectionPlugin,
+    IPytestOutcome,
+    IPytestResult,
     ResultCollector,
+    TestOutcome,
     TestResultOutput,
 )
+
+
+def run_test(
+    module_file: pathlib.Path, function_name: str, function_object: Callable
+) -> IPytestResult:
+    """
+    Run the tests for a single function
+    """
+    with redirect_stdout(io.StringIO()) as _, redirect_stderr(io.StringIO()) as _:
+        # Create the test collector
+        result_collector = ResultCollector()
+
+        # Run the tests
+        result = pytest.main(
+            ["-k", f"test_{function_name}", f"{module_file}"],
+            plugins=[
+                FunctionInjectionPlugin(function_object),
+                result_collector,
+            ],
+        )
+
+    match result:
+        case pytest.ExitCode.OK:
+            return IPytestResult(
+                function_name=function_name,
+                status=IPytestOutcome.FINISHED,
+                test_results=list(result_collector.tests.values()),
+            )
+        case pytest.ExitCode.TESTS_FAILED:
+            if any(
+                test.outcome == TestOutcome.TEST_ERROR
+                for test in result_collector.tests.values()
+            ):
+                return IPytestResult(
+                    function_name=function_name,
+                    status=IPytestOutcome.PYTEST_ERROR,
+                    exceptions=[
+                        test.exception
+                        for test in result_collector.tests.values()
+                        if test.exception
+                    ],
+                )
+
+            return IPytestResult(
+                function_name=function_name,
+                status=IPytestOutcome.FINISHED,
+                test_results=list(result_collector.tests.values()),
+            )
+        case pytest.ExitCode.INTERNAL_ERROR:
+            return IPytestResult(
+                function_name=function_name,
+                status=IPytestOutcome.PYTEST_ERROR,
+                exceptions=[Exception("Internal error")],
+            )
+        case pytest.ExitCode.NO_TESTS_COLLECTED:
+            return IPytestResult(
+                function_name=function_name,
+                status=IPytestOutcome.NO_TEST_FOUND,
+                exceptions=[FunctionNotFoundError()],
+            )
+
+    return IPytestResult(
+        status=IPytestOutcome.UNKNOWN_ERROR, exceptions=[Exception("Unknown error")]
+    )
+
+
+def run_test_in_thread(
+    module_file: pathlib.Path,
+    function_name: str,
+    function_object: Callable,
+    test_queue: Queue,
+):
+    """Run the tests for a single function and put the result in the queue"""
+    test_queue.put(run_test(module_file, function_name, function_object))
 
 
 def _name_from_line(line: str = ""):
@@ -44,7 +123,7 @@ def _name_from_globals(globals_dict: Dict) -> str | None:
     return pathlib.Path(module_path).stem if module_path else None
 
 
-def get_module_name(line: str, globals_dict: Dict) -> str:
+def get_module_name(line: str, globals_dict: Dict) -> str | None:
     """Fetch the test module name"""
 
     module_name = (
@@ -53,9 +132,6 @@ def get_module_name(line: str, globals_dict: Dict) -> str:
         or _name_from_globals(globals_dict)
     )
 
-    if not module_name:
-        raise ModuleNotFoundError(module_name)
-
     return module_name
 
 
@@ -63,8 +139,101 @@ def get_module_name(line: str, globals_dict: Dict) -> str:
 class TestMagic(Magics):
     """Class to add the test cell magic"""
 
-    shell: Optional[InteractiveShell]  # type: ignore
-    cells: Dict[str, int] = {}
+    def __init__(self, shell):
+        super().__init__(shell)
+        self.max_execution_count = 3
+        self.shell: InteractiveShell = shell
+        self.cell: str = ""
+        self.module_file: Optional[pathlib.Path] = None
+        self.module_name: Optional[str] = None
+        self.threaded: Optional[bool] = None
+        self.test_queue: Optional[Queue[IPytestResult]] = None
+        self.cell_execution_count: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+
+        # This is monkey-patching suppress printing any exception or traceback
+        # self.shell._showtraceback = lambda *args, **kwargs: None
+
+    def extract_functions_to_test(self) -> Dict[str, Callable]:
+        """"""
+        # Retrieve the functions names defined in the current cell
+        # Only functions with names starting with `solution_` will be candidates for tests
+        functions_names: List[str] = re.findall(
+            r"^(?:async\s+?)?def\s+(solution_.*?)\s*\(", self.cell, re.M
+        )
+
+        return {
+            name.removeprefix("solution_"): function
+            for name, function in self.shell.user_ns.items()
+            if name in functions_names
+            and (callable(function) or inspect.iscoroutinefunction(function))
+        }
+
+    def run_test(self, function_name: str, function_object: Callable) -> IPytestResult:
+        """Run the tests for a single function"""
+        assert isinstance(self.module_file, pathlib.Path)
+
+        # Store execution count information for each cell
+        cell_id = str(self.shell.parent_header["metadata"]["cellId"])  # type: ignore
+        self.cell_execution_count[cell_id][function_name] += 1
+
+        # Run the tests on a separate thread
+        if self.threaded:
+            assert isinstance(self.test_queue, Queue)
+            thread = Thread(
+                target=run_test_in_thread,
+                args=(
+                    self.module_file,
+                    function_name,
+                    function_object,
+                    self.test_queue,
+                ),
+            )
+            thread.start()
+            thread.join()
+            result = self.test_queue.get()
+        else:
+            result = run_test(self.module_file, function_name, function_object)
+
+        match result.status:
+            case IPytestOutcome.FINISHED:
+                return dataclasses.replace(
+                    result,
+                    test_attempts=self.cell_execution_count[cell_id][function_name],
+                )
+            case _:
+                return result
+
+    def run_cell(self) -> List[IPytestResult]:
+        # Run the cell through IPython
+        try:
+            result = self.shell.run_cell(self.cell, silent=True)  # type: ignore
+            result.raise_error()
+        except Exception as err:
+            return [
+                IPytestResult(
+                    status=IPytestOutcome.COMPILE_ERROR,
+                    exceptions=[err],
+                )
+            ]
+
+        functions_to_run = self.extract_functions_to_test()
+
+        if not functions_to_run:
+            return [
+                IPytestResult(
+                    status=IPytestOutcome.SOLUTION_FUNCTION_MISSING,
+                    exceptions=[FunctionNotFoundError()],
+                )
+            ]
+
+        # Run the tests for each function
+        test_results = [
+            self.run_test(name, function) for name, function in functions_to_run.items()
+        ]
+
+        return test_results
 
     @cell_magic
     def ipytest(self, line: str, cell: str):
@@ -73,132 +242,43 @@ class TestMagic(Magics):
         if not self.shell:
             raise InstanceNotFoundError("InteractiveShell")
 
+        # Store the cell content
+        self.cell = cell
+
+        # Check if we need to run the tests on a separate thread
+        if "async" in line:
+            line = line.removeprefix("async")
+            self.threaded = True
+            self.test_queue = Queue()
+
         # Get the module containing the test(s)
-        module_name = get_module_name(line, self.shell.user_global_ns)
+        if (module_name := get_module_name(line, self.shell.user_global_ns)) is None:
+            raise TestModuleNotFoundError
+
+        self.module_name = module_name
 
         # Check that the test module file exists
-        module_file = pathlib.Path(f"tutorial/tests/test_{module_name}.py")
-        if not module_file.exists():
+        if not (
+            module_file := pathlib.Path(f"tutorial/tests/test_{self.module_name}.py")
+        ).exists():
             raise FileNotFoundError(f"Module file '{module_file}' does not exist")
 
-        # Run the cell through IPython
-        result = self.shell.run_cell(cell)
+        self.module_file = module_file
 
-        try:
-            result.raise_error()
+        # Run the cell
+        results = self.run_cell()
 
-            # Retrieve the functions names defined in the current cell
-            # Only functions with names starting with `solution_` will be candidates for tests
-            functions_names = re.findall(r"^def\s+(solution_.*?)\s*\(", cell, re.M)
+        # Parse the AST of the test module to retrieve the solution code
+        ast_parser = AstParser(self.module_file)
 
-            # Get the functions objects from user namespace
-            functions_to_run = {}
-            for name, function in self.shell.user_ns.items():
-                if (
-                    name in functions_names
-                    and callable(function)
-                    or inspect.iscoroutinefunction(function)
-                ):
-                    functions_to_run[name.removeprefix("solution_")] = function
-
-            if not functions_to_run:
-                raise FunctionNotFoundError
-
-            # Store execution count information for each cell
-            if (ipython := get_ipython()) is None:
-                raise InstanceNotFoundError("IPython")
-
-            cell_id = ipython.parent_header["metadata"]["cellId"]
-            if cell_id in self.cells:
-                self.cells[cell_id] += 1
-            else:
-                self.cells[cell_id] = 1
-
-            # Parse the AST tree of the file containing the test functions,
-            # to extract and store all information of function definitions and imports
-            ast_parser = AstParser(module_file)
-
-            outputs = []
-            for name, function in functions_to_run.items():
-                # Create the test collector
-                q = Queue()
-                result_collector = QueuedResultCollector(q)
-                # Run the tests
-                with redirect_stderr(io.StringIO()) as pytest_stderr, redirect_stdout(
-                    io.StringIO()
-                ) as pytest_stdout:
-                    p = Process(
-                        target=pytest.main,
-                        args=(
-                            [
-                                "-q",
-                                f"{module_file}::test_{name}",
-                            ],
-                        ),
-                        kwargs={
-                            "plugins": [
-                                FunctionInjectionPlugin(function),
-                                result_collector,
-                            ],
-                        },
-                    )
-                    p.start()
-                    p.join()
-
-                    # result = pytest.main(
-                    #     [
-                    #         "-q",
-                    #         f"{module_file}::test_{name}",
-                    #     ],
-                    #     plugins=[
-                    #         FunctionInjectionPlugin(function),
-                    #         result_collector,
-                    #     ],
-                    # )
-
-                    # Read pytest output to prevent it from being displayed
-                    pytest_stdout.getvalue()
-                    pytest_stderr.getvalue()
-
-                # reset execution count on success
-                success = p.exitcode == pytest.ExitCode.OK
-                if success:
-                    self.cells[cell_id] = 0
-                res = [q.get() for _ in range(q.qsize())]
-                print(p.exitcode)
-                outputs.append(
-                    TestResultOutput(
-                        list(res),
-                        name,
-                        False,
-                        success,
-                        self.cells[cell_id],
-                        ast_parser.get_solution_code(name),
-                    )
-                )
-
-            display(*outputs)
-
-            # hide cell outputs that were not generated by a function
-            display(
-                Javascript(
-                    """
-                        var output_divs = document.querySelectorAll(".jp-OutputArea-executeResult");
-                        for (let div of output_divs) {
-                            div.setAttribute("style", "display: none;");
-                        }
-                    """
-                )
+        # Display the test results and the solution code
+        for result in results:
+            solution = (
+                ast_parser.get_solution_code(result.function_name)
+                if result.function_name
+                else None
             )
-
-        except SyntaxError:
-            # Catches syntax errors
-            display(
-                TestResultOutput(
-                    syntax_error=True,
-                    success=False,
-                )
-            )
+            TestResultOutput(result, solution).display_results()
 
 
 def load_ipython_extension(ipython):
