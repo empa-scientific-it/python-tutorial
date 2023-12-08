@@ -142,3 +142,136 @@ def test_train_regressor_and_obtain_rmse(dataset, function_to_test):
     assert reference_train_regressor_and_obtain_rmse(
         train_set, test_set
     ) == function_to_test(train_set, test_set)
+
+
+def reference_build_regressor_and_obtain_rmse():
+    from sklearn import (
+        datasets,
+        ensemble,
+        feature_selection,
+        metrics,
+        model_selection,
+        pipeline,
+        preprocessing,
+    )
+
+    data = datasets.fetch_california_housing()
+    features = data["data"]
+    targets = data["target"]
+    data["feature_names"]
+    (
+        features_train,
+        features_test,
+        targets_train,
+        targets_test,
+    ) = model_selection.train_test_split(
+        features, targets, test_size=0.3, random_state=42
+    )
+
+    model_pipeline = pipeline.Pipeline(
+        [
+            ("scaler", preprocessing.StandardScaler()),
+            (
+                "feature_selector",
+                feature_selection.SelectKBest(
+                    score_func=feature_selection.mutual_info_regression, k=3
+                ),
+            ),
+            (
+                "rfr_regressor",
+                ensemble.RandomForestRegressor(n_estimators=128, random_state=42),
+            ),
+        ]
+    )
+
+    model_pipeline.fit(features_train, targets_train)
+
+    predicted_test = model_pipeline.predict(features_test)
+
+    rmse_test = metrics.mean_squared_error(targets_test, predicted_test, squared=False)
+
+    return rmse_test
+
+
+def test_build_regressor_and_obtain_rmse(function_to_test):
+    assert reference_build_regressor_and_obtain_rmse() == function_to_test()
+
+
+def reference_build_classifier_and_obtain_f1score():
+    import numpy as np
+    from sklearn import (
+        datasets,
+        ensemble,
+        feature_extraction,
+        feature_selection,
+        metrics,
+        model_selection,
+        pipeline,
+    )
+
+    data = datasets.fetch_20newsgroups()
+    texts = data["data"]
+    targets = data["target"]
+    (
+        texts_train,
+        texts_test,
+        targets_train,
+        targets_test,
+    ) = model_selection.train_test_split(texts, targets, test_size=0.2, random_state=42)
+
+    (
+        texts_train,
+        texts_val,
+        targets_train,
+        targets_val,
+    ) = model_selection.train_test_split(
+        texts_train, targets_train, test_size=0.25, random_state=42
+    )
+
+    features_pipeline = pipeline.Pipeline(
+        [
+            ("feature_extraction", feature_extraction.text.TfidfVectorizer()),
+            (
+                "feature_selector",
+                feature_selection.SelectKBest(
+                    score_func=feature_selection.f_classif, k=100
+                ),
+            ),
+        ]
+    )
+
+    features_train = features_pipeline.fit_transform(texts_train, targets_train)
+    features_train = features_train.toarray()
+    features_val = features_pipeline.transform(texts_val).toarray()
+    features_test = features_pipeline.transform(texts_test).toarray()
+
+    range_nr_trees = [16, 32, 64, 128, 256]
+    validation_scores = []
+    for nr_trees in range_nr_trees:
+        rfr_classifier = ensemble.RandomForestClassifier(
+            n_estimators=nr_trees, random_state=42
+        )
+        rfr_classifier.fit(features_train, targets_train)
+        predicted_val = rfr_classifier.predict(features_val)
+        f1score_val = metrics.f1_score(targets_val, predicted_val, average="weighted")
+        validation_scores.append(f1score_val)
+
+    best_model_index = np.argmax(validation_scores)
+
+    features_train = np.vstack((features_train, features_val))
+    targets_train = np.hstack((targets_train, targets_val))
+
+    final_rfr_classifier = ensemble.RandomForestClassifier(
+        n_estimators=range_nr_trees[best_model_index], random_state=42
+    )
+    final_rfr_classifier.fit(features_train, targets_train)
+
+    predicted_test = final_rfr_classifier.predict(features_test)
+
+    f1score_test = metrics.f1_score(targets_test, predicted_test, average="weighted")
+
+    return f1score_test
+
+
+def test_build_classifier_and_obtain_f1score(function_to_test):
+    assert reference_build_classifier_and_obtain_f1score() == function_to_test()
