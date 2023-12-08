@@ -123,55 +123,60 @@ def hello(name):
     return f"Hello {name}!"
 
 
-def reference_once(func: t.Callable) -> t.Callable:
+def reference_once(allowed_time: int = 15) -> t.Callable:
     """Decorator to run a function at most once"""
-    allowed_time = 15
-    timer = 0.0
 
-    def wrapper(*args, **kwargs) -> t.Any:
-        """Wrapper"""
-        nonlocal timer
+    def decorator(func: t.Callable) -> t.Callable:
+        timer = 0.0
 
-        if not timer:
+        def wrapper(*args, **kwargs) -> t.Any:
+            """Wrapper"""
+            nonlocal timer
+
+            if not timer:
+                timer = time.perf_counter()
+                return func(*args, **kwargs)
+
+            if (stop := time.perf_counter()) - timer < allowed_time:
+                raise RuntimeError(
+                    f"Wait another {allowed_time - (stop - timer):.2f} seconds"
+                )
+
             timer = time.perf_counter()
+
             return func(*args, **kwargs)
 
-        if (stop := time.perf_counter()) - timer < allowed_time:
-            raise RuntimeError(
-                f"Wait another {allowed_time - (stop - timer):.2f} seconds"
-            )
+        return wrapper
 
-        timer = time.perf_counter()
-
-        return func(*args, **kwargs)
-
-    return wrapper
+    return decorator
 
 
 def test_once_simple(function_to_test: t.Callable) -> None:
-    _hello = function_to_test(hello)
+    _hello = function_to_test(5)(hello)
     assert _hello("world") == "Hello world!"
 
 
 def test_once_twice(function_to_test: t.Callable) -> None:
-    _hello = function_to_test(hello)
+    allowed_time = 5
+    _hello = function_to_test(allowed_time)(hello)
 
-    time.sleep(15)
+    time.sleep(allowed_time)
     assert _hello("world") == "Hello world!"
 
     with pytest.raises(RuntimeError) as err:
         _hello("world 2")
 
     assert err.type is RuntimeError
-    assert "Wait another 1." in err.value.args[0]
+    assert "Wait another 5." in err.value.args[0]
 
 
 def test_once_waiting_not_enough_time(function_to_test: t.Callable) -> None:
-    _hello = function_to_test(hello)
+    allowed_time = 10
+    _hello = function_to_test(allowed_time)(hello)
 
-    time.sleep(15)
+    time.sleep(allowed_time)
     assert _hello("world") == "Hello world!"
-    time.sleep(14)
+    time.sleep(allowed_time - 1)
 
     with pytest.raises(RuntimeError) as err:
         _hello("world 2")
