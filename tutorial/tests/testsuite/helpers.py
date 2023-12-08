@@ -39,33 +39,6 @@ class TestCaseResult:
     stdout: str = ""
     stderr: str = ""
 
-    # FIXME: this is unused
-    # _html_format_string: str = """<div class="alert alert-box {}"><h4>{}</h4>{}</div>"""
-
-    # def __format__(self) -> str:
-    #     """Format a test result as a string"""
-
-    #     if self.outcome == TestOutcome.FAIL:
-    #         return self._html_format_string.format(
-    #             "alert-danger",
-    #             f"Tests <strong>FAILED</strong> for the function <code>{self.test_name}</code>",
-    #             "&#x1F631 Your solution was not correct!",
-    #         )
-    #     elif self.outcome == TestOutcome.TEST_ERROR:
-    #         return self._html_format_string.format(
-    #             "alert-warning",
-    #             "Tests <strong>COULD NOT RUN</strong> for this cell.",
-    #             "&#129300 Careful, looks like you have a syntax error.",
-    #         )
-    #     elif self.outcome == TestOutcome.PASS:
-    #         return self._html_format_string.format(
-    #             "alert-success",
-    #             f"Tests <strong>PASSED</strong> for the function <code>{self.test_name}</code>",
-    #             "&#x1F389 Congratulations!",
-    #         )
-    #     else:
-    #         return self.__str__()
-
 
 @dataclass
 class IPytestResult:
@@ -387,6 +360,8 @@ class ResultCollector:
         """Called when an exception was raised which can potentially be interactively handled."""
         if (exc := call.excinfo) is not None:
             # TODO: extract a stack summary from the traceback to inspect if the function to test raise an exception
+            #    print([frame.name for frame in traceback.extract_tb(exc.tb)])
+            # If something else than the test_* name is in that list, then we have a solution function that raised an exception
             outcome = (
                 TestOutcome.FAIL
                 if exc.errisinstance(AssertionError)

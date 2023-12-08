@@ -16,12 +16,12 @@ from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 
 from .ast_parser import AstParser
-from .testsuite_exceptions import (
+from .exceptions import (
     FunctionNotFoundError,
     InstanceNotFoundError,
     TestModuleNotFoundError,
 )
-from .testsuite_helpers import (
+from .helpers import (
     FunctionInjectionPlugin,
     IPytestOutcome,
     IPytestResult,
@@ -153,7 +153,7 @@ class TestMagic(Magics):
         )
 
         # This is monkey-patching suppress printing any exception or traceback
-        # self.shell._showtraceback = lambda *args, **kwargs: None
+        self.shell._showtraceback = lambda *args, **kwargs: None
 
     def extract_functions_to_test(self) -> Dict[str, Callable]:
         """"""
