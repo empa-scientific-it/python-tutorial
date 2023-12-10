@@ -154,3 +154,17 @@ class Quiz(ipw.VBox):
         for question in self.questions:
             question.clear()
         self.output.value = ""
+
+
+class Spoiler(ipw.Accordion):
+    def __init__(self, title: str, content: str, show_content: bool = False):
+        """A Spoiler widget.
+
+        title: The title of the spoiler.
+        content: The content of the spoiler.
+        open: Whether the spoiler is open or closed.
+        """
+        super().__init__()
+        self.children = [ipw.HTML(content)]
+        self.set_title(0, title)
+        self.selected_index = 0 if show_content else None
