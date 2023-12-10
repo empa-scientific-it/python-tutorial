@@ -1,10 +1,7 @@
 import pathlib
 import time
 import typing as t
-from operator import sub
 from string import ascii_lowercase as lowercase
-from string import ascii_uppercase as uppercase
-from string import digits, punctuation
 
 import pytest
 
@@ -16,6 +13,12 @@ def reference_password_checker_factory(
     min_up: int, min_low: int, min_pun: int, min_dig: int
 ) -> t.Callable:
     """Password checker factory"""
+    # The `string` module contains a number of useful constants
+    import string
+
+    # The `sub` function from the operator module can be used to subtract two numbers
+    # sub(x, y) is equivalent to x - y
+    from operator import sub
 
     def password_checker(password: str) -> tuple[bool, dict]:
         """Password checker function"""
@@ -23,7 +26,12 @@ def reference_password_checker_factory(
         # Counts the number of chars for each class in a password
         counts = [
             sum(1 for char in password if char in _class)
-            for _class in (uppercase, lowercase, punctuation, digits)
+            for _class in (
+                string.ascii_uppercase,
+                string.ascii_lowercase,
+                string.punctuation,
+                string.digits,
+            )
         ]
 
         # Compare with requirements and calculate the differences
@@ -43,6 +51,7 @@ def test_password_checker_factory_no_min_no_pw(function_to_test: t.Callable):
     result, details = pc("")
 
     assert result
+    assert len(details) == 4
     for value in details.values():
         assert value == 0
 
@@ -52,6 +61,7 @@ def test_password_checker_factory_no_min_some_pw(function_to_test: t.Callable):
     result, details = pc("ABCDefgh!@#$1234")
 
     assert result
+    assert len(details) == 4
     for value in details.values():
         assert value == 4
 
@@ -61,6 +71,7 @@ def test_password_checker_factory_simple_good(function_to_test: t.Callable):
     result, details = pc("Abc!@#1234")
 
     assert result
+    assert len(details) == 4
     for value in details.values():
         assert value == 0
 
@@ -70,6 +81,7 @@ def test_password_checker_factory_simple_bad(function_to_test: t.Callable):
     result, details = pc("b!#234")
 
     assert not result
+    assert len(details) == 4
     for value in details.values():
         assert value == -1
 
@@ -84,6 +96,7 @@ def test_password_checker_factory_only_set_one(onlyset, function_to_test: t.Call
     result, details = pc(pw)  # type: ignore
 
     assert not result
+    assert len(details) == 4
     for key, value in details.items():
         if key == onlyset:
             assert value == 0
@@ -107,6 +120,7 @@ def test_password_checker_factory_only_ignore_one(
     result, details = pc(pw)
 
     assert not result
+    assert len(details) == 4
     for key, value in details.items():
         if key == donotset:
             assert value == -4
