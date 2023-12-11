@@ -190,30 +190,26 @@ def reference_music_streaming_service(song_info: list[dict]):
     return user
 
 
-@pytest.mark.parametrize(
-    "song_info",
-    [
-        [
-            {
-                "title": "Bohemian Rhapsody",
-                "artist": "Queen",
-                "album_title": "A Night at the Opera",
-            },
-            {
-                "title": "We Will Rock You",
-                "artist": "Queen",
-                "album_title": "News of the World",
-            },
-            {
-                "title": "I Want to Break Free",
-                "artist": "Queen",
-                "album_title": "The Works",
-            },
-        ]
-    ],
-)
-def test_music_streaming_service(song_info, function_to_test):
-    solution_user = function_to_test()
+def test_music_streaming_service(function_to_test):
+    song_info = [
+        {
+            "title": "Bohemian Rhapsody",
+            "artist": "Queen",
+            "album_title": "A Night at the Opera",
+        },
+        {
+            "title": "We Will Rock You",
+            "artist": "Queen",
+            "album_title": "News of the World",
+        },
+        {
+            "title": "I Want to Break Free",
+            "artist": "Queen",
+            "album_title": "The Works",
+        },
+    ]
+
+    solution_user = function_to_test(song_info)
     reference_user = reference_music_streaming_service(song_info)
 
     assert (
