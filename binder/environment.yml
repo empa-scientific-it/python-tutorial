@@ -16,3 +16,4 @@ dependencies:
           - pytest-timeout
           - markdown
           - pre-commit
+          - attrs
