@@ -78,10 +78,12 @@ def reference_exercise1(input_path: pathlib.Path, size: int) -> Dict[str, int]:
     return dict(functools.reduce(lambda x, y: x + y, result, Counter()))
 
 
+@pytest.mark.parametrize("size", [1000, 10000, 100000])
 def test_exercise1_total_counts(
-    function_to_test: Callable, make_random_file: Callable[[None], pathlib.Path]
+    function_to_test: Callable,
+    make_random_file: Callable[[None], pathlib.Path],
+    size: int,
 ):
-    size = 10000
     rf = make_random_file(size)
     reference_res = reference_exercise1(rf, size)
     total_letters = sum(reference_res.values())
@@ -90,10 +92,12 @@ def test_exercise1_total_counts(
     assert total_letters == total_letters_user
 
 
+@pytest.mark.parametrize("size", [1000, 10000, 100000])
 def test_exercise1_counts(
-    function_to_test: Callable, make_random_file: Callable[[None], pathlib.Path]
+    function_to_test: Callable,
+    make_random_file: Callable[[None], pathlib.Path],
+    size: int,
 ):
-    size = 10000
     rf = make_random_file(size)
     reference_res = reference_exercise1(rf, size)
     user_res = function_to_test(rf, size)
