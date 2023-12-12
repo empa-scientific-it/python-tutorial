@@ -2,6 +2,8 @@ import pathlib
 import time
 import typing as t
 from string import ascii_lowercase as lowercase
+from string import ascii_uppercase as uppercase  # noqa: F401
+from string import digits, punctuation  # noqa: F401
 
 import pytest
 
