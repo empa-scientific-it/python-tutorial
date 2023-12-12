@@ -6,7 +6,7 @@ import random
 import string
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
-from typing import Any, Callable, Coroutine, Dict
+from typing import Awaitable, Callable, Dict
 
 import pytest
 
@@ -18,6 +18,10 @@ class SecretServer:
         self.timeout = timeout
         self.sequence = 0
         self.reset_flag = False
+        # Count how many concurrent requests are being made
+        self.resetter: asyncio.Task = None
+
+    async def start(self):
         self.resetter = asyncio.create_task(self.reset_sequence())
 
     async def reset_sequence(self):
@@ -26,12 +30,14 @@ class SecretServer:
             self.reset_flag = True
 
     async def get_value(self):
+        # Increase the concurrency counter
         if self.reset_flag:
             self.sequence = 0
             self.reset_flag = False
             return "/"
         await asyncio.sleep(self.timeout / len(self.inner_key) * 1.5)
         seq = self.sequence
+        # Increase the sequence counter
         self.sequence = (self.sequence + 1) % len(self.inner_key)
         return self.inner_key[seq]
 
@@ -104,7 +110,7 @@ def test_exercise1_counts(
     assert user_res == reference_res
 
 
-# TODO: find a way to test that the user is using multiprocessing (directly or indirectly)
+# #TODO: find a way to test that the user is using multiprocessing (directly or indirectly)
 # def test_exercise1_processes(function_to_test: Callable, make_random_file: Callable[[None], pathlib.Path], monkeypatch: pytest.MonkeyPatch):
 #     with patch.object(multiprocessing.Process, "start") as process_mock:
 #         size = 1000
@@ -121,7 +127,7 @@ def find_word(letters: list[str], separator: str) -> bool:
 
 
 async def reference_exercise2(server: SecretServer) -> str:
-    rng = 30
+    rng = 50
     # Concurrently get 30 letters from the server
     letters = await asyncio.gather(*[server.get_value() for _ in range(rng)])
 
@@ -135,12 +141,15 @@ async def reference_exercise2(server: SecretServer) -> str:
     return [key for valid, key in res if valid][0]
 
 
-@pytest.mark.parametrize("key", ["Secret", "Very secret", "Extremely secret"])
-def test_exercise2(key: str, function_to_test: Coroutine[Any, Any, str]):
+@pytest.mark.parametrize("secret_key", ["Secret", "Very secret", "Extremely secret"])
+def test_exercise2(function_to_test: Callable[[None], Awaitable[str]], secret_key: str):
+    server = SecretServer(secret_key, timeout=1)
+
     async def run_test() -> str:
-        server = SecretServer(key, timeout=1)
+        await server.start()
         res = await function_to_test(server)
         return res
 
     res = asyncio.run(run_test())
-    assert res == key
+    print(res, secret_key)
+    assert secret_key == res
