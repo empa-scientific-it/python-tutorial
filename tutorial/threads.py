@@ -6,7 +6,7 @@ class Threads(Quiz):
         q1 = Question(
             question="One cashier serves two lines of people in a store?",
             options={
-                "Parallel:": "What if the cashier is slow?",
+                "Parallel": "What if the cashier is slow?",
                 "Not parallel": "Correct, there's only one cashier",
             },
             correct_answer="Not parallel",
