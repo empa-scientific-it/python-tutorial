@@ -11,6 +11,7 @@ repos:
             exclude: miscellaneous/structures/SiO2.xyz
           - id: check-yaml
           - id: check-added-large-files
+            args: [--maxkb=5000]
     - repo: https://github.com/pycqa/isort
       rev: 5.12.0
       hooks:
