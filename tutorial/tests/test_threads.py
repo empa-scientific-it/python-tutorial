@@ -117,7 +117,6 @@ def find_word(letters: list[str], separator: str) -> bool:
 
 
 async def reference_exercise2(server: SecretServer) -> str:
-    """Write your solution here"""
     rng = 30
     # Concurrently get 30 letters from the server
     letters = await asyncio.gather(*[server.get_value() for _ in range(rng)])
