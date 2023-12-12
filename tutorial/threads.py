@@ -4,7 +4,7 @@ from .common import Question, Quiz
 class Threads(Quiz):
     def __init__(self, title="Decide if the following are parallel or not"):
         q1 = Question(
-            question="One cashier serves two lines of people in a store?",
+            question="One cashier serves two lines of people in a store",
             options={
                 "Parallel": "What if the cashier is slow?",
                 "Not parallel": "Correct, there's only one cashier",
