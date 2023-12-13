@@ -109,3 +109,42 @@ def test_multiply_each_row_by_its_sum(array, function_to_test):
     assert np.all(
         reference_multiply_each_row_by_its_sum(array) == function_to_test(array)
     )
+
+
+def reference_compute_integral(f, a, b):
+    step = 0.001
+    # Create a set of values for x between a and b with step size 0.001
+    x = np.arange(a, b, step)
+    # Compute the y values
+    y = f(x)
+    # Compute the integral
+    integral = np.sum(y) * step
+    return integral
+
+
+@pytest.mark.parametrize(
+    "f, a, b",
+    [
+        (lambda x: x, 0, 1),
+        (lambda x: x**2, 0, 1),
+        (lambda x: x**3 + 2 * x**2 + 3 * x + 4, 0, 3),
+        (lambda x: np.sin(x), 0, np.pi),
+    ],
+)
+def test_compute_integral(f, a, b, function_to_test):
+    assert np.isclose(reference_compute_integral(f, a, b), function_to_test(f, a, b))
+
+
+def reference_eigenvalue():
+    # 1. TODO: define the matrix a_ref here:
+    a_ref = np.array([[9, 3, 3], [3, 2, 2], [3, 4, 2]])
+
+    eigenvalues, eigenvectors = np.linalg.eigh(a_ref)
+    return eigenvalues, eigenvectors
+
+
+def test_eigenvalue(function_to_test):
+    eigval_ref, eigvec_ref = reference_eigenvalue()
+    sol_test = function_to_test()
+    assert np.all(np.isclose(eigval_ref, sol_test[0]))
+    assert np.all(np.isclose(eigvec_ref, sol_test[1]))
