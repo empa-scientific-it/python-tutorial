@@ -16,5 +16,6 @@ dependencies:
           - pytest-timeout
           - markdown
           - pre-commit
+          - scikit-learn
           - attrs
           - multiprocess
