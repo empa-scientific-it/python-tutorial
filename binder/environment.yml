@@ -17,3 +17,5 @@ dependencies:
           - markdown
           - pre-commit
           - scikit-learn
+          - attrs
+          - multiprocess
