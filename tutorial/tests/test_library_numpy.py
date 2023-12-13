@@ -190,3 +190,73 @@ def test_eigenvalue(function_to_test):
     sol_test = function_to_test()
     assert np.all(np.isclose(eigval_ref, sol_test[0]))
     assert np.all(np.isclose(eigvec_ref, sol_test[1]))
+
+
+def reference_sum_numbers_0_to_10000():
+    # Your code starts here
+    numbers = np.arange(0, 10000)
+    divis = (numbers % 4 != 0) & (numbers % 7 != 0)
+    return np.sum(numbers[divis])
+    # Your code ends here
+
+
+def test_sum_numbers_0_to_10000(function_to_test):
+    assert reference_sum_numbers_0_to_10000() == function_to_test()
+
+
+def reference_mean_and_std():
+    # Your code starts here
+    x = np.linspace(0, 10, 10000)
+    y = np.exp(-x / 10) * np.sin(x)
+
+    mask = (x >= 4) & (x <= 7)
+    mean = y[mask].mean()
+    std = y[mask].std()
+    return mean, std
+
+
+def test_mean_and_std(function_to_test):
+    assert np.allclose(reference_mean_and_std(), function_to_test())
+
+
+def reference_80_percentile():
+    # Your code starts here
+    x = np.linspace(0, 10, 10000)
+    y = np.exp(-x / 10) * np.sin(x)
+
+    mask = (x >= 4) & (x <= 7)
+    percentile = np.percentile(y[mask], 80)
+    return percentile
+    # Your code ends here
+
+
+def test_80_percentile(function_to_test):
+    assert np.allclose(reference_80_percentile(), function_to_test())
+
+
+def reference_compute_area():
+    # Your code starts here
+    theta = np.linspace(0, 2 * np.pi, 1000)
+    r = 1 + 3 / 4 * np.sin(3 * theta)
+    area = 1 / 2 * np.sum(r**2) * (theta[1] - theta[0])
+    return area
+    # Your code ends here
+
+
+def test_compute_area(function_to_test):
+    assert np.allclose(reference_compute_area(), function_to_test())
+
+
+def reference_compute_arc_length():
+    # Your code starts here
+    theta = np.linspace(0, 2 * np.pi, 1000)
+    r = 1 + 3 / 4 * np.sin(3 * theta)
+    arc_length = np.sum(np.sqrt(r**2 + np.gradient(r, theta) ** 2)) * (
+        theta[1] - theta[0]
+    )
+    return arc_length
+    # Your code ends here
+
+
+def test_compute_arc_length(function_to_test):
+    assert np.allclose(reference_compute_arc_length(), function_to_test())
