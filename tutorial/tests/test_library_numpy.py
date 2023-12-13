@@ -111,6 +111,48 @@ def test_multiply_each_row_by_its_sum(array, function_to_test):
     )
 
 
+def reference_function_values(x):
+    return x**2 + 2 * x * np.exp(x) + 1.0
+
+
+@pytest.mark.parametrize(
+    "x",
+    [
+        np.array([1, 2, 3]),
+        np.array([0, 1, 2]),
+        np.array([0.1, 0.2, 0.3]),
+        np.array([0.1, 0.2, 0.3, 0.4]),
+        np.array([-1, 0, 1]),
+        np.random.random(100),
+    ],
+)
+def test_function_values(x, function_to_test):
+    assert np.all(reference_function_values(x) == function_to_test(x))
+
+
+def reference_all_values_strictly_positive(array):
+    # Your code starts here
+    result = array > 0
+    return result.all()
+    # Your code ends here
+
+
+@pytest.mark.parametrize(
+    "array",
+    [
+        np.array([1, 2, 3]),
+        np.array([0, 1, 2]),
+        np.array([0.1, 0.2, 0.3]),
+        np.array([0.1, 0.2, 0.3, 0.4]),
+        np.array([-1, 0, 1]),
+        np.random.random((3, 4)) * 10 - 1,
+        np.random.random((3, 4, 5)) * 20 - 1,
+    ],
+)
+def test_all_values_strictly_positive(array, function_to_test):
+    assert reference_all_values_strictly_positive(array) == function_to_test(array)
+
+
 def reference_compute_integral(f, a, b):
     step = 0.001
     # Create a set of values for x between a and b with step size 0.001
