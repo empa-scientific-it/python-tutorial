@@ -1,6 +1,5 @@
 import asyncio
 import functools
-import multiprocessing
 import pathlib
 import random
 import string
@@ -8,6 +7,7 @@ from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from typing import Awaitable, Callable, Dict
 
+import multiprocess
 import pytest
 
 
@@ -76,7 +76,7 @@ def count_words(
 
 
 def reference_exercise1(input_path: pathlib.Path, size: int) -> Dict[str, int]:
-    workers = multiprocessing.cpu_count()
+    workers = multiprocess.cpu_count()
     with ProcessPoolExecutor(workers) as executor:
         result = executor.map(
             functools.partial(count_words, input_path, size, workers), range(workers)
