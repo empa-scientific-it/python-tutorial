@@ -1,6 +1,8 @@
 import pathlib
+import re
 import time
 import typing as t
+from math import isclose
 from string import ascii_lowercase as lowercase
 from string import ascii_uppercase as uppercase  # noqa: F401
 from string import digits, punctuation  # noqa: F401
@@ -183,7 +185,10 @@ def test_once_twice(function_to_test: t.Callable) -> None:
         _hello("world 2")
 
     assert err.type is RuntimeError
-    assert "Wait another 5." in err.value.args[0]
+    assert "Wait another" in err.value.args[0]
+
+    wait_time = re.search(r"[\d.]+", err.value.args[0])
+    assert wait_time and isclose(float(wait_time.group()), 5.0, abs_tol=1e-2)
 
 
 def test_once_waiting_not_enough_time(function_to_test: t.Callable) -> None:
@@ -198,7 +203,10 @@ def test_once_waiting_not_enough_time(function_to_test: t.Callable) -> None:
         _hello("world 2")
 
     assert err.type is RuntimeError
-    assert "Wait another 1." in err.value.args[0]
+    assert "Wait another" in err.value.args[0]
+
+    wait_time = re.search(r"[\d.]+", err.value.args[0])
+    assert wait_time and isclose(float(wait_time.group()), 1.0, abs_tol=1e-2)
 
 
 #
