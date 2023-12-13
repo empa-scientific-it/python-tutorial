@@ -18,3 +18,6 @@ dependencies:
           - pre-commit
           - geostatspy
           - gstools
+          - scikit-learn
+          - attrs
+          - multiprocess
