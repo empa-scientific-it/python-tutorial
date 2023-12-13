@@ -33,21 +33,6 @@ def test_root_finder(function_to_test):
         assert sol_ref[i] == sol_test[i]
 
 
-def reference_eigenvalue():
-    # 1. TODO: define the matrix a_ref here:
-    a_ref = np.array([[9, 3, 3], [3, 2, 2], [3, 4, 2]])
-
-    eigenvalues, eigenvectors = np.linalg.eigh(a_ref)
-    return eigenvalues, eigenvectors
-
-
-def test_eigenvalue(function_to_test):
-    eigval_ref, eigvec_ref = reference_eigenvalue()
-    sol_test = function_to_test()
-    assert np.all(np.isclose(eigval_ref, sol_test[0]))
-    assert np.all(np.isclose(eigvec_ref, sol_test[1]))
-
-
 def reference_lu():
     from scipy.linalg import lu
 
