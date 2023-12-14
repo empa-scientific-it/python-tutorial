@@ -5,7 +5,7 @@ def reference_minimize():
     from scipy.optimize import minimize
 
     def f(x):
-        return 3 * x**2 - 4 * x - 4
+        return 3 * x**2 - 5 * x - 4
 
     return minimize(f, 0)
 
@@ -22,7 +22,7 @@ def reference_root_finder():
         return x**3 - 6 * x**2 + 4 * x + 12
 
     # 2. TODO: call the root function here:
-    sol1, sol2, sol3 = root(f, -1.0), root(f, 2.5), root(f, 4.5)
+    sol1, sol2, sol3 = root(f, -1.0).x, root(f, 2.5).x, root(f, 4.5).x
     return sol1, sol2, sol3
 
 
