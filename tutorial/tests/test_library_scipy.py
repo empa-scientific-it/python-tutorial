@@ -118,10 +118,12 @@ def reference_gaussian():
         3.9,
         2.1,
     ]
+    xdata = np.array(xdata)
+    ydata = np.array(ydata)
 
     # 2. TODO: define the gaussian function here:
-    def ref_gaussian_math(x, sigma, mu):
-        return 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+    def ref_gaussian_math(x, a, b):
+        return a * np.exp(-b * x**2)
 
     # 3. TODO: call the curve_fit function here:
     parameters, covariance = curve_fit(ref_gaussian_math, xdata, ydata)
