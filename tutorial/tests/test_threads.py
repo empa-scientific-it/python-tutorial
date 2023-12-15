@@ -5,9 +5,8 @@ import random
 import string
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
-from typing import Awaitable, Callable, Dict
+from typing import Awaitable, Callable
 
-import multiprocess
 import pytest
 
 
@@ -56,67 +55,79 @@ def make_random_file(tmp_path_factory: pytest.TempPathFactory) -> str:
     return inner_file
 
 
-def read_segment(file: pathlib.Path, start: int, end: int) -> str:
-    with open(file) as f:
-        f.seek(start)
-        return f.read(end - start)
+def reference_exercise1(
+    input_file: pathlib.Path, size: int, n_processes: int
+) -> dict[str, int]:
+    def read_segment(file: pathlib.Path, start: int, end: int) -> str:
+        with open(file) as f:
+            f.seek(start)
+            return f.read(end - start)
 
+    def segment_stat(segment: str) -> dict[str, int]:
+        return Counter(segment.strip())
 
-def segment_stat(segment: str) -> Dict[str, int]:
-    return Counter(segment.strip())
+    def count_words(
+        file: pathlib.Path, size: int, n_processes: int, segment_index: int
+    ) -> dict[str, int]:
+        segment_size = size // n_processes
+        remainder = size % n_processes
+        start = segment_index * segment_size + min(segment_index, remainder)
+        end = start + segment_size + (1 if segment_index < remainder else 0)
+        return segment_stat(read_segment(file, start, end))
 
-
-def count_words(
-    file: pathlib.Path, size: int, n_processes: int, index: int
-) -> Dict[str, int]:
-    segment_size = size // n_processes
-    start = index * segment_size
-    end = start + segment_size
-    return segment_stat(read_segment(file, start, end))
-
-
-def reference_exercise1(input_path: pathlib.Path, size: int) -> Dict[str, int]:
-    workers = multiprocess.cpu_count()
-    with ProcessPoolExecutor(workers) as executor:
+    with ProcessPoolExecutor(n_processes) as executor:
         result = executor.map(
-            functools.partial(count_words, input_path, size, workers), range(workers)
+            functools.partial(count_words, input_file, size, n_processes),
+            range(n_processes),
         )
     return dict(functools.reduce(lambda x, y: x + y, result, Counter()))
 
 
-@pytest.mark.parametrize("size", [1000, 10000, 100000])
+random_file_sizes = [53, 123, 517, 1000, 10000]
+
+
+@pytest.mark.parametrize(
+    "size, n_processes", [(s, w) for s in random_file_sizes for w in [2, 4, 5, 7]]
+)
 def test_exercise1_total_counts(
     function_to_test: Callable,
     make_random_file: Callable[[None], pathlib.Path],
     size: int,
+    n_processes: int,
 ):
     rf = make_random_file(size)
-    reference_res = reference_exercise1(rf, size)
-    total_letters = sum(reference_res.values())
-    user_res = function_to_test(rf, size)
+    user_res = function_to_test(rf, size, n_processes)
     total_letters_user = sum(user_res.values())
-    assert total_letters == total_letters_user
+    assert total_letters_user == size
 
 
-@pytest.mark.parametrize("size", [1000, 10000, 100000])
+@pytest.mark.parametrize(
+    "size, workers", [(s, w) for s in random_file_sizes for w in [2, 4, 5, 7]]
+)
 def test_exercise1_counts(
     function_to_test: Callable,
     make_random_file: Callable[[None], pathlib.Path],
     size: int,
+    workers: int,
 ):
     rf = make_random_file(size)
-    reference_res = reference_exercise1(rf, size)
-    user_res = function_to_test(rf, size)
-    assert user_res == reference_res
+    # We read the file and use a counter as a trick. It is not parallel but we are
+    # sure it is correct
+    with open(rf) as f:
+        file_content = f.read()
+    # reference_res = count_words_parallel(rf, size, workers)
+    user_res = function_to_test(rf, size, workers)
+    assert user_res == Counter(file_content)
 
 
-# #TODO: find a way to test that the user is using multiprocessing (directly or indirectly)
+# TODO: find a way to test that the user is using multiprocessing (directly or indirectly)
 # def test_exercise1_processes(function_to_test: Callable, make_random_file: Callable[[None], pathlib.Path], monkeypatch: pytest.MonkeyPatch):
-#     with patch.object(multiprocessing.Process, "start") as process_mock:
-#         size = 1000
-#         rf = make_random_file(size)
-#         user_res = function_to_test(rf, size)
-#     assert process_mock.mock_calls or
+#     n_process_mock = MagicMock()
+#     n_process_mock.return_value = 2
+#     size = 1000
+#     rf = make_random_file(size)
+#     user_res = function_to_test(rf, size, n_process_mock)
+#     assert n_process_mock.called
 
 
 def find_word(letters: list[str], separator: str) -> bool:
