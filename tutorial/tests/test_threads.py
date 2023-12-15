@@ -56,7 +56,7 @@ def make_random_file(tmp_path_factory: pytest.TempPathFactory) -> str:
 
 
 def reference_exercise1(
-    input_path: pathlib.Path, size: int, workers: int
+    input_file: pathlib.Path, size: int, n_processes: int
 ) -> dict[str, int]:
     def read_segment(file: pathlib.Path, start: int, end: int) -> str:
         with open(file) as f:
@@ -75,9 +75,10 @@ def reference_exercise1(
         end = start + segment_size + (1 if segment_index < remainder else 0)
         return segment_stat(read_segment(file, start, end))
 
-    with ProcessPoolExecutor(workers) as executor:
+    with ProcessPoolExecutor(n_processes) as executor:
         result = executor.map(
-            functools.partial(count_words, input_path, size, workers), range(workers)
+            functools.partial(count_words, input_file, size, n_processes),
+            range(n_processes),
         )
     return dict(functools.reduce(lambda x, y: x + y, result, Counter()))
 
