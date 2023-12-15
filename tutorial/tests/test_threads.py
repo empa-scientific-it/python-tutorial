@@ -55,29 +55,26 @@ def make_random_file(tmp_path_factory: pytest.TempPathFactory) -> str:
     return inner_file
 
 
-def read_segment(file: pathlib.Path, start: int, end: int) -> str:
-    with open(file) as f:
-        f.seek(start)
-        return f.read(end - start)
-
-
-def segment_stat(segment: str) -> dict[str, int]:
-    return Counter(segment.strip())
-
-
-def count_words(
-    file: pathlib.Path, size: int, n_processes: int, segment_index: int
-) -> dict[str, int]:
-    segment_size = size // n_processes
-    remainder = size % n_processes
-    start = segment_index * segment_size + min(segment_index, remainder)
-    end = start + segment_size + (1 if segment_index < remainder else 0)
-    return segment_stat(read_segment(file, start, end))
-
-
 def reference_exercise1(
     input_path: pathlib.Path, size: int, workers: int
 ) -> dict[str, int]:
+    def read_segment(file: pathlib.Path, start: int, end: int) -> str:
+        with open(file) as f:
+            f.seek(start)
+            return f.read(end - start)
+
+    def segment_stat(segment: str) -> dict[str, int]:
+        return Counter(segment.strip())
+
+    def count_words(
+        file: pathlib.Path, size: int, n_processes: int, segment_index: int
+    ) -> dict[str, int]:
+        segment_size = size // n_processes
+        remainder = size % n_processes
+        start = segment_index * segment_size + min(segment_index, remainder)
+        end = start + segment_size + (1 if segment_index < remainder else 0)
+        return segment_stat(read_segment(file, start, end))
+
     with ProcessPoolExecutor(workers) as executor:
         result = executor.map(
             functools.partial(count_words, input_path, size, workers), range(workers)
