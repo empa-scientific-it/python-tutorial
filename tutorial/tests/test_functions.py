@@ -2,7 +2,7 @@ import inspect
 import pathlib
 from collections import Counter
 from string import ascii_lowercase, ascii_uppercase
-from typing import List
+from typing import List, Tuple
 
 import pytest
 
@@ -40,6 +40,73 @@ def test_greet(function_to_test) -> None:
     assert (
         return_annotation != inspect.Signature.empty
     ), "The function's return value is missing the type hint"
+
+
+#
+# Exercise 2: calculate area with units
+#
+
+
+def reference_calculate_area(
+    lenght: float, width: float, unit: str = "cm"
+) -> Tuple[float, str]:
+    """Reference solution for the calculate_area function"""
+    # Conversion factors to cm from different units
+    units = {"cm": 1, "m": 100, "mm": 10}
+
+    if unit not in units:
+        raise ValueError(f"Invalid unit: {unit}")
+
+    area = lenght * width * units[unit] ** 2
+
+    return (area, "cm^2")
+
+
+def test_calculate_area_signature(function_to_test) -> None:
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring"
+
+    signature = inspect.signature(function_to_test)
+    params = signature.parameters
+    return_annotation = signature.return_annotation
+
+    assert len(params) == 3, "The function should take three arguments"
+    assert (
+        "length" in params.keys()
+        and "width" in params.keys()
+        and "unit" in params.keys()
+    ), "The function's parameters should be 'length', 'width' and 'unit'"
+
+    assert all(
+        p.annotation != inspect.Parameter.empty for p in params.values()
+    ), "The function's parameters should have type hints"
+    assert (
+        return_annotation != inspect.Signature.empty
+    ), "The function's return value is missing the type hint"
+
+
+@pytest.mark.parametrize(
+    "length,width,unit,expected",
+    [
+        (2.0, 3.0, "cm", (6.0, "cm^2")),
+        (4.0, 5.0, "m", (200000.0, "cm^2")),
+        (10.0, 2.0, "mm", (2000.0, "cm^2")),
+    ],
+)
+def test_calculate_area_result(
+    length: float,
+    width: float,
+    unit: str,
+    expected: Tuple[float, str],
+    function_to_test,
+) -> None:
+    result = function_to_test(length, width, unit)
+    test_result = reference_calculate_area(length, width, unit)
+
+    assert isinstance(result, Tuple), "The function should return a tuple"
+    assert "cm^2" in result, "The result should be in squared centimeters (cm^2)"
+
+    assert test_result == expected, "The reference solution is incorrect"
+    assert result == reference_calculate_area(length, width, unit)
 
 
 #
