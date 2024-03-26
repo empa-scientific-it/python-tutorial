@@ -114,10 +114,11 @@ def reference_ice_cream_shop(flavors_1: list[str], flavors_2: list[str]) -> bool
 
 
 @pytest.mark.parametrize(
-    "flavors_1",
-    "flavors_2",
+    "flavors_1, flavors_2",
     [
-        (["chocolate", "vanilla", "stracciatella"], ["chocolate", "vanilla", "mango"]),
+        (["chocolate", "vanilla", "stracciatella"], ["caramel", "strawberry", "mango"]),
+        (["vanilla", "stracciatella"], ["chocolate", "vanilla", "mango"]),
+        (["vanilla", "mango"], ["chocolate"]),
     ],
 )
 def test_ice_cream_shop(flavors_1, flavors_2, function_to_test) -> None:
@@ -131,11 +132,18 @@ def test_ice_cream_shop(flavors_1, flavors_2, function_to_test) -> None:
 #
 
 
-def reference_intcode_computer() -> any:
-    def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
-        """Read input data"""
-        return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
+def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
+    """Read input data"""
+    return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
 
+
+def prepare_params() -> list[str]:
+    intcodes = ["1,0,0,0,99", "2,3,0,3,99", "1,1,1,4,99,5,6,0,99"]
+    intcodes += [read_data(f"intcode_{i}.txt").read_text() for i in (1, 2)]
+    return intcodes
+
+
+def reference_intcode_computer(intcode: str) -> int:
     class Computer:
         """An Intcode computer class"""
 
@@ -160,14 +168,14 @@ def reference_intcode_computer() -> any:
                 )
                 pos += 4
 
-    intcodes = ["1,0,0,0,99", "2,3,0,3,99", "1,1,1,4,99,5,6,0,99"]
-    intcodes += [read_data(f"intcode_{i}.txt").read_text() for i in (1, 2)]
-
-    computer = Computer(intcodes)
+    computer = Computer(intcode)
     computer.run()
     return computer.program[0]
 
 
-# @pytest.mark.parametrize("intcode", intcodes)
+@pytest.mark.parametrize(
+    "intcode",
+    prepare_params(),
+)
 def test_intcode_computer(intcode: str, function_to_test) -> None:
-    assert function_to_test(intcode)
+    assert function_to_test(intcode) == reference_intcode_computer(intcode)
