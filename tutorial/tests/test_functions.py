@@ -2,7 +2,7 @@ import inspect
 import pathlib
 from collections import Counter
 from string import ascii_lowercase, ascii_uppercase
-from typing import List, Tuple
+from typing import List
 
 import pytest
 
@@ -121,25 +121,25 @@ def reference_password_validator2(start: int, end: int) -> int:
 
 
 @pytest.mark.parametrize(
-    "pwd_range",
+    "start,end",
     [
         (138241, 674034),
         (136760, 595730),
     ],
 )
-def test_password_validator1(pwd_range: Tuple[int], function_to_test) -> None:
-    assert function_to_test(*pwd_range) == reference_password_validator1(*pwd_range)
+def test_password_validator1(start: int, end: int, function_to_test) -> None:
+    assert function_to_test(start, end) == reference_password_validator1(start, end)
 
 
 @pytest.mark.parametrize(
-    "pwd_range",
+    "start,end",
     [
         (138241, 674034),
         (136760, 595730),
     ],
 )
-def test_password_validator2(pwd_range: Tuple[int], function_to_test) -> None:
-    assert function_to_test(*pwd_range) == reference_password_validator2(*pwd_range)
+def test_password_validator2(start: int, end: int, function_to_test) -> None:
+    assert function_to_test(start, end) == reference_password_validator2(start, end)
 
 
 #
