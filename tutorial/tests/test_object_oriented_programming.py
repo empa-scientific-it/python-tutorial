@@ -7,19 +7,27 @@ import pytest
 #
 
 
-class Scoop:
-    """A class representing a single scoop of ice cream"""
+def reference_ice_cream_scoop(flavors: tuple[str]) -> str:
+    class Scoop:
+        """A class representing a single scoop of ice cream"""
 
-    def __init__(self, flavor: str):
-        self.flavor = flavor
+        def __init__(self, flavor: str):
+            self.flavor = flavor
 
-    def __str__(self):
-        return f"Ice cream scoop with flavor '{self.flavor}'"
+        def __str__(self):
+            return f"Ice cream scoop with flavor '{self.flavor}'"
+
+    return [str(Scoop(flavor)) for flavor in flavors]
 
 
-def test_ice_cream_scoop(function_to_test) -> None:
-    flavors = ("chocolate", "vanilla", "persimmon")
-    assert function_to_test(flavors) == [str(Scoop(flavor)) for flavor in flavors]
+@pytest.mark.parametrize(
+    "flavors",
+    [
+        (("chocolate", "vanilla", "persimmon")),
+    ],
+)
+def test_ice_cream_scoop(flavors, function_to_test) -> None:
+    assert function_to_test(flavors) == reference_ice_cream_scoop(flavors)
 
 
 #
@@ -27,67 +35,139 @@ def test_ice_cream_scoop(function_to_test) -> None:
 #
 
 
-class Bowl:
-    """A class representing a bowl of ice cream scoops"""
+def reference_ice_cream_bowl(flavors: tuple[str]) -> str:
+    class Scoop:
+        """A class representing a single scoop of ice cream"""
 
-    def __init__(self):
-        self.scoops = []
+        def __init__(self, flavor: str):
+            self.flavor = flavor
 
-    def add_scoops(self, *new_scoops: "Scoop") -> None:
-        for one_scoop in new_scoops:
-            self.scoops.append(one_scoop)
+        def __str__(self):
+            return f"Ice cream scoop with flavor '{self.flavor}'"
 
-    def __str__(self):
-        return f"Ice cream bowl with {', '.join(s.flavor for s in self.scoops)} scoops"
+    class Bowl:
+        """A class representing a bowl of ice cream scoops"""
 
+        def __init__(self):
+            self.scoops = []
 
-def test_ice_cream_bowl(function_to_test) -> None:
-    flavors = ("chocolate", "vanilla", "stracciatella")
+        def add_scoops(self, *new_scoops: "Scoop") -> None:
+            for one_scoop in new_scoops:
+                self.scoops.append(one_scoop)
+
+        def __str__(self):
+            return (
+                f"Ice cream bowl with {', '.join(s.flavor for s in self.scoops)} scoops"
+            )
+
     bowl = Bowl()
     scoops = [Scoop(flavor) for flavor in flavors]
     bowl.add_scoops(*scoops)
-    assert function_to_test(flavors) == str(bowl)
+    return str(bowl)
+
+
+@pytest.mark.parametrize(
+    "flavors",
+    [
+        (("chocolate", "vanilla", "stracciatella")),
+    ],
+)
+def test_ice_cream_bowl(flavors, function_to_test) -> None:
+    assert function_to_test(flavors) == reference_ice_cream_bowl(flavors)
 
 
 #
-# Exercise 3: Intcode computer
+# Exercise 3: Ice cream shop
 #
 
 
-def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
-    """Read input data"""
-    return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
+def reference_ice_cream_shop(flavors_1: list[str], flavors_2: list[str]) -> bool:
+    class Shop:
+        """A class representing an ice cream shop"""
 
+        def __init__(self, flavors):
+            self.flavors = flavors
 
-class Computer:
-    """An Intcode computer class"""
-
-    def __init__(self, program: str):
-        self.program = [int(c.strip()) for c in program.split(",")]
-        self._backup = self.program[:]
-
-    def reset(self):
-        self.program = self._backup[:]
-
-    def run(self, pos=0):
-        while True:
-            if self.program[pos] == 99:
-                break
-            op1, op2 = (
-                self.program[self.program[pos + 1]],
-                self.program[self.program[pos + 2]],
+        def __str__(self):
+            return (
+                f"Ice cream shop selling flavors: {', '.join(f for f in self.flavors)}"
             )
-            func = self.program[pos]
-            self.program[self.program[pos + 3]] = op1 + op2 if func == 1 else op1 * op2
-            pos += 4
+
+        def __eq__(self, other):
+            if isinstance(other, Shop):
+                return len(self.flavors) == len(other.flavors)
+            return False
+
+        def __lt__(self, other):
+            if isinstance(other, Shop):
+                return len(self.flavors) < len(other.flavors)
+            return False
+
+        def __le__(self, other):
+            if isinstance(other, Shop):
+                return self < other or self == other
+            return False
+
+    shop_1 = Shop(flavors_1)
+    shop_2 = Shop(flavors_2)
+    return shop_1 <= shop_2
 
 
-intcodes = ["1,0,0,0,99", "2,3,0,3,99", "1,1,1,4,99,5,6,0,99"]
-intcodes += [read_data(f"intcode_{i}.txt").read_text() for i in (1, 2)]
+@pytest.mark.parametrize(
+    "flavors_1",
+    "flavors_2",
+    [
+        (["chocolate", "vanilla", "stracciatella"], ["chocolate", "vanilla", "mango"]),
+    ],
+)
+def test_ice_cream_shop(flavors_1, flavors_2, function_to_test) -> None:
+    assert function_to_test(flavors_1, flavors_2) == reference_ice_cream_shop(
+        flavors_1, flavors_2
+    )
 
 
-@pytest.mark.parametrize("intcode", intcodes)
-def test_intcode_computer(intcode: str, function_to_test) -> None:
-    computer = Computer(intcode)
+#
+# Exercise 4: Intcode computer
+#
+
+
+def reference_intcode_computer() -> any:
+    def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
+        """Read input data"""
+        return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
+
+    class Computer:
+        """An Intcode computer class"""
+
+        def __init__(self, program: str):
+            self.program = [int(c.strip()) for c in program.split(",")]
+            self._backup = self.program[:]
+
+        def reset(self):
+            self.program = self._backup[:]
+
+        def run(self, pos=0):
+            while True:
+                if self.program[pos] == 99:
+                    break
+                op1, op2 = (
+                    self.program[self.program[pos + 1]],
+                    self.program[self.program[pos + 2]],
+                )
+                func = self.program[pos]
+                self.program[self.program[pos + 3]] = (
+                    op1 + op2 if func == 1 else op1 * op2
+                )
+                pos += 4
+
+    intcodes = ["1,0,0,0,99", "2,3,0,3,99", "1,1,1,4,99,5,6,0,99"]
+    intcodes += [read_data(f"intcode_{i}.txt").read_text() for i in (1, 2)]
+
+    computer = Computer(intcodes)
     computer.run()
-    assert function_to_test(intcode) == computer.program[0]
+    return computer.program[0]
+
+
+# @pytest.mark.parametrize("intcode", intcodes)
+def test_intcode_computer(intcode: str, function_to_test) -> None:
+    assert function_to_test(intcode)
