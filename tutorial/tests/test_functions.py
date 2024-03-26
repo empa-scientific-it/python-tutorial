@@ -1,5 +1,5 @@
+import inspect
 import pathlib
-import sys
 from collections import Counter
 from string import ascii_lowercase, ascii_uppercase
 from typing import List, Tuple
@@ -9,14 +9,41 @@ import pytest
 
 def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     """Read input data"""
-    current_module = sys.modules[__name__]
-    return (
-        pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}"
-    ).resolve()
+    return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
 
 
 #
-# Exercise 1: Longest Sequence
+# Exercise 1: a `greet` function
+#
+
+
+def reference_greet(name: str, age: int) -> str:
+    """Reference solution for the greet function"""
+    return f"Hello {name}, you are {age} years old."
+
+
+def test_greet(function_to_test) -> None:
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring"
+
+    signature = inspect.signature(function_to_test)
+    params = signature.parameters
+    return_annotation = signature.return_annotation
+
+    assert len(params) == 2, "The function should take two arguments"
+    assert (
+        "name" in params.keys() and "age" in params.keys()
+    ), "The function's parameters should be 'name' and 'age'"
+
+    assert all(
+        p.annotation != inspect.Parameter.empty for p in params.values()
+    ), "The function's parameters should have type hints"
+    assert (
+        return_annotation != inspect.Signature.empty
+    ), "The function's return value is missing the type hint"
+
+
+#
+# Exercise: Longest Sequence
 #
 
 
@@ -67,7 +94,7 @@ def test_longest_sequence_best(input_nums: List[int], function_to_test) -> None:
 
 
 #
-# Exercise 2: Password Validator
+# Exercise: Password Validator
 #
 
 
@@ -116,7 +143,7 @@ def test_password_validator2(pwd_range: Tuple[int], function_to_test) -> None:
 
 
 #
-# Exercise 3: Buckets reorganization
+# Exercise: Buckets reorganization
 #
 
 prio = {l: i for i, l in enumerate(ascii_lowercase + ascii_uppercase, start=1)}
