@@ -4,7 +4,7 @@ from .common import Question, Quiz
 class OopQuiz(Quiz):
     def __init__(self, title=""):
         q1 = Question(
-            question="Based on what you learned about Python's special methods, which of the following statements is true?",
+            question="Based on what you learned about Python's special methods, which of the following statements is <strong>true</strong>?",
             options={
                 "__repr__ is also used for __str__, but not vice versa.": "Correct! This statement is true.",
                 "__str__ is also used for __repr__, but not vice versa.": "The opposite is true.",
