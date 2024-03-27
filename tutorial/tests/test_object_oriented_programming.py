@@ -23,7 +23,8 @@ def reference_ice_cream_scoop(flavors: tuple[str]) -> str:
 @pytest.mark.parametrize(
     "flavors",
     [
-        (("chocolate", "vanilla", "persimmon")),
+        ("chocolate", "vanilla", "persimmon"),
+
     ],
 )
 def test_ice_cream_scoop(flavors, function_to_test) -> None:
