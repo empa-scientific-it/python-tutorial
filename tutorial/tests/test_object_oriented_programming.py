@@ -69,7 +69,8 @@ def reference_ice_cream_bowl(flavors: tuple[str]) -> str:
 @pytest.mark.parametrize(
     "flavors",
     [
-        (("chocolate", "vanilla", "stracciatella")),
+        ("chocolate", "vanilla", "stracciatella"),
+
     ],
 )
 def test_ice_cream_bowl(flavors, function_to_test) -> None:
