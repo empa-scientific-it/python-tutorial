@@ -48,18 +48,24 @@ def test_greet(function_to_test) -> None:
 
 
 def reference_calculate_area(
-    lenght: float, width: float, unit: str = "cm"
-) -> Tuple[float, str]:
+    length: float, width: float, unit: str = "cm"
+) -> Tuple[float, str] | str:
     """Reference solution for the calculate_area function"""
-    # Conversion factors to cm from different units
-    units = {"cm": 1, "m": 100, "mm": 10}
+    # Conversion factors from supported units to centimeters
+    units = {
+        "cm": 1,
+        "m": 100,
+        "mm": 10,
+        "yd": 91.44,
+        "ft": 30.48,
+    }
 
-    if unit not in units:
-        raise ValueError(f"Invalid unit: {unit}")
-
-    area = lenght * width * units[unit] ** 2
-
-    return (area, "cm^2")
+    try:
+        area = length * width * units[unit] ** 2
+    except KeyError:
+        return f"Invalid unit: {unit}"
+    else:
+        return (area, "cm^2")
 
 
 def test_calculate_area_signature(function_to_test) -> None:
@@ -90,6 +96,9 @@ def test_calculate_area_signature(function_to_test) -> None:
         (2.0, 3.0, "cm", (6.0, "cm^2")),
         (4.0, 5.0, "m", (200000.0, "cm^2")),
         (10.0, 2.0, "mm", (2000.0, "cm^2")),
+        (2.0, 8.0, "yd", (133780.38, "cm^2")),
+        (5.0, 4.0, "ft", (18580.608, "cm^2")),
+        (3.0, 5.0, "in", (96.774, "cm^2")),
     ],
 )
 def test_calculate_area_result(
@@ -102,11 +111,24 @@ def test_calculate_area_result(
     result = function_to_test(length, width, unit)
     test_result = reference_calculate_area(length, width, unit)
 
-    assert isinstance(result, Tuple), "The function should return a tuple"
-    assert "cm^2" in result, "The result should be in squared centimeters (cm^2)"
+    if unit in ("cm", "m", "mm", "yd", "ft"):
+        assert isinstance(result, Tuple), "The function should return a tuple"
 
-    assert test_result == expected, "The reference solution is incorrect"
-    assert result == reference_calculate_area(length, width, unit)
+        assert "cm^2" in result, "The result should be in squared centimeters (cm^2)"
+
+        # Double-check the reference solution
+        assert test_result[0] == pytest.approx(
+            expected[0], abs=0.01
+        ), "The reference solution is incorrect"
+
+        assert result[0] == pytest.approx(expected[0], abs=0.01)
+    else:
+        assert isinstance(
+            result, str
+        ), "The function should return an error string for unsupported units"
+        assert (
+            result == f"Invalid unit: {unit}"
+        ), "The error message is incorrectly formatted"
 
 
 #
