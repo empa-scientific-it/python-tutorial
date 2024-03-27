@@ -155,9 +155,6 @@ def reference_intcode_computer(intcode: str) -> int:
             self.program = [int(c.strip()) for c in program.split(",")]
             self._backup = self.program[:]
 
-        def reset(self):
-            self.program = self._backup[:]
-
         def run(self, pos=0):
             while True:
                 if self.program[pos] == 99:
