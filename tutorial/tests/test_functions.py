@@ -159,8 +159,7 @@ def reference_summing_anything(*args: Any) -> Any:
     ],
 )
 def test_summing_anything(args: Any, expected: Any, function_to_test) -> None:
-    assert reference_summing_anything(*args) == expected
-    assert function_to_test(*args) == reference_summing_anything(*args)
+    assert function_to_test(*args) == expected
 
 
 #
