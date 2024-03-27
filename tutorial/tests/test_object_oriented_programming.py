@@ -7,7 +7,8 @@ import pytest
 #
 
 
-def reference_ice_cream_scoop(flavors: tuple[str]) -> str:
+def reference_ice_cream_scoop(flavors: tuple[str]) -> list[str]:
+
     class Scoop:
         """A class representing a single scoop of ice cream"""
 
