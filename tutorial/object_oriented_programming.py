@@ -28,7 +28,7 @@ class OopQuiz(Quiz):
         )
 
         q3 = Question(
-            question="Based on what you learned about the @property keyword, which of the following statements is false?",
+            question="Based on what you learned about the @property keyword, which of the following statements is <strong>false</strong>?",
             options={
                 "@property creates attributes that act like methods but can be accessed and assigned as regular attributes.": "This statement is true.",
                 "@property helps implement attributes that require additional logic or validation when getting or setting their values.": "This statement is true.",
