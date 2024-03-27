@@ -2,7 +2,7 @@ import inspect
 import pathlib
 from collections import Counter
 from string import ascii_lowercase, ascii_uppercase
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import pytest
 
@@ -18,7 +18,7 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
 
 
 def reference_greet(name: str, age: int) -> str:
-    """Reference solution for the greet function"""
+    """Reference solution for the greet exercise"""
     return f"Hello {name}, you are {age} years old."
 
 
@@ -50,7 +50,7 @@ def test_greet(function_to_test) -> None:
 def reference_calculate_area(
     length: float, width: float, unit: str = "cm"
 ) -> Tuple[float, str] | str:
-    """Reference solution for the calculate_area function"""
+    """Reference solution for the calculate_area exercise"""
     # Conversion factors from supported units to centimeters
     units = {
         "cm": 1,
@@ -129,6 +129,38 @@ def test_calculate_area_result(
         assert (
             result == f"Invalid unit: {unit}"
         ), "The error message is incorrectly formatted"
+
+
+#
+# Exercise 3: summing anything
+#
+
+
+def reference_summing_anything(*args: Any) -> Any:
+    """Reference solution for the summing_anything exercise"""
+    if not args:
+        return args
+
+    result = args[0]
+
+    for item in args[1:]:
+        result += item
+
+    return result
+
+
+@pytest.mark.parametrize(
+    "args,expected",
+    [
+        ((), ()),
+        ((1, 2, 3), 6),
+        (([1, 2, 3], [4, 5, 6]), [1, 2, 3, 4, 5, 6]),
+        (("hello", "world"), "helloworld"),
+    ],
+)
+def test_summing_anything(args: Any, expected: Any, function_to_test) -> None:
+    assert reference_summing_anything(*args) == expected
+    assert function_to_test(*args) == reference_summing_anything(*args)
 
 
 #
