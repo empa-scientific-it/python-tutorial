@@ -138,6 +138,7 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
 
 
 def prepare_params() -> list[str]:
+    """Prepare input values for a parametrized test"""
     intcodes = ["1,0,0,0,99", "2,3,0,3,99", "1,1,1,4,99,5,6,0,99"]
     intcodes += [read_data(f"intcode_{i}.txt").read_text() for i in (1, 2)]
     return intcodes
