@@ -16,7 +16,7 @@ class OopQuiz(Quiz):
         )
 
         q2 = Question(
-            question="Based on what you learned about Python's comparison methods, which of the following statements is false?",
+            question="Based on what you learned about Python's comparison methods, which of the following statements is <strong>false</strong>?",
             options={
                 "If we implement __gt__, Python will also use it for __lt__": "This statement is true.",
                 "If we implement __lt__, Python will also use it for __le__": "Correct! This statement is false.",
