@@ -8,7 +8,6 @@ import pytest
 
 
 def reference_ice_cream_scoop(flavors: tuple[str]) -> list[str]:
-
     class Scoop:
         """A class representing a single scoop of ice cream"""
 
@@ -25,7 +24,6 @@ def reference_ice_cream_scoop(flavors: tuple[str]) -> list[str]:
     "flavors",
     [
         ("chocolate", "vanilla", "persimmon"),
-
     ],
 )
 def test_ice_cream_scoop(flavors, function_to_test) -> None:
@@ -72,7 +70,6 @@ def reference_ice_cream_bowl(flavors: tuple[str]) -> str:
     "flavors",
     [
         ("chocolate", "vanilla", "stracciatella"),
-
     ],
 )
 def test_ice_cream_bowl(flavors, function_to_test) -> None:
