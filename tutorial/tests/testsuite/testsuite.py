@@ -1,4 +1,5 @@
 """A module to define the `%%ipytest` cell magic"""
+
 import dataclasses
 import inspect
 import io
