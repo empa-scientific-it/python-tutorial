@@ -188,7 +188,11 @@ class TestResultOutput:
         )
 
         match self.ipytest_result.status:
-            case IPytestOutcome.COMPILE_ERROR | IPytestOutcome.PYTEST_ERROR | IPytestOutcome.UNKNOWN_ERROR:
+            case (
+                IPytestOutcome.COMPILE_ERROR
+                | IPytestOutcome.PYTEST_ERROR
+                | IPytestOutcome.UNKNOWN_ERROR
+            ):
                 # We know that there is exactly one exception
                 assert self.ipytest_result.exceptions is not None
                 exception = self.ipytest_result.exceptions[0]
@@ -282,9 +286,11 @@ class TestResultOutput:
                             HTML(
                                 f'<h3>{"&#10004" if test_succeded else "&#10060"} Test <code>{test_name}</code></h3>',
                                 style={
-                                    "background": "rgba(251, 59, 59, 0.25)"
-                                    if not test_succeded
-                                    else "rgba(207, 249, 179, 0.60)"
+                                    "background": (
+                                        "rgba(251, 59, 59, 0.25)"
+                                        if not test_succeded
+                                        else "rgba(207, 249, 179, 0.60)"
+                                    )
                                 },
                             )
                         ]
