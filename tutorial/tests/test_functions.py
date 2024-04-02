@@ -19,7 +19,7 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
 
 def reference_greet(name: str, age: int) -> str:
     """Reference solution for the greet exercise"""
-    return f"Hello {name}, you are {age} years old."
+    return f"Hello {name}! You are {age} years old."
 
 
 def test_greet(function_to_test) -> None:
