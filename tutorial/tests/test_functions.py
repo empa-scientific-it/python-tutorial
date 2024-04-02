@@ -19,7 +19,7 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
 
 def reference_greet(name: str, age: int) -> str:
     """Reference solution for the greet exercise"""
-    return f"Hello {name}, you are {age} years old."
+    return f"Hello {name}! You are {age} years old."
 
 
 def test_greet(function_to_test) -> None:
@@ -53,9 +53,9 @@ def reference_calculate_area(
     """Reference solution for the calculate_area exercise"""
     # Conversion factors from supported units to centimeters
     units = {
-        "cm": 1,
-        "m": 100,
-        "mm": 10,
+        "cm": 1.0,
+        "m": 100.0,
+        "mm": 10.0,
         "yd": 91.44,
         "ft": 30.48,
     }
