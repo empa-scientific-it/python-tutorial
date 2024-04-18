@@ -82,9 +82,13 @@ def test_calculate_area_signature(function_to_test) -> None:
         and "unit" in params.keys()
     ), "The function's parameters should be 'length', 'width' and 'unit'"
 
+    assert (
+        params["unit"].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+        and params["unit"].default == "cm"
+    ), "Argument 'unit' should have a default value 'cm'"
     assert all(
         p.annotation != inspect.Parameter.empty for p in params.values()
-    ), "The function's parameters should have type hints"
+    ), "All function parameters should have type hints"
     assert (
         return_annotation != inspect.Signature.empty
     ), "The function's return value is missing the type hint"
