@@ -237,6 +237,7 @@ class TestMagic(Magics):
 
     @cell_magic
     def ipytest(self, line: str, cell: str):
+        print("Running tests...")
         """The `%%ipytest` cell magic"""
         # Check that the magic is called from a notebook
         if not self.shell:
@@ -282,7 +283,7 @@ class TestMagic(Magics):
 
         # Parse the AST of the test module to retrieve the solution code
         ast_parser = AstParser(self.module_file)
-
+        print("Parsed AST")
         # Display the test results and the solution code
         for result in results:
             solution = (
