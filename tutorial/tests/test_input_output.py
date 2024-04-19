@@ -30,7 +30,7 @@ def test_print_odd(function_to_test, num: int):
         with contextlib.redirect_stdout(reference_stdout):
             reference_print_odd(num)
 
-        assert reference_stdout.getvalue() == solution_stdout.getvalue()
+    assert reference_stdout.getvalue() == solution_stdout.getvalue()
 
 
 def reference_find_all_files(f: pl.Path) -> List[pl.Path]:
@@ -80,9 +80,16 @@ def test_write_file(function_to_test, tmp_path: pl.Path):
 
 
 def reference_read_write_file(input_file: pl.Path, output_file: pl.Path) -> None:
+    # We open the input and output file at the same time
     with input_file.open("r") as read_file, output_file.open("w") as write_file:
+        # Here we iterate over each line of the input file
         for line in read_file.readlines():
-            write_file.write("{}, {}\n".format(line.strip("\n\r"), len(line)))
+            # We remove line breaks and write the line to the output file
+            clean_line = line.strip("\n\r")
+            # We crete the output line
+            output_line = f"{clean_line}, {len(clean_line)}\n"
+            # Finally we write the line and its length to the output file
+            write_file.write(output_line)
 
 
 def test_read_write_file(function_to_test, tmp_path: pl.Path):
@@ -105,8 +112,9 @@ def reference_exercise1(file: pl.Path) -> Dict[str, List[str]]:
         }
 
 
-def test_exercise1(function_to_test):
-    f = get_data("example.csv")
+@pytest.mark.parametrize("file", ["example.csv"])
+def test_exercise1(function_to_test, file: str):
+    f = get_data(file)
     assert function_to_test(f) == reference_exercise1(f)
 
 
@@ -121,8 +129,9 @@ def reference_exercise2(file: pl.Path) -> int:
         )
 
 
-def test_exercise2(function_to_test):
-    f = get_data("lines.txt")
+@pytest.mark.parametrize("file", ["lines.txt", "lines2.txt"])
+def test_exercise2(function_to_test, file: str):
+    f = get_data(file)
     assert function_to_test(f) == reference_exercise2(f)
 
 
