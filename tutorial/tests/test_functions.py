@@ -22,24 +22,38 @@ def reference_greet(name: str, age: int) -> str:
     return f"Hello, {name}! You are {age} years old."
 
 
-def test_greet(function_to_test) -> None:
-    assert function_to_test.__doc__ is not None, "The function is missing a docstring"
+@pytest.mark.parametrize(
+    "name,age",
+    [
+        ("John", 30),
+    ],
+)
+def test_greet(
+    name: str,
+    age: int,
+    function_to_test,
+) -> None:
+    errors = []
 
     signature = inspect.signature(function_to_test)
     params = signature.parameters
     return_annotation = signature.return_annotation
 
-    assert len(params) == 2, "The function should take two arguments"
-    assert (
-        "name" in params.keys() and "age" in params.keys()
-    ), "The function's parameters should be 'name' and 'age'"
+    if function_to_test.__doc__ is None:
+        errors.append("The function is missing a docstring.")
+    if len(params) != 2:
+        errors.append("The function should take two arguments.")
+    if "name" not in params.keys() or "age" not in params.keys():
+        errors.append("The function's parameters should be 'name' and 'age'.")
+    if any(p.annotation == inspect.Parameter.empty for p in params.values()):
+        errors.append("The function's parameters should have type hints.")
+    if return_annotation == inspect.Signature.empty:
+        errors.append("The function's return value is missing the type hint.")
 
-    assert all(
-        p.annotation != inspect.Parameter.empty for p in params.values()
-    ), "The function's parameters should have type hints"
-    assert (
-        return_annotation != inspect.Signature.empty
-    ), "The function's return value is missing the type hint"
+    # test signature
+    assert not errors
+    # test result
+    assert function_to_test(name, age) == reference_greet(name, age)
 
 
 #
@@ -69,29 +83,35 @@ def reference_calculate_area(
 
 
 def test_calculate_area_signature(function_to_test) -> None:
-    assert function_to_test.__doc__ is not None, "The function is missing a docstring"
+    errors = []
 
     signature = inspect.signature(function_to_test)
     params = signature.parameters
     return_annotation = signature.return_annotation
 
-    assert len(params) == 3, "The function should take three arguments"
-    assert (
-        "length" in params.keys()
-        and "width" in params.keys()
-        and "unit" in params.keys()
-    ), "The function's parameters should be 'length', 'width' and 'unit'"
-
-    assert (
+    if function_to_test.__doc__ is None:
+        errors.append("The function is missing a docstring.")
+    if len(params) != 3:
+        errors.append("The function should take three arguments.")
+    if (
+        "length" not in params.keys()
+        or "width" not in params.keys()
+        or "unit" not in params.keys()
+    ):
+        errors.append(
+            "The function's parameters should be 'length', 'width' and 'unit'."
+        )
+    if "unit" in params.keys() and not (
         params["unit"].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
         and params["unit"].default == "cm"
-    ), "Argument 'unit' should have a default value 'cm'"
-    assert all(
-        p.annotation != inspect.Parameter.empty for p in params.values()
-    ), "All function parameters should have type hints"
-    assert (
-        return_annotation != inspect.Signature.empty
-    ), "The function's return value is missing the type hint"
+    ):
+        errors.append("Argument 'unit' should have a default value 'cm'.")
+    if any(p.annotation == inspect.Parameter.empty for p in params.values()):
+        errors.append("The function's parameters should have type hints.")
+    if return_annotation == inspect.Signature.empty:
+        errors.append("The function's return value is missing the type hint.")
+
+    assert not errors
 
 
 @pytest.mark.parametrize(
