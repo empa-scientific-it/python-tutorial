@@ -12,6 +12,14 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
 
 
+def errors_to_list(errors):
+    result = "<ul>"
+    for error in errors:
+        result += "<li>" + error + "</li>"
+    result += "</ul>"
+    return result
+
+
 #
 # Exercise 1: a `greet` function
 #
@@ -51,7 +59,7 @@ def test_greet(
         errors.append("The function's return value is missing the type hint.")
 
     # test signature
-    assert not errors, "<br/>".join(errors) + "<br/><br/>"
+    assert not errors, errors_to_list(errors)
     # test result
     assert function_to_test(name, age) == reference_greet(name, age)
 
@@ -109,7 +117,7 @@ def test_calculate_area_signature(function_to_test) -> None:
     if return_annotation == inspect.Signature.empty:
         errors.append("The function's return value is missing the type hint.")
 
-    assert not errors, "<br/>".join(errors) + "<br/><br/>"
+    assert not errors, errors_to_list(errors)
 
 
 @pytest.mark.parametrize(
