@@ -32,7 +32,7 @@ class StringInput(Quiz):
         q1 = Question(
             question="What does the function <code>input</code> do?",
             options={
-                "It asks for user input and returns it as a string": "Correct! It can be used to read user input from the console.",
+                "It asks for user input and returns it as a string": "Correct! It is used to read user input from the console.",
                 "It shows a list of input devices available on the current computer.": "Wrong! It is used to read user input from the console.",
             },
             correct_answer="It asks for user input and returns it as a string",
