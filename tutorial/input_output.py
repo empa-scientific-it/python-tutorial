@@ -14,7 +14,7 @@ class StringOutput(Quiz):
         )
 
         q2 = Question(
-            question="What does a <code>f</code> before a string do? E.g <code>f'Hello {name}'</code>",
+            question="What does the <code>f</code> before a string do? E.g <code>f'Hello {name}'</code>",
             options={
                 "It formats the string as a float": "Wrong! Try it in a cell below.",
                 "It changes the color of the string": "Wrong! Try it in a cell below.",
