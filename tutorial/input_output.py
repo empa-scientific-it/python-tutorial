@@ -146,7 +146,7 @@ class ContextManagers(Quiz):
                 "Yes": "Wrong! The context manager will handle the closing of a file when the context manager scope ends.",
                 "No": "Correct! The context manager automatically calls close when leaving the scope.",
             },
-            correct_answer="No.",
+            correct_answer="No",
             shuffle=True,
         )
 
