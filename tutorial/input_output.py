@@ -87,31 +87,6 @@ class Paths(Quiz):
         super().__init__(questions=[q1, q2, q3])
 
 
-class TextFiles(Quiz):
-    def __init__(self, title=""):
-        q1 = Question(
-            question="Can you read from a file before calling <code>open</code>?",
-            options={
-                "Yes": "Wrong, if the file is not open, we cannot access its contents.",
-                "No": "Correct, we need to open the file first.",
-            },
-            correct_answer="No",
-            shuffle=True,
-        )
-
-        q2 = Question(
-            question="The function <code>readlines</code> reads the entire content of a text file into <b>one</string>. Is this correct?",
-            options={
-                "No": "Correct! It reads the file line by line.",
-                "Yes": "Wrong! It reads the file line by line and returns a list of <code>str</code>, with one element for each line.",
-            },
-            correct_answer="No",
-            shuffle=True,
-        )
-
-        super().__init__(questions=[q1, q2])
-
-
 class ReadFiles(Quiz):
     def __init__(self, title=""):
         q1 = Question(
