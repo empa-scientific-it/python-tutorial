@@ -237,7 +237,6 @@ class TestMagic(Magics):
 
     @cell_magic
     def ipytest(self, line: str, cell: str):
-        print("Running tests...")
         """The `%%ipytest` cell magic"""
         # Check that the magic is called from a notebook
         if not self.shell:
