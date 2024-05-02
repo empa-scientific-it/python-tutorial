@@ -14,11 +14,11 @@ class StringOutput(Quiz):
         )
 
         q2 = Question(
-            question="What does a <code>f<code> before a string do?",
+            question="What does a <code>f</code> before a string do? E.g <code>f'Hello {name}'</code>",
             options={
                 "It formats the string as a float": "Wrong! Try it in a cell below.",
                 "It changes the color of the string": "Wrong! Try it in a cell below.",
-                "It allows you to insert variables into the string": "Correct!",
+                "It allows you to insert variables into the string": "Correct! In the example above, it will print the value of the <code>name</code> variable, if this is defined.",
             },
             correct_answer="It allows you to insert variables into the string",
             shuffle=True,
@@ -43,7 +43,7 @@ class StringInput(Quiz):
             question="What happens if you call <code>input()</code> in the middle of a function?",
             options={
                 "The function execution stops and it waits for the user to type an input": "Correct! Input is a blocking function which waits for user to enter a string in the console and press enter.",
-                "The function continues": "Wrong!",
+                "The function continues its execusion": "Wrong!",
             },
             correct_answer="The function execution stops and it waits for the user to type an input",
             shuffle=True,
@@ -176,7 +176,7 @@ class WriteFiles(Quiz):
 class ContextManagers(Quiz):
     def __init__(self, title=""):
         q1 = Question(
-            question="Do you need to call <code>close</code>` on a file object when using a context manager?",
+            question="Do you need to call <code>close</code> on a file object when using a context manager?",
             options={
                 "Yes": "Wrong! The context manager will handle the closing of a file when the context manager scope ends.",
                 "No": "Correct! The context manager automatically calls close when leaving the scope.",
