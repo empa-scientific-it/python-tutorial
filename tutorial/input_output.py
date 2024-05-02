@@ -58,7 +58,7 @@ class Paths(Quiz):
             question="What does the operator <code>/</code> do when applied to two <code>Pathlib.Path</code> objects?",
             options={
                 "It removes the second path from the first": "Wrong, try it in the shell.",
-                "It concatenates paths.": "Correct, it lets you construct a path from different segments",
+                "It concatenates paths": "Correct, it lets you construct a path from different segments",
             },
             correct_answer="It concatenates paths",
             shuffle=True,
