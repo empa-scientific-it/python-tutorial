@@ -20,7 +20,7 @@ class StringOutput(Quiz):
                 "It changes the color of the string": "Wrong! Try it in a cell below.",
                 "It allows inserting variables into a string": "Correct! In the example above, it will print the value of the <code>name</code> variable, if it is defined.",
             },
-            correct_answer="It allows you to insert variables into the string",
+            correct_answer="It allows inserting variables into a string",
             shuffle=True,
         )
 
