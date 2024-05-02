@@ -4,7 +4,7 @@ from .common import Question, Quiz
 class StringOutput(Quiz):
     def __init__(self, title=""):
         q1 = Question(
-            question="Can the function <code>print()</code> be used on strings only?",
+            question="The function <code>print()</code> can be used only to output strings.",
             options={
                 "False": "Correct! It can be used on any Python object.",
                 "True:": "Wrong! Try it in a cell below.",
