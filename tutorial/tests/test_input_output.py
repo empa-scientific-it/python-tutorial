@@ -15,22 +15,24 @@ def get_data(name: str, data_dir: str = "data") -> pl.Path:
     return (pl.Path.cwd() / f"tutorial/tests/{data_dir}/{name}").resolve()
 
 
-def reference_print_odd(num: int) -> None:
-    for i in range(num):
+def reference_print_odd(n: int) -> None:
+    for i in range(n):
         if i % 2 != 0:
             print(i)
 
 
-@pytest.mark.parametrize("num", [1, 2, 3, 4, 5])
-def test_print_odd(function_to_test, num: int):
+@pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
+def test_print_odd(function_to_test, n: int):
     with StringIO() as solution_stdout, StringIO() as reference_stdout:
         with contextlib.redirect_stdout(solution_stdout):
-            function_to_test(num)
+            function_to_test(n)
+            solution_text = solution_stdout.getvalue()
 
         with contextlib.redirect_stdout(reference_stdout):
-            reference_print_odd(num)
+            reference_print_odd(n)
+            reference_text = reference_stdout.getvalue()
 
-    assert reference_stdout.getvalue() == solution_stdout.getvalue()
+    assert solution_text == reference_text
 
 
 def reference_find_all_files(f: pl.Path) -> List[pl.Path]:
