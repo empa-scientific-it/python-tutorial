@@ -78,7 +78,7 @@ class ConditionalsQuiz(Quiz):
             options={
                 "if x > 10 and y < 5:": "Correct! Python uses the keyword <strong>and</strong>.",
                 "if x > 10 && y < 5:": "This is not a valid Python operator.",
-                "if x > 10 & y < 5:": "This is not a valid Python operator.",
+                "if x > 10 & y < 5:": "& is bitwise AND operator.",
             },
             correct_answer="if x > 10 and y < 5:",
             shuffle=True,
