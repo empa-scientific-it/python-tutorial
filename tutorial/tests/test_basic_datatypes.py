@@ -265,28 +265,50 @@ SET1_2 = [
 ]
 
 
+def reference_sets_union(set1: set, set2: set) -> set:
+    return set1.union(set2)
+
+
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_union(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.union(set2)
+    assert function_to_test(set1, set2) == reference_sets_union(set1, set2)
+
+
+def reference_sets_intersection(set1: set, set2: set) -> set:
+    return set1.intersection(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_intersection(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.intersection(set2)
+    assert function_to_test(set1, set2) == reference_sets_intersection(set1, set2)
+
+
+def reference_sets_difference(set1: set, set2: set) -> set:
+    return set1.difference(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_difference(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.difference(set2)
+    assert function_to_test(set1, set2) == reference_sets_difference(set1, set2)
+
+
+def reference_sets_symmetric_difference(set1: set, set2: set) -> set:
+    return set1.symmetric_difference(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_symmetric_difference(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.symmetric_difference(set2)
+    assert function_to_test(set1, set2) == reference_sets_symmetric_difference(
+        set1, set2
+    )
+
+
+def reference_sets_subset(set1: set, set2: set) -> bool:
+    return set1.issubset(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
@@ -295,16 +317,24 @@ def test_sets_subset(set1, set2, function_to_test):
     assert function_to_test(set1, set2) == set1.issubset(set2)
 
 
+def reference_sets_superset(set1: set, set2: set) -> bool:
+    return set1.issuperset(set2)
+
+
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_superset(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.issuperset(set2)
+    assert function_to_test(set1, set2) == reference_sets_superset(set1, set2)
+
+
+def reference_sets_disjoint(set1: set, set2: set) -> bool:
+    return set1.isdisjoint(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_disjoint(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.isdisjoint(set2)
+    assert function_to_test(set1, set2) == reference_sets_disjoint(set1, set2)
 
 
 DICTS1 = [
