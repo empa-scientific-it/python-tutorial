@@ -104,6 +104,7 @@ def test_read_write_file(function_to_test, tmp_path: pl.Path):
 
     function_to_test(input_file, output_file)
     reference_read_write_file(input_file, test_output_file)
+    assert output_file.exists(), "The output file was not created."
 
     assert output_file.read_text() == test_output_file.read_text()
 
