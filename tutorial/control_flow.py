@@ -7,19 +7,19 @@ class ConditionalsQuiz(Quiz):
             question="""What would be the output of the following code?
                 <pre><code class="language-python">
                     if 'blue' in {'red': 1, 'blue': 2, 'green': 3}:
-                        print(1)
-                        print(2)
+                        print(1, end=", ")
+                        print(2, end=", ")
                         if 'd' in 'abc':
-                            print(3)
+                            print(3, end=", ")
                     print(4)
                 </code></pre>
             """,
             options={
-                "1 2 3 4": "The character 'd' does not exist in the string 'abc', so the second if statement is False.",
-                "1 2 4": "Correct!",
+                "1, 2, 3, 4": "The character 'd' does not exist in the string 'abc', so the second if statement is False.",
+                "1, 2, 4": "Correct!",
                 "4": "The word 'blue' exists in the dictionary's keywords, so the first if statement is True.",
             },
-            correct_answer="1 2 4",
+            correct_answer="1, 2, 4",
             shuffle=True,
         )
 
@@ -96,15 +96,15 @@ class LoopsQuiz(Quiz):
                     for i in range(10):
                         for j in range(-1, -10, -1):
                             x += 1
-                            print(x)
+                    print(x)
                 </code></pre>
             """,
             options={
-                "100": "",
-                "90": "Correct!",
-                "99": "",
+                "9": "Pay attention to the range of the outter loop.",
+                "18": "Correct!",
+                "20": "Remember that <code>range()</code> does not include its stop element.",
             },
-            correct_answer="90",
+            correct_answer="18",
             shuffle=True,
         )
 
@@ -116,11 +116,11 @@ class LoopsQuiz(Quiz):
                 </code></pre>
             """,
             options={
-                "-2, -1, -3, -4": "",
-                "-2, -1, 0": "",
-                "-2, -3, -4": "Correct!",
+                "-2, -3, -4, -5,": "Remember that <code>range()</code> does not include its stop element.",
+                "-2, -1, 0,": "Pay attention to the step element of <code>range()</code>.",
+                "-2, -3, -4,": "Correct!",
             },
-            correct_answer="-2, -3, -4",
+            correct_answer="-2, -3, -4,",
             shuffle=True,
         )
 
@@ -133,15 +133,15 @@ class LoopsQuiz(Quiz):
                             if var % 2 == 0:
                                 continue
                                 var += 1
-                        var+=1
+                        var += 1
                     else:
-                        var+=1
+                        var += 1
                     print(var)
                 </code></pre>
             """,
             options={
-                "11": "",
-                "20": "",
+                "12": "Pay attention to the range of the outter loop.",
+                "20": "Pay attention to the <code>else</code> statement.",
                 "21": "Correct!",
             },
             correct_answer="21",
@@ -151,19 +151,27 @@ class LoopsQuiz(Quiz):
         q4 = Question(
             question="""What would be the output of the following code?
                 <pre><code class="language-python">
-                    for num in range(10, 14):
-                        for i in range(2, num):
-                            if num % i == 1:
-                                print(num)
+                    s = ""
+                    n = 5
+                    while n > 0:
+                        n -= 1
+                        if (n % 2) == 0:
+                            continue
+
+                        a = ['apple', 'mango', 'banana']
+                        while a:
+                            s += str(n) + a.pop(0)
+                            if len(a) < 2:
                                 break
+                    print(s)
                 </code></pre>
             """,
             options={
-                "10 11 12 13": "Correct!",
-                "10 11 12": "",
-                "11 12 13": "",
+                "3apple3mango1apple1mango": "Correct!",
+                "3apple3mango3banana1apple1mango1banana": "Pay attention to the <code>break</code>.",
+                "3apple3mango1banana": "Remember that list <code>a</code> gets re-initialized in every iteration of the outter loop.",
             },
-            correct_answer="10 11 12 13",
+            correct_answer="3apple3mango1apple1mango",
             shuffle=True,
         )
 
