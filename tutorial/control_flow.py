@@ -93,14 +93,14 @@ class LoopsQuiz(Quiz):
             question="""What would be the output of the following code?
                 <pre><code class="language-python">
                     x = 0
-                    for i in range(10):
+                    for i in range(2):
                         for j in range(-1, -10, -1):
                             x += 1
                     print(x)
                 </code></pre>
             """,
             options={
-                "9": "Pay attention to the range of the outter loop.",
+                "9": "Pay attention to the range of the outer loop.",
                 "18": "Correct!",
                 "20": "Remember that <code>range()</code> does not include its stop element.",
             },
@@ -140,7 +140,7 @@ class LoopsQuiz(Quiz):
                 </code></pre>
             """,
             options={
-                "12": "Pay attention to the range of the outter loop.",
+                "12": "Pay attention to the range of the outer loop.",
                 "20": "Pay attention to the <code>else</code> statement.",
                 "21": "Correct!",
             },
@@ -169,7 +169,7 @@ class LoopsQuiz(Quiz):
             options={
                 "3apple3mango1apple1mango": "Correct!",
                 "3apple3mango3banana1apple1mango1banana": "Pay attention to the <code>break</code>.",
-                "3apple3mango1banana": "Remember that list <code>a</code> gets re-initialized in every iteration of the outter loop.",
+                "3apple3mango1banana": "Remember that list <code>a</code> gets re-initialized in every iteration of the outer loop.",
             },
             correct_answer="3apple3mango1apple1mango",
             shuffle=True,
