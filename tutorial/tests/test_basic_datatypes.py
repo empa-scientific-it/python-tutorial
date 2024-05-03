@@ -1,6 +1,6 @@
 import copy
 import math
-from typing import Callable, Hashable, Iterable, TypeVar
+from typing import Any, Callable, Hashable, Iterable
 
 import pytest
 
@@ -234,13 +234,13 @@ def test_lists_are_equal(list1, list2, function_to_test):
     assert function_to_test(list1, list2) == reference_lists_are_equal(list1, list2)
 
 
-def reference_lists_are_equal_but_not_same(list1: list, list2: list) -> bool:
+def reference_lists_are_not_same_but_equal(list1: list, list2: list) -> bool:
     return list1 == list2 and list1 is not list2
 
 
 @pytest.mark.parametrize("list1, list2", LIST1_2)
-def test_lists_are_equal_but_not_same(list1, list2, function_to_test):
-    assert function_to_test(list1, list2) == reference_lists_are_equal_but_not_same(
+def test_lists_are_not_same_but_equal(list1, list2, function_to_test):
+    assert function_to_test(list1, list2) == reference_lists_are_not_same_but_equal(
         list1, list2
     )
 
@@ -266,28 +266,50 @@ SET1_2 = [
 ]
 
 
+def reference_sets_union(set1: set, set2: set) -> set:
+    return set1.union(set2)
+
+
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_union(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.union(set2)
+    assert function_to_test(set1, set2) == reference_sets_union(set1, set2)
+
+
+def reference_sets_intersection(set1: set, set2: set) -> set:
+    return set1.intersection(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_intersection(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.intersection(set2)
+    assert function_to_test(set1, set2) == reference_sets_intersection(set1, set2)
+
+
+def reference_sets_difference(set1: set, set2: set) -> set:
+    return set1.difference(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_difference(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.difference(set2)
+    assert function_to_test(set1, set2) == reference_sets_difference(set1, set2)
+
+
+def reference_sets_symmetric_difference(set1: set, set2: set) -> set:
+    return set1.symmetric_difference(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_symmetric_difference(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.symmetric_difference(set2)
+    assert function_to_test(set1, set2) == reference_sets_symmetric_difference(
+        set1, set2
+    )
+
+
+def reference_sets_subset(set1: set, set2: set) -> bool:
+    return set1.issubset(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
@@ -296,16 +318,24 @@ def test_sets_subset(set1, set2, function_to_test):
     assert function_to_test(set1, set2) == set1.issubset(set2)
 
 
+def reference_sets_superset(set1: set, set2: set) -> bool:
+    return set1.issuperset(set2)
+
+
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_superset(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.issuperset(set2)
+    assert function_to_test(set1, set2) == reference_sets_superset(set1, set2)
+
+
+def reference_sets_disjoint(set1: set, set2: set) -> bool:
+    return set1.isdisjoint(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_disjoint(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.isdisjoint(set2)
+    assert function_to_test(set1, set2) == reference_sets_disjoint(set1, set2)
 
 
 DICTS1 = [
@@ -326,11 +356,8 @@ DICTS2 = [
     {},
 ]
 
-V = TypeVar("V")
-K = TypeVar("K", bound=Hashable)
 
-
-def reference_dict_return_value(my_dict: dict[K, V], key: K) -> V | None:
+def reference_dict_return_value(my_dict: dict[Hashable, Any], key: Any) -> Any:
     return my_dict.get(key)
 
 
@@ -346,26 +373,26 @@ def test_dict_return_value(my_dict, key, function_to_test):
     assert my_dict == my_dict_to_try
 
 
-def reference_dict_return_value_delete(my_dict: dict[K, V], key: K) -> V | None:
+def reference_dict_return_delete_value(my_dict: dict[Hashable, Any], key: Any) -> Any:
     return my_dict.pop(key, None)
 
 
 @pytest.mark.parametrize(
     "my_dict, key", list(zip(copy.deepcopy(DICTS1), ["b"] * len(DICTS1)))
 )
-def test_dict_return_value_delete(my_dict, key, function_to_test):
+def test_dict_return_delete_value(my_dict, key, function_to_test):
     my_dict_original1 = my_dict.copy()
     my_dict_original2 = my_dict.copy()
     assert function_to_test(
         my_dict_original1, key
-    ) == reference_dict_return_value_delete(my_dict_original2, key)
+    ) == reference_dict_return_delete_value(my_dict_original2, key)
 
     assert my_dict_original1 == my_dict_original2
 
 
 def reference_update_one_dict_with_another(
-    dict1: dict[K, V], dict2: dict[K, V]
-) -> None:
+    dict1: dict[Hashable, Any], dict2: dict[Hashable, Any]
+) -> dict[Hashable, Any]:
     return dict1.update(dict2)
 
 
