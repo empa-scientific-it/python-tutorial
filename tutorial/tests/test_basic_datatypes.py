@@ -90,7 +90,7 @@ def test_quadratic_equation(
 
 
 def reference_a_plus_b_equals_c(a: float, b: float, c: float) -> bool:
-    return a + b == c
+    return math.isclose(a + b, c)
 
 
 @pytest.mark.parametrize(
@@ -103,6 +103,7 @@ def reference_a_plus_b_equals_c(a: float, b: float, c: float) -> bool:
         (23.1, 1.8, 14.2),
         (-10.5, 7.4, 84),
         (1e-5, 3.5e-5, 2.5),
+        (0.1, 0.2, 0.3),
     ],
 )
 def test_a_plus_b_equals_c(
