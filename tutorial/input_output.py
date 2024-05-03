@@ -77,10 +77,10 @@ class Paths(Quiz):
         q3 = Question(
             question="""The path </code>Pathlib.Path("./")</code> represent a relative path. What location does it refer to?""",
             options={
-                "Relative to the current working directory, which is the location of the current Python script being run.": "Correct!",
+                "Relative to the current working directory, the location of the current Python script being run": "Correct!",
                 "Relative to the user's home directory": "Wrong!",
             },
-            correct_answer="Relative to the current working directory, which is the location of the current Python script being run.",
+            correct_answer="Relative to the current working directory, the location of the current Python script being run",
             shuffle=True,
         )
 
