@@ -7,7 +7,7 @@ class StringOutput(Quiz):
             question="The function <code>print()</code> can be used only to output strings.",
             options={
                 "False": "Correct! It can be used on any Python object.",
-                "True:": "Wrong! Try it in a cell below.",
+                "True": "Wrong! Try it in a cell below.",
             },
             correct_answer="False",
             shuffle=True,
@@ -33,7 +33,7 @@ class StringInput(Quiz):
             question="What does the function <code>input</code> do?",
             options={
                 "It asks for user input and returns it as a string": "Correct! It is used to read user input from the console.",
-                "It shows a list of input devices available on the current computer.": "Wrong! It is used to read user input from the console.",
+                "It shows a list of input devices available on the current computer": "Wrong! It is used to read user input from the console.",
             },
             correct_answer="It asks for user input and returns it as a string",
             shuffle=True,
@@ -43,7 +43,7 @@ class StringInput(Quiz):
             question="What happens if you call <code>input()</code> in the middle of a function?",
             options={
                 "The function execution stops and it waits for the user to type an input": "Correct! Input is a blocking function which waits for user to enter a string in the console and press enter.",
-                "The function continues its execusion": "Wrong!",
+                "The function continues its execution": "Wrong!",
             },
             correct_answer="The function execution stops and it waits for the user to type an input",
             shuffle=True,
@@ -67,10 +67,10 @@ class Paths(Quiz):
         q2 = Question(
             question="If you use Pathlib,  do you need to use different path separators on Windows and Linux to combine path segments?",
             options={
-                "No, you can combine Pathlib.Path objects with <code>/</code>": "Correct! Pathlib will then generate the correct path for your OS.",
-                "Yes.": "Wrong! You can always use  <code>/</code>",
+                "No, you can combine Pathlib.Path objects with /": "Correct! Pathlib will then generate the correct path for your OS.",
+                "Yes": "Wrong! You can always use  <code>/</code>",
             },
-            correct_answer="No, you can combine Pathlib.Path objects with <code>/</code>",
+            correct_answer="No, you can combine Pathlib.Path objects with /",
             shuffle=True,
         )
 
@@ -117,21 +117,21 @@ class WriteFiles(Quiz):
         q1 = Question(
             question="""What does <code>w</code> in the second argument of <code>open</code> do:  <code>open(path, "w")</code>?""",
             options={
-                "It opens the file for writing.": "Correct.",
+                "It opens the file for writing": "Correct.",
                 "It writes a w next to each line of the file": "Wrong, it opens the file for reading.",
             },
-            correct_answer="It opens the file for writing.",
+            correct_answer="It opens the file for writing",
             shuffle=True,
         )
 
         q2 = Question(
             question="What function do we use on a file object to write a list of strings line-by-line",
             options={
-                "<code>write</code>": "Wrong, this function only writes a single string.",
-                "<code>writestrings</code>": "Wrong, this function does not exist.",
-                "<code>writelines</code>": "Correct.",
+                "write": "Wrong, this function only writes a single string.",
+                "writestrings": "Wrong, this function does not exist.",
+                "writelines": "Correct.",
             },
-            correct_answer="<code>writelines</code>",
+            correct_answer="writelines",
             shuffle=True,
         )
 

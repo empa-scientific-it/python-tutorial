@@ -282,7 +282,6 @@ class TestMagic(Magics):
 
         # Parse the AST of the test module to retrieve the solution code
         ast_parser = AstParser(self.module_file)
-        print("Parsed AST")
         # Display the test results and the solution code
         for result in results:
             solution = (
