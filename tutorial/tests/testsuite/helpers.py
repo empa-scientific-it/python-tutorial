@@ -96,7 +96,7 @@ def format_error(exception: BaseException) -> str:
             )
 
     # If we couldn't parse the exception message, just display it as is
-    formatted_message = formatted_message or f"<p>{html.escape(exception_str)}</p>"
+    formatted_message = formatted_message or f"<p>{exception_str}</p>"
 
     return formatted_message
 
