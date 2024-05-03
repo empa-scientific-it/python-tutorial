@@ -233,13 +233,13 @@ def test_lists_are_equal(list1, list2, function_to_test):
     assert function_to_test(list1, list2) == reference_lists_are_equal(list1, list2)
 
 
-def reference_lists_are_equal_but_not_same(list1: list, list2: list) -> bool:
+def reference_lists_are_not_same_but_equal(list1: list, list2: list) -> bool:
     return list1 == list2 and list1 is not list2
 
 
 @pytest.mark.parametrize("list1, list2", LIST1_2)
-def test_lists_are_equal_but_not_same(list1, list2, function_to_test):
-    assert function_to_test(list1, list2) == reference_lists_are_equal_but_not_same(
+def test_lists_are_not_same_but_equal(list1, list2, function_to_test):
+    assert function_to_test(list1, list2) == reference_lists_are_not_same_but_equal(
         list1, list2
     )
 
