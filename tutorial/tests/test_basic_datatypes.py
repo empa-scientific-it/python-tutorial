@@ -1,10 +1,11 @@
 import copy
 import math
+from typing import Callable, Hashable, Iterable, TypeVar
 
 import pytest
 
 
-def reference_addition_multiplication(a, b, c):
+def reference_addition_multiplication(a: float, b: float, c: float) -> float:
     return (a + b) * c
 
 
@@ -20,13 +21,18 @@ def reference_addition_multiplication(a, b, c):
         (1e-5, 3.5e-5, 2.5),
     ],
 )
-def test_addition_multiplication(a, b, c, function_to_test):
+def test_addition_multiplication(
+    a: float,
+    b: float,
+    c: float,
+    function_to_test: Callable[[float, float, float], float],
+):
     assert math.isclose(
         function_to_test(a, b, c), reference_addition_multiplication(a, b, c)
     )
 
 
-def reference_circle_area(r):
+def reference_circle_area(r: float) -> float:
     return math.pi * r**2
 
 
@@ -42,11 +48,11 @@ def reference_circle_area(r):
         0.0001,
     ],
 )
-def test_circle_area(r, function_to_test):
+def test_circle_area(r: float, function_to_test: Callable[[float], float]):
     assert math.isclose(function_to_test(r), reference_circle_area(r), rel_tol=1e-4)
 
 
-def reference_quadratic_equation(a, b, c):
+def reference_quadratic_equation(a: float, b: float, c: float) -> tuple[float, float]:
     d = b**2 - 4 * a * c
     solution1 = (-b + math.sqrt(d)) / (2 * a)
     solution2 = (-b - math.sqrt(d)) / (2 * a)
@@ -65,7 +71,12 @@ def reference_quadratic_equation(a, b, c):
         (1e-3, 1, 1.5),
     ],
 )
-def test_quadratic_equation(a, b, c, function_to_test):
+def test_quadratic_equation(
+    a: float,
+    b: float,
+    c: float,
+    function_to_test: Callable[[float, float, float], tuple[float, float]],
+):
     solution1, solution2 = reference_quadratic_equation(a, b, c)
     provided_solution1, provided_solution2 = function_to_test(a, b, c)
 
@@ -78,7 +89,7 @@ def test_quadratic_equation(a, b, c, function_to_test):
     )
 
 
-def reference_a_plus_b_equals_c(a, b, c):
+def reference_a_plus_b_equals_c(a: float, b: float, c: float) -> bool:
     return a + b == c
 
 
@@ -94,43 +105,54 @@ def reference_a_plus_b_equals_c(a, b, c):
         (1e-5, 3.5e-5, 2.5),
     ],
 )
-def test_a_plus_b_equals_c(a, b, c, function_to_test):
+def test_a_plus_b_equals_c(
+    a: float,
+    b: float,
+    c: float,
+    function_to_test: Callable[[float, float, float], bool],
+) -> None:
     assert function_to_test(a, b, c) == reference_a_plus_b_equals_c(a, b, c)
 
 
-def reference_number_is_even(number):
+def reference_number_is_even(number: int) -> bool:
     return number % 2 == 0
 
 
 @pytest.mark.parametrize("number", [1, 2, 3, 4])
-def test_number_is_even(number, function_to_test):
+def test_number_is_even(number: int, function_to_test: Callable[[int], bool]) -> None:
     assert function_to_test(number) == reference_number_is_even(number)
 
 
-def reference_number_is_greater_than_zero(number):
+def reference_number_is_greater_than_zero(number: float) -> bool:
     return number > 0
 
 
 @pytest.mark.parametrize("number", [1, 2, 3, 4])
-def test_number_is_greater_than_zero(number, function_to_test):
+def test_number_is_greater_than_zero(
+    number: int, function_to_test: Callable[[int], bool]
+):
     assert function_to_test(number) == reference_number_is_greater_than_zero(number)
 
 
-def reference_number_is_positive_and_even(number):
+def reference_number_is_positive_and_even(number: int) -> bool:
     return number % 2 == 0 and number > 0
 
 
 @pytest.mark.parametrize("number", [1, 2, 3, 4, -1, -2, -3, -4])
-def test_number_is_positive_and_even(number, function_to_test):
+def test_number_is_positive_and_even(
+    number: int, function_to_test: Callable[[int], bool]
+):
     assert function_to_test(number) == reference_number_is_positive_and_even(number)
 
 
-def reference_number_is_lower_than_0_or_greater_than_100(number):
+def reference_number_is_lower_than_0_or_greater_than_100(number: int) -> bool:
     return number < 0 or number >= 100
 
 
 @pytest.mark.parametrize("number", [1, 2, 3, 4, -1, -2, -3, -4, 0, 100, 101, 102, 103])
-def test_number_is_lower_than_0_or_greater_than_100(number, function_to_test):
+def test_number_is_lower_than_0_or_greater_than_100(
+    number: int, function_to_test: Callable[[int], bool]
+):
     assert function_to_test(
         number
     ) == reference_number_is_lower_than_0_or_greater_than_100(number)
@@ -169,7 +191,7 @@ LIST1_2 = [
 ]
 
 
-def reference_remove_every_second_element_from_list(my_list):
+def reference_remove_every_second_element_from_list(my_list: list) -> list:
     return my_list[::2]
 
 
@@ -180,7 +202,7 @@ def test_remove_every_second_element_from_list(my_list, function_to_test):
     )
 
 
-def reference_return_first_and_last_element_from_list(my_list):
+def reference_return_first_and_last_element_from_list(my_list: list) -> tuple:
     return my_list[0], my_list[-1]
 
 
@@ -191,7 +213,7 @@ def test_return_first_and_last_element_from_list(my_list, function_to_test):
     ) == reference_return_first_and_last_element_from_list(my_list)
 
 
-def reference_first_and_last_element_are_equal(my_list):
+def reference_first_and_last_element_are_equal(my_list: list) -> bool:
     return my_list[0] == my_list[-1]
 
 
@@ -202,7 +224,7 @@ def test_first_and_last_element_are_equal(my_list, function_to_test):
     )
 
 
-def reference_lists_are_equal(list1, list2):
+def reference_lists_are_equal(list1: list, list2: list) -> bool:
     return list1 == list2
 
 
@@ -211,7 +233,7 @@ def test_lists_are_equal(list1, list2, function_to_test):
     assert function_to_test(list1, list2) == reference_lists_are_equal(list1, list2)
 
 
-def reference_lists_are_equal_but_not_same(list1, list2):
+def reference_lists_are_equal_but_not_same(list1: list, list2: list) -> bool:
     return list1 == list2 and list1 is not list2
 
 
@@ -222,7 +244,7 @@ def test_lists_are_equal_but_not_same(list1, list2, function_to_test):
     )
 
 
-def reference_greater_or_equal(list1, list2):
+def reference_greater_or_equal(list1: list, list2: list) -> bool:
     return list1 >= list2
 
 
@@ -303,8 +325,11 @@ DICTS2 = [
     {},
 ]
 
+V = TypeVar("V")
+K = TypeVar("K", bound=Hashable)
 
-def reference_dict_return_value(my_dict, key):
+
+def reference_dict_return_value(my_dict: dict[K, V], key: K) -> V | None:
     return my_dict.get(key)
 
 
@@ -320,7 +345,7 @@ def test_dict_return_value(my_dict, key, function_to_test):
     assert my_dict == my_dict_to_try
 
 
-def reference_dict_return_value_delete(my_dict, key):
+def reference_dict_return_value_delete(my_dict: dict[K, V], key: K) -> V | None:
     return my_dict.pop(key, None)
 
 
@@ -337,7 +362,9 @@ def test_dict_return_value_delete(my_dict, key, function_to_test):
     assert my_dict_original1 == my_dict_original2
 
 
-def reference_update_one_dict_with_another(dict1, dict2):
+def reference_update_one_dict_with_another(
+    dict1: dict[K, V], dict2: dict[K, V]
+) -> None:
     return dict1.update(dict2)
 
 
@@ -365,7 +392,7 @@ STRINGS = [
 ]
 
 
-def reference_string_capitalize(my_string):
+def reference_string_capitalize(my_string: str) -> str:
     return my_string.capitalize()
 
 
@@ -374,7 +401,7 @@ def test_string_capitalize(my_string, function_to_test):
     assert function_to_test(my_string) == reference_string_capitalize(my_string)
 
 
-def reference_string_lower_case(my_string):
+def reference_string_lower_case(my_string: str) -> str:
     return my_string.lower()
 
 
@@ -383,7 +410,7 @@ def test_string_lower_case(my_string, function_to_test):
     assert function_to_test(my_string) == reference_string_lower_case(my_string)
 
 
-def reference_string_word_split(my_string):
+def reference_string_word_split(my_string: str) -> list[str]:
     return my_string.split()
 
 
@@ -392,7 +419,7 @@ def test_string_word_split(my_string, function_to_test):
     assert function_to_test(my_string) == reference_string_word_split(my_string)
 
 
-def reference_string_join_commas(my_string):
+def reference_string_join_commas(my_string: Iterable[str]) -> str:
     return ",".join(my_string)
 
 
@@ -406,7 +433,7 @@ def test_string_join_commas(my_string, function_to_test):
     )
 
 
-def reference_string_split_lines(my_string):
+def reference_string_split_lines(my_string: str) -> list[str]:
     return my_string.splitlines()
 
 

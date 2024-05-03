@@ -1,22 +1,169 @@
+import inspect
 import pathlib
-import sys
 from collections import Counter
 from string import ascii_lowercase, ascii_uppercase
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import pytest
 
 
 def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     """Read input data"""
-    current_module = sys.modules[__name__]
-    return (
-        pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}"
-    ).resolve()
+    return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
 
 
 #
-# Exercise 1: Longest Sequence
+# Exercise 1: a `greet` function
+#
+
+
+def reference_greet(name: str, age: int) -> str:
+    """Reference solution for the greet exercise"""
+    return f"Hello, {name}! You are {age} years old."
+
+
+def test_greet(function_to_test) -> None:
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring"
+
+    signature = inspect.signature(function_to_test)
+    params = signature.parameters
+    return_annotation = signature.return_annotation
+
+    assert len(params) == 2, "The function should take two arguments"
+    assert (
+        "name" in params.keys() and "age" in params.keys()
+    ), "The function's parameters should be 'name' and 'age'"
+
+    assert all(
+        p.annotation != inspect.Parameter.empty for p in params.values()
+    ), "The function's parameters should have type hints"
+    assert (
+        return_annotation != inspect.Signature.empty
+    ), "The function's return value is missing the type hint"
+
+
+#
+# Exercise 2: calculate area with units
+#
+
+
+def reference_calculate_area(
+    length: float, width: float, unit: str = "cm"
+) -> Tuple[float, str] | str:
+    """Reference solution for the calculate_area exercise"""
+    # Conversion factors from supported units to centimeters
+    units = {
+        "cm": 1.0,
+        "m": 100.0,
+        "mm": 10.0,
+        "yd": 91.44,
+        "ft": 30.48,
+    }
+
+    try:
+        area = length * width * units[unit] ** 2
+    except KeyError:
+        return f"Invalid unit: {unit}"
+    else:
+        return (area, "cm^2")
+
+
+def test_calculate_area_signature(function_to_test) -> None:
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring"
+
+    signature = inspect.signature(function_to_test)
+    params = signature.parameters
+    return_annotation = signature.return_annotation
+
+    assert len(params) == 3, "The function should take three arguments"
+    assert (
+        "length" in params.keys()
+        and "width" in params.keys()
+        and "unit" in params.keys()
+    ), "The function's parameters should be 'length', 'width' and 'unit'"
+
+    assert all(
+        p.annotation != inspect.Parameter.empty for p in params.values()
+    ), "The function's parameters should have type hints"
+    assert (
+        return_annotation != inspect.Signature.empty
+    ), "The function's return value is missing the type hint"
+
+
+@pytest.mark.parametrize(
+    "length,width,unit,expected",
+    [
+        (2.0, 3.0, "cm", (6.0, "cm^2")),
+        (4.0, 5.0, "m", (200000.0, "cm^2")),
+        (10.0, 2.0, "mm", (2000.0, "cm^2")),
+        (2.0, 8.0, "yd", (133780.38, "cm^2")),
+        (5.0, 4.0, "ft", (18580.608, "cm^2")),
+        (3.0, 5.0, "in", (96.774, "cm^2")),
+    ],
+)
+def test_calculate_area_result(
+    length: float,
+    width: float,
+    unit: str,
+    expected: Tuple[float, str],
+    function_to_test,
+) -> None:
+    result = function_to_test(length, width, unit)
+    test_result = reference_calculate_area(length, width, unit)
+
+    if unit in ("cm", "m", "mm", "yd", "ft"):
+        assert isinstance(result, Tuple), "The function should return a tuple"
+
+        assert "cm^2" in result, "The result should be in squared centimeters (cm^2)"
+
+        # Double-check the reference solution
+        assert test_result[0] == pytest.approx(
+            expected[0], abs=0.01
+        ), "The reference solution is incorrect"
+
+        assert result[0] == pytest.approx(expected[0], abs=0.01)
+    else:
+        assert isinstance(
+            result, str
+        ), "The function should return an error string for unsupported units"
+        assert (
+            result == f"Invalid unit: {unit}"
+        ), "The error message is incorrectly formatted"
+
+
+#
+# Exercise 3: summing anything
+#
+
+
+def reference_summing_anything(*args: Any) -> Any:
+    """Reference solution for the summing_anything exercise"""
+    if not args:
+        return args
+
+    result = args[0]
+
+    for item in args[1:]:
+        result += item
+
+    return result
+
+
+@pytest.mark.parametrize(
+    "args,expected",
+    [
+        ((), ()),
+        ((1, 2, 3), 6),
+        (([1, 2, 3], [4, 5, 6]), [1, 2, 3, 4, 5, 6]),
+        (("hello", "world"), "helloworld"),
+    ],
+)
+def test_summing_anything(args: Any, expected: Any, function_to_test) -> None:
+    assert function_to_test(*args) == expected
+
+
+#
+# Exercise: Longest Sequence
 #
 
 
@@ -67,7 +214,7 @@ def test_longest_sequence_best(input_nums: List[int], function_to_test) -> None:
 
 
 #
-# Exercise 2: Password Validator
+# Exercise: Password Validator
 #
 
 
@@ -94,29 +241,29 @@ def reference_password_validator2(start: int, end: int) -> int:
 
 
 @pytest.mark.parametrize(
-    "pwd_range",
+    "start,end",
     [
         (138241, 674034),
         (136760, 595730),
     ],
 )
-def test_password_validator1(pwd_range: Tuple[int], function_to_test) -> None:
-    assert function_to_test(*pwd_range) == reference_password_validator1(*pwd_range)
+def test_password_validator1(start: int, end: int, function_to_test) -> None:
+    assert function_to_test(start, end) == reference_password_validator1(start, end)
 
 
 @pytest.mark.parametrize(
-    "pwd_range",
+    "start,end",
     [
         (138241, 674034),
         (136760, 595730),
     ],
 )
-def test_password_validator2(pwd_range: Tuple[int], function_to_test) -> None:
-    assert function_to_test(*pwd_range) == reference_password_validator2(*pwd_range)
+def test_password_validator2(start: int, end: int, function_to_test) -> None:
+    assert function_to_test(start, end) == reference_password_validator2(start, end)
 
 
 #
-# Exercise 3: Buckets reorganization
+# Exercise: Buckets reorganization
 #
 
 prio = {l: i for i, l in enumerate(ascii_lowercase + ascii_uppercase, start=1)}

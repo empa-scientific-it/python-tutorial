@@ -147,9 +147,7 @@ def reference_dblquad():
     # 2. TODO: define the upper and lower limits:
 
     # 3. TODO: call the dblquad function here:
-    result, error = dblquad(
-        func=f, a=0, b=2, gfun=lambda x: x, hfun=lambda x: 6 - x**2
-    )
+    result, error = dblquad(func=f, a=0, b=2, gfun=lambda x: x, hfun=lambda x: 6 - x**2)
 
     # 4. TODO: return the result and the error in this order here:
     return result, error
