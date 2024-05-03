@@ -1,7 +1,7 @@
 import pathlib
 import sys
 from collections import Counter
-from math import isclose, isqrt, sqrt
+from math import isclose, sqrt
 from typing import List, Tuple
 
 import pytest
@@ -125,25 +125,8 @@ def test_divide_until(num: int, function_to_test) -> None:
 #
 
 
-def is_prime(num: int) -> bool:
-    """Check if a number is prime"""
-    if num <= 3:
-        return num > 1
-
-    if num % 2 == 0 or num % 3 == 0:
-        return False
-
-    for i in range(5, isqrt(num) + 1, 6):
-        if num % i == 0 or num % (i + 2) == 0:
-            return False
-
-    return True
-
-
 def reference_find_factors(num: int) -> List[int]:
-    """Dumb way to find the factors of an integer"""
-    if is_prime(num):
-        return [1, num]
+    """Reference solution to find the factors of an integer"""
     return [m for m in range(1, num + 1) if num % m == 0]
 
 
