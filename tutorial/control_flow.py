@@ -1,7 +1,7 @@
 from .common import Question, Quiz
 
 
-class ControlFlow(Quiz):
+class ConditionalsQuiz(Quiz):
     def __init__(self, title=""):
         q1 = Question(
             question="""What would be the output of the following code?
@@ -85,3 +85,86 @@ class ControlFlow(Quiz):
         )
 
         super().__init__(questions=[q1, q2, q3, q4, q5])
+
+
+class LoopsQuiz(Quiz):
+    def __init__(self, title=""):
+        q1 = Question(
+            question="""What would be the output of the following code?
+                <pre><code class="language-python">
+                    x = 0
+                    for i in range(10):
+                        for j in range(-1, -10, -1):
+                            x += 1
+                            print(x)
+                </code></pre>
+            """,
+            options={
+                "100": "",
+                "90": "Correct!",
+                "99": "",
+            },
+            correct_answer="90",
+            shuffle=True,
+        )
+
+        q2 = Question(
+            question="""What would be the output of the following code?
+                <pre><code class="language-python">
+                    for num in range(-2, -5, -1):
+                        print(num, end=", ")
+                </code></pre>
+            """,
+            options={
+                "-2, -1, -3, -4": "",
+                "-2, -1, 0": "",
+                "-2, -3, -4": "Correct!",
+            },
+            correct_answer="-2, -3, -4",
+            shuffle=True,
+        )
+
+        q3 = Question(
+            question="""What would be the output of the following code?
+                <pre><code class="language-python">
+                    var = 10
+                    for i in range(10):
+                        for j in range(2, 10, 1):
+                            if var % 2 == 0:
+                                continue
+                                var += 1
+                        var+=1
+                    else:
+                        var+=1
+                    print(var)
+                </code></pre>
+            """,
+            options={
+                "11": "",
+                "20": "",
+                "21": "Correct!",
+            },
+            correct_answer="21",
+            shuffle=True,
+        )
+
+        q4 = Question(
+            question="""What would be the output of the following code?
+                <pre><code class="language-python">
+                    for num in range(10, 14):
+                        for i in range(2, num):
+                            if num % i == 1:
+                                print(num)
+                                break
+                </code></pre>
+            """,
+            options={
+                "10 11 12 13": "Correct!",
+                "10 11 12": "",
+                "11 12 13": "",
+            },
+            correct_answer="10 11 12 13",
+            shuffle=True,
+        )
+
+        super().__init__(questions=[q1, q2, q3, q4])
