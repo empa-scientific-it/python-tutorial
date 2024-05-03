@@ -1,6 +1,6 @@
 import copy
 import math
-from typing import Callable, Hashable, Iterable, TypeVar
+from typing import Any, Callable, Hashable, Iterable
 
 import pytest
 
@@ -355,11 +355,8 @@ DICTS2 = [
     {},
 ]
 
-V = TypeVar("V")
-K = TypeVar("K", bound=Hashable)
 
-
-def reference_dict_return_value(my_dict: dict[K, V], key: K) -> V | None:
+def reference_dict_return_value(my_dict: dict[Hashable, Any], key: Any) -> Any:
     return my_dict.get(key)
 
 
@@ -375,26 +372,26 @@ def test_dict_return_value(my_dict, key, function_to_test):
     assert my_dict == my_dict_to_try
 
 
-def reference_dict_return_value_delete(my_dict: dict[K, V], key: K) -> V | None:
+def reference_dict_return_delete_value(my_dict: dict[Hashable, Any], key: Any) -> Any:
     return my_dict.pop(key, None)
 
 
 @pytest.mark.parametrize(
     "my_dict, key", list(zip(copy.deepcopy(DICTS1), ["b"] * len(DICTS1)))
 )
-def test_dict_return_value_delete(my_dict, key, function_to_test):
+def test_dict_return_delete_value(my_dict, key, function_to_test):
     my_dict_original1 = my_dict.copy()
     my_dict_original2 = my_dict.copy()
     assert function_to_test(
         my_dict_original1, key
-    ) == reference_dict_return_value_delete(my_dict_original2, key)
+    ) == reference_dict_return_delete_value(my_dict_original2, key)
 
     assert my_dict_original1 == my_dict_original2
 
 
 def reference_update_one_dict_with_another(
-    dict1: dict[K, V], dict2: dict[K, V]
-) -> None:
+    dict1: dict[Hashable, Any], dict2: dict[Hashable, Any]
+) -> dict[Hashable, Any]:
     return dict1.update(dict2)
 
 
