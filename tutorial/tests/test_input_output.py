@@ -75,10 +75,13 @@ def test_write_file(function_to_test, tmp_path: pl.Path):
     function_to_test(tmp_user)
     reference_write_file(tmp_test)
 
-    if not tmp_user.exists():
-        pytest.fail("Cannot read from inexistent file.")
+    assert (
+        tmp_user.exists()
+    ), """The file was not created. Make sure to create the file in the function. Hint: use `open(output_file, "w")`"""
 
-    assert tmp_user.read_text() == tmp_test.read_text()
+    assert (
+        tmp_user.read_text() == tmp_test.read_text()
+    ), "The file content is not correct."
 
 
 def reference_read_write_file(input_file: pl.Path, output_file: pl.Path) -> None:
