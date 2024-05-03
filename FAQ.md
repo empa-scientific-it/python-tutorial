@@ -2,7 +2,7 @@
 
 ## What will be the workshop schedule?
 
-Each tutorial session lasts 4 half-days, from 9:00 to 13:00 (breaks included). During one afternoon, a one hour and a half will be dedicated to the extra session on Linux & Gitlab.
+Each topic lasts 2 hours and includes a walk-through of the theoretical concepts, a hands-on session and Q&A. At the end of each day we will have 1 extra hour to answer additional questions.
 
 ## Which operating system should I use?
 
@@ -14,23 +14,27 @@ There is no specific software that you have to install before the training. Howe
 
 ## Is there a recommended Python installation?
 
-If you plan to install Python locally, we recommend using Python 3.8 at the minimum. If possible, it's better to have Python 3.10 installed. If you need help, please check out the `#help` channel on Slack and feel free to ask for support.
+If you plan to install Python locally, we recommend using Python 3.8 at the minimum. If possible, it's better to have Python 3.10 installed.
 
 ## Will the workshop cover the topic X?
 
 The workshop will cover the fundamentals of the language, and the topics we will explore include:
 
+Basic:
 - Basic syntax and data types
 - Control flow, loops, and exceptions
 - Functions
 - File handling
-- Functional programming
 - Object-oriented programming
 - Modules and packages
 
-We have created dedicated channels on Slack for each topic.
-
-Due to time constraints, we couldn't fit all the requests, and we will mainly focus on the fundamentals of the language. However, you will see some practical use cases during the exercise sessions. If you have any questions or are interested in a specific topic that is not covered in the workshop, you can open a discussion on the `#extra` channel on Slack.
+Advanced:
+- Manage Python project
+- Advanced functions
+- Functional programming
+- Advanced Object-oriented programming
+- Parallelism and concurrency
+- Libraries
 
 ## How do I test my solutions?
 
@@ -55,11 +59,8 @@ To run the cell and test your solution, select it and press `Shift + Enter`  or 
 
 ## I have another question. Where should I ask?
 
-For any other question you might have about the workshop, feel free to post a message in the `#help` channel on Slack.
+For any other question you might have about the workshop, feel free to post a message in the `discussions` on GitHub.
 
-A couple of things worth reminding about Slack:
+If you come across any bug or have suggestions on how we could improve the content and exercises, feel free to open a new `issue`.
 
-1. Do a quick search in the channel before posting. It might be that someone already started a discussion on the same topic.
-2. **Always** reply within [threads](https://slack.com/help/articles/115000769927-Use-threads-to-organize-discussions-) (or open a new one) when you want to join a conversation. The [purpose](https://slack.com/resources/using-slack/tips-on-how-best-to-use-threaded-messages) is to avoid too many unrelated messages that are difficult to navigate in the long run.
-
-For a few more tips about using Slack effectively, check out [this link](https://slack.com/blog/collaboration/etiquette-tips-in-slack).
+Here is the link to the tutorial's [official repository on GitHub](https://github.com/empa-scientific-it/python-tutorial).
