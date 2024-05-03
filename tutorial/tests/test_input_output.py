@@ -15,22 +15,24 @@ def get_data(name: str, data_dir: str = "data") -> pl.Path:
     return (pl.Path.cwd() / f"tutorial/tests/{data_dir}/{name}").resolve()
 
 
-def reference_print_odd(num: int) -> None:
-    for i in range(num):
+def reference_print_odd(n: int) -> None:
+    for i in range(n):
         if i % 2 != 0:
             print(i)
 
 
-@pytest.mark.parametrize("num", [1, 2, 3, 4, 5])
-def test_print_odd(function_to_test, num: int):
+@pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
+def test_print_odd(function_to_test, n: int):
     with StringIO() as solution_stdout, StringIO() as reference_stdout:
         with contextlib.redirect_stdout(solution_stdout):
-            function_to_test(num)
+            function_to_test(n)
+            solution_text = solution_stdout.getvalue()
 
         with contextlib.redirect_stdout(reference_stdout):
-            reference_print_odd(num)
+            reference_print_odd(n)
+            reference_text = reference_stdout.getvalue()
 
-        assert reference_stdout.getvalue() == solution_stdout.getvalue()
+    assert solution_text == reference_text
 
 
 def reference_find_all_files(f: pl.Path) -> List[pl.Path]:
@@ -73,16 +75,26 @@ def test_write_file(function_to_test, tmp_path: pl.Path):
     function_to_test(tmp_user)
     reference_write_file(tmp_test)
 
-    if not tmp_user.exists():
-        pytest.fail("Cannot read from inexistent file.")
+    assert (
+        tmp_user.exists()
+    ), """The file was not created. Make sure to create the file in the function. Hint: use `open(output_file, "w")`"""
 
-    assert tmp_user.read_text() == tmp_test.read_text()
+    assert (
+        tmp_user.read_text() == tmp_test.read_text()
+    ), "The file content is not correct."
 
 
 def reference_read_write_file(input_file: pl.Path, output_file: pl.Path) -> None:
+    # We open the input and output file at the same time
     with input_file.open("r") as read_file, output_file.open("w") as write_file:
+        # Here we iterate over each line of the input file
         for line in read_file.readlines():
-            write_file.write("{}, {}\n".format(line.strip("\n\r"), len(line)))
+            # We remove line breaks and write the line to the output file
+            clean_line = line.strip("\n\r")
+            # We crete the output line
+            output_line = f"{clean_line}, {len(clean_line)}\n"
+            # Finally we write the line and its length to the output file
+            write_file.write(output_line)
 
 
 def test_read_write_file(function_to_test, tmp_path: pl.Path):
@@ -92,6 +104,7 @@ def test_read_write_file(function_to_test, tmp_path: pl.Path):
 
     function_to_test(input_file, output_file)
     reference_read_write_file(input_file, test_output_file)
+    assert output_file.exists(), "The output file was not created."
 
     assert output_file.read_text() == test_output_file.read_text()
 
@@ -105,8 +118,9 @@ def reference_exercise1(file: pl.Path) -> Dict[str, List[str]]:
         }
 
 
-def test_exercise1(function_to_test):
-    f = get_data("example.csv")
+@pytest.mark.parametrize("file", ["example.csv"])
+def test_exercise1(function_to_test, file: str):
+    f = get_data(file)
     assert function_to_test(f) == reference_exercise1(f)
 
 
@@ -121,8 +135,9 @@ def reference_exercise2(file: pl.Path) -> int:
         )
 
 
-def test_exercise2(function_to_test):
-    f = get_data("lines.txt")
+@pytest.mark.parametrize("file", ["lines.txt", "lines2.txt"])
+def test_exercise2(function_to_test, file: str):
+    f = get_data(file)
     assert function_to_test(f) == reference_exercise2(f)
 
 
