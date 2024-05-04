@@ -2,7 +2,7 @@ import inspect
 import pathlib
 from collections import Counter
 from string import ascii_lowercase, ascii_uppercase
-from typing import Any, List, Tuple
+from typing import Any, List
 
 import pytest
 
@@ -10,6 +10,14 @@ import pytest
 def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     """Read input data"""
     return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
+
+
+def errors_to_list(errors):
+    result = "<ul>"
+    for error in errors:
+        result += "<li>" + error + "</li>"
+    result += "</ul>"
+    return result
 
 
 #
@@ -22,24 +30,38 @@ def reference_greet(name: str, age: int) -> str:
     return f"Hello, {name}! You are {age} years old."
 
 
-def test_greet(function_to_test) -> None:
-    assert function_to_test.__doc__ is not None, "The function is missing a docstring"
+@pytest.mark.parametrize(
+    "name,age",
+    [
+        ("John", 30),
+    ],
+)
+def test_greet(
+    name: str,
+    age: int,
+    function_to_test,
+) -> None:
+    errors = []
 
     signature = inspect.signature(function_to_test)
     params = signature.parameters
     return_annotation = signature.return_annotation
 
-    assert len(params) == 2, "The function should take two arguments"
-    assert (
-        "name" in params.keys() and "age" in params.keys()
-    ), "The function's parameters should be 'name' and 'age'"
+    if function_to_test.__doc__ is None:
+        errors.append("The function is missing a docstring.")
+    if len(params) != 2:
+        errors.append("The function should take two arguments.")
+    if "name" not in params.keys() or "age" not in params.keys():
+        errors.append("The function's parameters should be 'name' and 'age'.")
+    if any(p.annotation == inspect.Parameter.empty for p in params.values()):
+        errors.append("The function's parameters should have type hints.")
+    if return_annotation == inspect.Signature.empty:
+        errors.append("The function's return value is missing the type hint.")
 
-    assert all(
-        p.annotation != inspect.Parameter.empty for p in params.values()
-    ), "The function's parameters should have type hints"
-    assert (
-        return_annotation != inspect.Signature.empty
-    ), "The function's return value is missing the type hint"
+    # test signature
+    assert not errors, errors_to_list(errors)
+    # test result
+    assert function_to_test(name, age) == reference_greet(name, age)
 
 
 #
@@ -47,9 +69,7 @@ def test_greet(function_to_test) -> None:
 #
 
 
-def reference_calculate_area(
-    length: float, width: float, unit: str = "cm"
-) -> Tuple[float, str] | str:
+def reference_calculate_area(length: float, width: float, unit: str = "cm") -> str:
     """Reference solution for the calculate_area exercise"""
     # Conversion factors from supported units to centimeters
     units = {
@@ -65,70 +85,81 @@ def reference_calculate_area(
     except KeyError:
         return f"Invalid unit: {unit}"
     else:
-        return (area, "cm^2")
+        return f"{area} cm^2"
 
 
 def test_calculate_area_signature(function_to_test) -> None:
-    assert function_to_test.__doc__ is not None, "The function is missing a docstring"
+    errors = []
 
     signature = inspect.signature(function_to_test)
     params = signature.parameters
     return_annotation = signature.return_annotation
 
-    assert len(params) == 3, "The function should take three arguments"
-    assert (
-        "length" in params.keys()
-        and "width" in params.keys()
-        and "unit" in params.keys()
-    ), "The function's parameters should be 'length', 'width' and 'unit'"
+    if function_to_test.__doc__ is None:
+        errors.append("The function is missing a docstring.")
+    if len(params) != 3:
+        errors.append("The function should take three arguments.")
+    if (
+        "length" not in params.keys()
+        or "width" not in params.keys()
+        or "unit" not in params.keys()
+    ):
+        errors.append(
+            "The function's parameters should be 'length', 'width' and 'unit'."
+        )
+    if "unit" in params.keys() and not (
+        params["unit"].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+        and params["unit"].default == "cm"
+    ):
+        errors.append("Argument 'unit' should have a default value 'cm'.")
+    if any(p.annotation == inspect.Parameter.empty for p in params.values()):
+        errors.append("The function's parameters should have type hints.")
+    if return_annotation == inspect.Signature.empty:
+        errors.append("The function's return value is missing the type hint.")
 
-    assert all(
-        p.annotation != inspect.Parameter.empty for p in params.values()
-    ), "The function's parameters should have type hints"
-    assert (
-        return_annotation != inspect.Signature.empty
-    ), "The function's return value is missing the type hint"
+    assert not errors, errors_to_list(errors)
 
 
 @pytest.mark.parametrize(
-    "length,width,unit,expected",
+    "length,width,unit",
     [
-        (2.0, 3.0, "cm", (6.0, "cm^2")),
-        (4.0, 5.0, "m", (200000.0, "cm^2")),
-        (10.0, 2.0, "mm", (2000.0, "cm^2")),
-        (2.0, 8.0, "yd", (133780.38, "cm^2")),
-        (5.0, 4.0, "ft", (18580.608, "cm^2")),
-        (3.0, 5.0, "in", (96.774, "cm^2")),
+        (2.0, 3.0, "cm"),
+        (4.0, 5.0, "m"),
+        (10.0, 2.0, "mm"),
+        (2.0, 8.0, "yd"),
+        (5.0, 4.0, "ft"),
+        (3.0, 5.0, "in"),
     ],
 )
 def test_calculate_area_result(
     length: float,
     width: float,
     unit: str,
-    expected: Tuple[float, str],
     function_to_test,
 ) -> None:
-    result = function_to_test(length, width, unit)
-    test_result = reference_calculate_area(length, width, unit)
+    errors = []
 
     if unit in ("cm", "m", "mm", "yd", "ft"):
-        assert isinstance(result, Tuple), "The function should return a tuple"
+        result = function_to_test(length, width, unit)
 
-        assert "cm^2" in result, "The result should be in squared centimeters (cm^2)"
-
-        # Double-check the reference solution
-        assert test_result[0] == pytest.approx(
-            expected[0], abs=0.01
-        ), "The reference solution is incorrect"
-
-        assert result[0] == pytest.approx(expected[0], abs=0.01)
+        if not isinstance(result, str):
+            errors.append("The function should return a string.")
+        if "cm^2" not in result:
+            errors.append("The result should be in squared centimeters (cm^2).")
+        if result != reference_calculate_area(length, width, unit):
+            errors.append("The solution is incorrect.")
     else:
-        assert isinstance(
-            result, str
-        ), "The function should return an error string for unsupported units"
-        assert (
-            result == f"Invalid unit: {unit}"
-        ), "The error message is incorrectly formatted"
+        try:
+            result = function_to_test(length, width, unit)
+        except KeyError:
+            errors.append(
+                "The function should return an error string for unsupported units."
+            )
+        else:
+            if result != f"Invalid unit: {unit}":
+                errors.append("The error message is incorrectly formatted.")
+
+    assert not errors
 
 
 #

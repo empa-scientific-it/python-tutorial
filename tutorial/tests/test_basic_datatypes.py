@@ -1,10 +1,11 @@
 import copy
 import math
+from typing import Any, Callable, Hashable, Iterable
 
 import pytest
 
 
-def reference_addition_multiplication(a, b, c):
+def reference_addition_multiplication(a: float, b: float, c: float) -> float:
     return (a + b) * c
 
 
@@ -20,13 +21,18 @@ def reference_addition_multiplication(a, b, c):
         (1e-5, 3.5e-5, 2.5),
     ],
 )
-def test_addition_multiplication(a, b, c, function_to_test):
+def test_addition_multiplication(
+    a: float,
+    b: float,
+    c: float,
+    function_to_test: Callable[[float, float, float], float],
+):
     assert math.isclose(
         function_to_test(a, b, c), reference_addition_multiplication(a, b, c)
     )
 
 
-def reference_circle_area(r):
+def reference_circle_area(r: float) -> float:
     return math.pi * r**2
 
 
@@ -42,11 +48,11 @@ def reference_circle_area(r):
         0.0001,
     ],
 )
-def test_circle_area(r, function_to_test):
+def test_circle_area(r: float, function_to_test: Callable[[float], float]):
     assert math.isclose(function_to_test(r), reference_circle_area(r), rel_tol=1e-4)
 
 
-def reference_quadratic_equation(a, b, c):
+def reference_quadratic_equation(a: float, b: float, c: float) -> tuple[float, float]:
     d = b**2 - 4 * a * c
     solution1 = (-b + math.sqrt(d)) / (2 * a)
     solution2 = (-b - math.sqrt(d)) / (2 * a)
@@ -65,7 +71,12 @@ def reference_quadratic_equation(a, b, c):
         (1e-3, 1, 1.5),
     ],
 )
-def test_quadratic_equation(a, b, c, function_to_test):
+def test_quadratic_equation(
+    a: float,
+    b: float,
+    c: float,
+    function_to_test: Callable[[float, float, float], tuple[float, float]],
+):
     solution1, solution2 = reference_quadratic_equation(a, b, c)
     provided_solution1, provided_solution2 = function_to_test(a, b, c)
 
@@ -78,8 +89,8 @@ def test_quadratic_equation(a, b, c, function_to_test):
     )
 
 
-def reference_a_plus_b_equals_c(a, b, c):
-    return a + b == c
+def reference_a_plus_b_equals_c(a: float, b: float, c: float) -> bool:
+    return math.isclose(a + b, c)
 
 
 @pytest.mark.parametrize(
@@ -92,45 +103,57 @@ def reference_a_plus_b_equals_c(a, b, c):
         (23.1, 1.8, 14.2),
         (-10.5, 7.4, 84),
         (1e-5, 3.5e-5, 2.5),
+        (0.1, 0.2, 0.3),
     ],
 )
-def test_a_plus_b_equals_c(a, b, c, function_to_test):
+def test_a_plus_b_equals_c(
+    a: float,
+    b: float,
+    c: float,
+    function_to_test: Callable[[float, float, float], bool],
+) -> None:
     assert function_to_test(a, b, c) == reference_a_plus_b_equals_c(a, b, c)
 
 
-def reference_number_is_even(number):
+def reference_number_is_even(number: int) -> bool:
     return number % 2 == 0
 
 
 @pytest.mark.parametrize("number", [1, 2, 3, 4])
-def test_number_is_even(number, function_to_test):
+def test_number_is_even(number: int, function_to_test: Callable[[int], bool]) -> None:
     assert function_to_test(number) == reference_number_is_even(number)
 
 
-def reference_number_is_greater_than_zero(number):
+def reference_number_is_greater_than_zero(number: float) -> bool:
     return number > 0
 
 
 @pytest.mark.parametrize("number", [1, 2, 3, 4])
-def test_number_is_greater_than_zero(number, function_to_test):
+def test_number_is_greater_than_zero(
+    number: int, function_to_test: Callable[[int], bool]
+):
     assert function_to_test(number) == reference_number_is_greater_than_zero(number)
 
 
-def reference_number_is_positive_and_even(number):
+def reference_number_is_positive_and_even(number: int) -> bool:
     return number % 2 == 0 and number > 0
 
 
 @pytest.mark.parametrize("number", [1, 2, 3, 4, -1, -2, -3, -4])
-def test_number_is_positive_and_even(number, function_to_test):
+def test_number_is_positive_and_even(
+    number: int, function_to_test: Callable[[int], bool]
+):
     assert function_to_test(number) == reference_number_is_positive_and_even(number)
 
 
-def reference_number_is_lower_than_0_or_greater_than_100(number):
+def reference_number_is_lower_than_0_or_greater_than_100(number: int) -> bool:
     return number < 0 or number >= 100
 
 
 @pytest.mark.parametrize("number", [1, 2, 3, 4, -1, -2, -3, -4, 0, 100, 101, 102, 103])
-def test_number_is_lower_than_0_or_greater_than_100(number, function_to_test):
+def test_number_is_lower_than_0_or_greater_than_100(
+    number: int, function_to_test: Callable[[int], bool]
+):
     assert function_to_test(
         number
     ) == reference_number_is_lower_than_0_or_greater_than_100(number)
@@ -169,7 +192,7 @@ LIST1_2 = [
 ]
 
 
-def reference_remove_every_second_element_from_list(my_list):
+def reference_remove_every_second_element_from_list(my_list: list) -> list:
     return my_list[::2]
 
 
@@ -180,7 +203,7 @@ def test_remove_every_second_element_from_list(my_list, function_to_test):
     )
 
 
-def reference_return_first_and_last_element_from_list(my_list):
+def reference_return_first_and_last_element_from_list(my_list: list) -> tuple:
     return my_list[0], my_list[-1]
 
 
@@ -191,7 +214,7 @@ def test_return_first_and_last_element_from_list(my_list, function_to_test):
     ) == reference_return_first_and_last_element_from_list(my_list)
 
 
-def reference_first_and_last_element_are_equal(my_list):
+def reference_first_and_last_element_are_equal(my_list: list) -> bool:
     return my_list[0] == my_list[-1]
 
 
@@ -202,7 +225,7 @@ def test_first_and_last_element_are_equal(my_list, function_to_test):
     )
 
 
-def reference_lists_are_equal(list1, list2):
+def reference_lists_are_equal(list1: list, list2: list) -> bool:
     return list1 == list2
 
 
@@ -211,18 +234,18 @@ def test_lists_are_equal(list1, list2, function_to_test):
     assert function_to_test(list1, list2) == reference_lists_are_equal(list1, list2)
 
 
-def reference_lists_are_equal_but_not_same(list1, list2):
+def reference_lists_are_not_same_but_equal(list1: list, list2: list) -> bool:
     return list1 == list2 and list1 is not list2
 
 
 @pytest.mark.parametrize("list1, list2", LIST1_2)
-def test_lists_are_equal_but_not_same(list1, list2, function_to_test):
-    assert function_to_test(list1, list2) == reference_lists_are_equal_but_not_same(
+def test_lists_are_not_same_but_equal(list1, list2, function_to_test):
+    assert function_to_test(list1, list2) == reference_lists_are_not_same_but_equal(
         list1, list2
     )
 
 
-def reference_greater_or_equal(list1, list2):
+def reference_greater_or_equal(list1: list, list2: list) -> bool:
     return list1 >= list2
 
 
@@ -243,28 +266,50 @@ SET1_2 = [
 ]
 
 
+def reference_sets_union(set1: set, set2: set) -> set:
+    return set1.union(set2)
+
+
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_union(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.union(set2)
+    assert function_to_test(set1, set2) == reference_sets_union(set1, set2)
+
+
+def reference_sets_intersection(set1: set, set2: set) -> set:
+    return set1.intersection(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_intersection(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.intersection(set2)
+    assert function_to_test(set1, set2) == reference_sets_intersection(set1, set2)
+
+
+def reference_sets_difference(set1: set, set2: set) -> set:
+    return set1.difference(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_difference(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.difference(set2)
+    assert function_to_test(set1, set2) == reference_sets_difference(set1, set2)
+
+
+def reference_sets_symmetric_difference(set1: set, set2: set) -> set:
+    return set1.symmetric_difference(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_symmetric_difference(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.symmetric_difference(set2)
+    assert function_to_test(set1, set2) == reference_sets_symmetric_difference(
+        set1, set2
+    )
+
+
+def reference_sets_subset(set1: set, set2: set) -> bool:
+    return set1.issubset(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
@@ -273,16 +318,24 @@ def test_sets_subset(set1, set2, function_to_test):
     assert function_to_test(set1, set2) == set1.issubset(set2)
 
 
+def reference_sets_superset(set1: set, set2: set) -> bool:
+    return set1.issuperset(set2)
+
+
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_superset(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.issuperset(set2)
+    assert function_to_test(set1, set2) == reference_sets_superset(set1, set2)
+
+
+def reference_sets_disjoint(set1: set, set2: set) -> bool:
+    return set1.isdisjoint(set2)
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
 def test_sets_disjoint(set1, set2, function_to_test):
     """The test case(s)"""
-    assert function_to_test(set1, set2) == set1.isdisjoint(set2)
+    assert function_to_test(set1, set2) == reference_sets_disjoint(set1, set2)
 
 
 DICTS1 = [
@@ -304,7 +357,7 @@ DICTS2 = [
 ]
 
 
-def reference_dict_return_value(my_dict, key):
+def reference_dict_return_value(my_dict: dict[Hashable, Any], key: Any) -> Any:
     return my_dict.get(key)
 
 
@@ -320,24 +373,26 @@ def test_dict_return_value(my_dict, key, function_to_test):
     assert my_dict == my_dict_to_try
 
 
-def reference_dict_return_value_delete(my_dict, key):
+def reference_dict_return_delete_value(my_dict: dict[Hashable, Any], key: Any) -> Any:
     return my_dict.pop(key, None)
 
 
 @pytest.mark.parametrize(
     "my_dict, key", list(zip(copy.deepcopy(DICTS1), ["b"] * len(DICTS1)))
 )
-def test_dict_return_value_delete(my_dict, key, function_to_test):
+def test_dict_return_delete_value(my_dict, key, function_to_test):
     my_dict_original1 = my_dict.copy()
     my_dict_original2 = my_dict.copy()
     assert function_to_test(
         my_dict_original1, key
-    ) == reference_dict_return_value_delete(my_dict_original2, key)
+    ) == reference_dict_return_delete_value(my_dict_original2, key)
 
     assert my_dict_original1 == my_dict_original2
 
 
-def reference_update_one_dict_with_another(dict1, dict2):
+def reference_update_one_dict_with_another(
+    dict1: dict[Hashable, Any], dict2: dict[Hashable, Any]
+) -> dict[Hashable, Any]:
     return dict1.update(dict2)
 
 
@@ -365,7 +420,7 @@ STRINGS = [
 ]
 
 
-def reference_string_capitalize(my_string):
+def reference_string_capitalize(my_string: str) -> str:
     return my_string.capitalize()
 
 
@@ -374,7 +429,7 @@ def test_string_capitalize(my_string, function_to_test):
     assert function_to_test(my_string) == reference_string_capitalize(my_string)
 
 
-def reference_string_lower_case(my_string):
+def reference_string_lower_case(my_string: str) -> str:
     return my_string.lower()
 
 
@@ -383,7 +438,7 @@ def test_string_lower_case(my_string, function_to_test):
     assert function_to_test(my_string) == reference_string_lower_case(my_string)
 
 
-def reference_string_word_split(my_string):
+def reference_string_word_split(my_string: str) -> list[str]:
     return my_string.split()
 
 
@@ -392,7 +447,7 @@ def test_string_word_split(my_string, function_to_test):
     assert function_to_test(my_string) == reference_string_word_split(my_string)
 
 
-def reference_string_join_commas(my_string):
+def reference_string_join_commas(my_string: Iterable[str]) -> str:
     return ",".join(my_string)
 
 
@@ -406,7 +461,7 @@ def test_string_join_commas(my_string, function_to_test):
     )
 
 
-def reference_string_split_lines(my_string):
+def reference_string_split_lines(my_string: str) -> list[str]:
     return my_string.splitlines()
 
 

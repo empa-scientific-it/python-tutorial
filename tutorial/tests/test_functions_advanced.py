@@ -267,7 +267,7 @@ def create_alphabet_file(tmp_path: pathlib.Path):
     d.mkdir()
     p = d / "alphabet.txt"
 
-    text = "\n".join(f"{one_letter*20}" for one_letter in lowercase) + "\n"
+    text = "\n".join(f"{one_letter * 20}" for one_letter in lowercase) + "\n"
 
     p.write_text(text)
 

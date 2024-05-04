@@ -110,7 +110,7 @@ class Quiz(ipw.VBox):
     def add_question(self, question: Question):
         """Adds a question to the quiz."""
         question.question.value = (
-            f"""<strong>Q{self.nquestions+1}:</strong> """ + question.question.value
+            f"""<strong>Q{self.nquestions + 1}:</strong> """ + question.question.value
         )
         self.questions.append(question)
         self.children = self.questions + self.aux
