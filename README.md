@@ -67,12 +67,6 @@ Finally, launch JupyterLab with
 jupyter lab
 ```
 
-To update the existing environment, run
-
-```console
-conda env update -f environment.yml
-```
-
 ### 2. With Docker
 
 > **Note**
