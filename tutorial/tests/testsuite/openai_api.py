@@ -19,17 +19,23 @@ logger = logging.getLogger(__name__)
 GPT_STABLE_MODELS = ("gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4o-mini")
 GPT_ALL_MODELS = GPT_STABLE_MODELS
 
+DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_LANGUAGE = "English"
+
 
 class OpenAIWrapper:
     """A simple API wrapper adapted for IPython environments"""
 
     def __init__(
-        self, api_key: str, model: str = "gpt-4o-mini", language: str = "en"
+        self,
+        api_key: str,
+        model: t.Optional[str] = None,
+        language: t.Optional[str] = None,
     ) -> None:
         """Initialize the wrapper for OpenAI API with logging and checks"""
         self.api_key = api_key
-        self.model = model
-        self.language = language
+        self.model = model or DEFAULT_MODEL
+        self.language = language or DEFAULT_LANGUAGE
         self.client = openai.OpenAI(api_key=self.api_key)
 
         if model not in GPT_ALL_MODELS:
@@ -57,8 +63,11 @@ class OpenAIWrapper:
             "in a clear and concise manner. Your explanations should be easy to understand, "
             "highlighting the root cause of the error. "
             "The average user is likely to have very little experience with Python. "
-            "Remember that the users are students: do not provide verbatim code solutions, only guidance. "
-            "The output must be formatted in HTML as it will displayed inside a Jupyter notebook. "
+            "Instructions:\n\n"
+            " - Even if the error is trivial, provide some hints.\n"
+            " - Refrain from writing an exact solution to the problem.\n"
+            " - The output must be formatted in HTML as it will displayed inside a Jupyter notebook.\n"
+            f" - Write your response in {self.language}."
         )
 
         messages: t.List[ChatCompletionMessageParam] = [
