@@ -315,30 +315,35 @@ class TestResultOutput:
                         if not test_succeded:
                             assert result.exception is not None
 
-                            explanation_output = ipywidgets.Output()
-
-                            explain_button = ipywidgets.Button(
-                                description="Explain", icon="question"
+                            output_box_children.append(
+                                ipywidgets.Accordion(
+                                    children=[
+                                        HTML(format_error(result.exception)),
+                                    ],
+                                    titles=("Test results",),
+                                ),
                             )
 
-                            explain_button.on_click(
-                                lambda b, ipytest_result=self.ipytest_result, exc=result.exception, out=explanation_output, test_name=test_name: self.on_click_explain(
-                                    ipytest_result, exc, out, test_name
+                            if self.openai_client:
+                                explanation_output = ipywidgets.Output()
+
+                                explain_button = ipywidgets.Button(
+                                    description="Explain", icon="question"
                                 )
-                            )
 
-                            output_box_children.extend(
-                                [
-                                    ipywidgets.Accordion(
-                                        children=[
-                                            HTML(format_error(result.exception)),
-                                        ],
-                                        titles=("Test results",),
-                                    ),
-                                    explain_button,
-                                    explanation_output,
-                                ]
-                            )
+                                explain_button.on_click(
+                                    lambda b,
+                                    ipytest_result=self.ipytest_result,
+                                    exc=result.exception,
+                                    out=explanation_output,
+                                    test_name=test_name: self.on_click_explain(
+                                        ipytest_result, exc, out, test_name
+                                    )
+                                )
+
+                                output_box_children.extend(
+                                    [explain_button, explanation_output]
+                                )
 
                         output_cell.append_display_data(
                             ipywidgets.VBox(children=output_box_children)

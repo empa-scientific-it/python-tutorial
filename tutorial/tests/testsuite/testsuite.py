@@ -314,14 +314,14 @@ def load_ipython_extension(ipython):
     autoloaded by IPython at startup time.
     """
     # Configure the API key for the OpenAI client
-    api_key = os.getenv("OPENAI_API_KEY")
-    if api_key:
+    if api_key := os.getenv("OPENAI_API_KEY"):
         openai_client = OpenAIWrapper(api_key)
         ipython.openai_client = openai_client
         print("OpenAI client configured")
     else:
+        ipython.openai_client = None
         print(
-            "OpenAI API key is undefined. Please set the OPENAI_API_KEY environment variable."
+            "OpenAI API key is undefined. Please use the utility tutorial.enable_ai.set_key() to set it."
         )
 
     # Register the magic
