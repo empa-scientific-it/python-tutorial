@@ -332,11 +332,7 @@ class TestResultOutput:
                                 )
 
                                 explain_button.on_click(
-                                    lambda b,
-                                    ipytest_result=self.ipytest_result,
-                                    exc=result.exception,
-                                    out=explanation_output,
-                                    test_name=test_name: self.on_click_explain(
+                                    lambda b, ipytest_result=self.ipytest_result, exc=result.exception, out=explanation_output, test_name=test_name: self.on_click_explain(
                                         ipytest_result, exc, out, test_name
                                     )
                                 )
