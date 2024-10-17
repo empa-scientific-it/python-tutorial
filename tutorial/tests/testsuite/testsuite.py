@@ -1,15 +1,16 @@
 """A module to define the `%%ipytest` cell magic"""
 
+import ast
 import dataclasses
 import inspect
 import io
+import os
 import pathlib
-import re
 from collections import defaultdict
 from contextlib import redirect_stderr, redirect_stdout
 from queue import Queue
 from threading import Thread
-from typing import Callable, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import ipynbname
 import pytest
@@ -23,6 +24,7 @@ from .exceptions import (
     TestModuleNotFoundError,
 )
 from .helpers import (
+    AFunction,
     FunctionInjectionPlugin,
     IPytestOutcome,
     IPytestResult,
@@ -30,11 +32,10 @@ from .helpers import (
     TestOutcome,
     TestResultOutput,
 )
+from .openai_api import OpenAIWrapper
 
 
-def run_test(
-    module_file: pathlib.Path, function_name: str, function_object: Callable
-) -> IPytestResult:
+def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
     """
     Run the tests for a single function
     """
@@ -44,9 +45,9 @@ def run_test(
 
         # Run the tests
         result = pytest.main(
-            ["-k", f"test_{function_name}", f"{module_file}"],
+            ["-k", f"test_{function.name}", f"{module_file}"],
             plugins=[
-                FunctionInjectionPlugin(function_object),
+                FunctionInjectionPlugin(function.callable),
                 result_collector,
             ],
         )
@@ -54,7 +55,7 @@ def run_test(
     match result:
         case pytest.ExitCode.OK:
             return IPytestResult(
-                function_name=function_name,
+                function_name=function.name,
                 status=IPytestOutcome.FINISHED,
                 test_results=list(result_collector.tests.values()),
             )
@@ -64,7 +65,8 @@ def run_test(
                 for test in result_collector.tests.values()
             ):
                 return IPytestResult(
-                    function_name=function_name,
+                    function_name=function.name,
+                    function_code=function.code,
                     status=IPytestOutcome.PYTEST_ERROR,
                     exceptions=[
                         test.exception
@@ -74,19 +76,22 @@ def run_test(
                 )
 
             return IPytestResult(
-                function_name=function_name,
+                function_name=function.name,
+                function_code=function.code,
                 status=IPytestOutcome.FINISHED,
                 test_results=list(result_collector.tests.values()),
             )
         case pytest.ExitCode.INTERNAL_ERROR:
             return IPytestResult(
-                function_name=function_name,
+                function_name=function.name,
+                function_code=function.code,
                 status=IPytestOutcome.PYTEST_ERROR,
                 exceptions=[Exception("Internal error")],
             )
         case pytest.ExitCode.NO_TESTS_COLLECTED:
             return IPytestResult(
-                function_name=function_name,
+                function_name=function.name,
+                function_code=function.code,
                 status=IPytestOutcome.NO_TEST_FOUND,
                 exceptions=[FunctionNotFoundError()],
             )
@@ -98,12 +103,11 @@ def run_test(
 
 def run_test_in_thread(
     module_file: pathlib.Path,
-    function_name: str,
-    function_object: Callable,
+    function: AFunction,
     test_queue: Queue,
 ):
     """Run the tests for a single function and put the result in the queue"""
-    test_queue.put(run_test(module_file, function_name, function_object))
+    test_queue.put(_run_test(module_file, function))
 
 
 def _name_from_line(line: str = ""):
@@ -142,7 +146,6 @@ class TestMagic(Magics):
 
     def __init__(self, shell):
         super().__init__(shell)
-        self.max_execution_count = 3
         self.shell: InteractiveShell = shell
         self.cell: str = ""
         self.module_file: Optional[pathlib.Path] = None
@@ -155,28 +158,39 @@ class TestMagic(Magics):
         self._orig_traceback = self.shell._showtraceback  # type: ignore
         # This is monkey-patching suppress printing any exception or traceback
 
-    def extract_functions_to_test(self) -> Dict[str, Callable]:
+    def extract_functions_to_test(self) -> List[AFunction]:
         """"""
         # Retrieve the functions names defined in the current cell
         # Only functions with names starting with `solution_` will be candidates for tests
-        functions_names: List[str] = re.findall(
-            r"^(?:async\s+?)?def\s+(solution_.*?)\s*\(", self.cell, re.M
-        )
+        functions: Dict[str, str] = {}
+        tree = ast.parse(self.cell)
 
-        return {
-            name.removeprefix("solution_"): function
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("solution_"):
+                functions.update({str(node.name): ast.unparse(node)})
+
+        # functions_names: List[str] = re.findall(
+        #     r"^(?:async\s+?)?def\s+(solution_.*?)\s*\(", self.cell, re.M
+        # )
+
+        return [
+            AFunction(
+                name=name.removeprefix("solution_"),
+                callable=function,
+                code=functions[name],
+            )
             for name, function in self.shell.user_ns.items()
-            if name in functions_names
+            if name in functions
             and (callable(function) or inspect.iscoroutinefunction(function))
-        }
+        ]
 
-    def run_test(self, function_name: str, function_object: Callable) -> IPytestResult:
+    def run_test(self, function: AFunction) -> IPytestResult:
         """Run the tests for a single function"""
         assert isinstance(self.module_file, pathlib.Path)
 
         # Store execution count information for each cell
         cell_id = str(self.shell.parent_header["metadata"]["cellId"])  # type: ignore
-        self.cell_execution_count[cell_id][function_name] += 1
+        self.cell_execution_count[cell_id][function.name] += 1
 
         # Run the tests on a separate thread
         if self.threaded:
@@ -185,8 +199,7 @@ class TestMagic(Magics):
                 target=run_test_in_thread,
                 args=(
                     self.module_file,
-                    function_name,
-                    function_object,
+                    function,
                     self.test_queue,
                 ),
             )
@@ -194,13 +207,13 @@ class TestMagic(Magics):
             thread.join()
             result = self.test_queue.get()
         else:
-            result = run_test(self.module_file, function_name, function_object)
+            result = _run_test(self.module_file, function)
 
         match result.status:
             case IPytestOutcome.FINISHED:
                 return dataclasses.replace(
                     result,
-                    test_attempts=self.cell_execution_count[cell_id][function_name],
+                    test_attempts=self.cell_execution_count[cell_id][function.name],
                 )
             case _:
                 return result
@@ -229,9 +242,7 @@ class TestMagic(Magics):
             ]
 
         # Run the tests for each function
-        test_results = [
-            self.run_test(name, function) for name, function in functions_to_run.items()
-        ]
+        test_results = [self.run_test(function) for function in functions_to_run]
 
         return test_results
 
@@ -289,7 +300,11 @@ class TestMagic(Magics):
                 if result.function_name
                 else None
             )
-            TestResultOutput(result, solution).display_results()
+            TestResultOutput(
+                result,
+                solution,
+                self.shell.openai_client,  # type: ignore
+            ).display_results()
 
 
 def load_ipython_extension(ipython):
@@ -298,5 +313,18 @@ def load_ipython_extension(ipython):
     can be loaded via `%load_ext module.path` or be configured to be
     autoloaded by IPython at startup time.
     """
+    # Configure the API key for the OpenAI client
+    api_key = os.getenv("OPENAI_API_KEY")
+    if api_key:
+        openai_client = OpenAIWrapper(api_key)
+        ipython.openai_client = openai_client
+        print("OpenAI client configured")
+    else:
+        print(
+            "OpenAI API key is undefined. Please set the OPENAI_API_KEY environment variable."
+        )
 
+    # Register the magic
     ipython.register_magics(TestMagic)
+
+    print("IPytest extension loaded")

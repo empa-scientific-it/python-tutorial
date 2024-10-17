@@ -1,16 +1,20 @@
 import html
+import random
 import re
 import traceback
 from dataclasses import dataclass
 from enum import Enum
+from functools import lru_cache
 from types import TracebackType
-from typing import Callable, ClassVar, Dict, List, Optional
+from typing import Any, Callable, ClassVar, Dict, List, Optional
 
 import ipywidgets
 import pytest
 from IPython.display import Code
 from IPython.display import display as ipython_display
 from ipywidgets import HTML
+
+from .openai_api import OpenAIWrapper
 
 
 class TestOutcome(Enum):
@@ -42,11 +46,23 @@ class TestCaseResult:
 
 @dataclass
 class IPytestResult:
+    """Class to store the results of running pytest on a solution function"""
+
     function_name: Optional[str] = None
+    function_code: Optional[str] = None
     status: Optional[IPytestOutcome] = None
     test_results: Optional[List[TestCaseResult]] = None
     exceptions: Optional[List[BaseException]] = None
     test_attempts: int = 0
+
+
+@dataclass
+class AFunction:
+    """Container class to store a function and its metadata"""
+
+    name: str
+    callable: Callable[..., Any]
+    code: Optional[str]
 
 
 def format_error(exception: BaseException) -> str:
@@ -108,6 +124,7 @@ class TestResultOutput:
     ipytest_result: IPytestResult
     solution: Optional[str] = None
     MAX_ATTEMPTS: ClassVar[int] = 3
+    openai_client: Optional[OpenAIWrapper] = None
 
     def display_results(self) -> None:
         """Display the test results in an output widget as a VBox"""
@@ -298,11 +315,29 @@ class TestResultOutput:
                         if not test_succeded:
                             assert result.exception is not None
 
-                            output_box_children.append(
-                                ipywidgets.Accordion(
-                                    children=[HTML(format_error(result.exception))],
-                                    titles=("Test results",),
+                            explanation_output = ipywidgets.Output()
+
+                            explain_button = ipywidgets.Button(
+                                description="Explain", icon="question"
+                            )
+
+                            explain_button.on_click(
+                                lambda b, ipytest_result=self.ipytest_result, exc=result.exception, out=explanation_output, test_name=test_name: self.on_click_explain(
+                                    ipytest_result, exc, out, test_name
                                 )
+                            )
+
+                            output_box_children.extend(
+                                [
+                                    ipywidgets.Accordion(
+                                        children=[
+                                            HTML(format_error(result.exception)),
+                                        ],
+                                        titles=("Test results",),
+                                    ),
+                                    explain_button,
+                                    explanation_output,
+                                ]
                             )
 
                         output_cell.append_display_data(
@@ -313,6 +348,38 @@ class TestResultOutput:
                 output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))
 
         return output_cell
+
+    def on_click_explain(
+        self,
+        ipytest_result: IPytestResult,
+        exception: BaseException,
+        explanation_output: ipywidgets.Output,
+        test_name: str,
+    ) -> None:
+        """Callback for the explain button"""
+
+        with explanation_output:
+            explanation_output.clear_output()
+            traceback_str = "".join(traceback.format_exception_only(exception))
+
+            if self.openai_client:
+                query = (
+                    "I wrote the following Python function:\n\n"
+                    f"{ipytest_result.function_code}\n\n"
+                    "Here is the error traceback I encountered:\n\n"
+                    f"{traceback_str}"
+                )
+                response = self.openai_client.get_chat_response(query)
+                if reply := response.choices[0].message.content:
+                    reply = reply.removeprefix("```html").removesuffix("```").strip()
+                    explanation_output.append_display_data(
+                        HTML(f"<h4>Explanation for {test_name}:</h4>{reply}")
+                    )
+
+
+@lru_cache
+def sample_output(string: str) -> str:
+    return f"{string}: {random.random()}"
 
 
 @pytest.fixture
