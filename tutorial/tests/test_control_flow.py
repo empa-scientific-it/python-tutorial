@@ -194,7 +194,7 @@ def test_find_triplet(nums: List[int], function_to_test) -> None:
 
 def reference_cats_with_hats() -> int:
     """Solution with dictionaries"""
-    cats = {i: False for i in range(1, 101)}
+    cats = dict.fromkeys(range(1, 101), False)
 
     for loop in range(1, 101):
         for cat, has_hat in cats.items():
