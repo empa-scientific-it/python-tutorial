@@ -10,7 +10,7 @@ You have two ways in which you can run the tutorial **locally**.
 
 #### 0. Prerequisites
 
-To run the tutorial locally, you should first install [conda](https://docs.conda.io/en/latest/miniconda.html) (or [mamba](https://mamba.readthedocs.io/en/latest/installation.html)).
+To run the tutorial locally, you should first install [conda](https://docs.conda.io/en/latest/miniconda.html) (or [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html)).
 
 It is also suggested that you have a recent version of `git`. Check out [how to install `git`](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) on your operating system.
 
@@ -65,12 +65,6 @@ Finally, launch JupyterLab with
 
 ```console
 jupyter lab
-```
-
-To update the existing environment, run
-
-```console
-conda env update -f environment.yml
 ```
 
 ### 2. With Docker
