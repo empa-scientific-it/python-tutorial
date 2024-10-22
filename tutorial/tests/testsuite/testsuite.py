@@ -47,7 +47,7 @@ def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
         result = pytest.main(
             ["-k", f"test_{function.name}", f"{module_file}"],
             plugins=[
-                FunctionInjectionPlugin(function.callable),
+                FunctionInjectionPlugin(function.implementation),
                 result_collector,
             ],
         )
@@ -66,7 +66,7 @@ def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
             ):
                 return IPytestResult(
                     function_name=function.name,
-                    function_code=function.code,
+                    function_code=function.source_code,
                     status=IPytestOutcome.PYTEST_ERROR,
                     exceptions=[
                         test.exception
@@ -77,21 +77,21 @@ def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
 
             return IPytestResult(
                 function_name=function.name,
-                function_code=function.code,
+                function_code=function.source_code,
                 status=IPytestOutcome.FINISHED,
                 test_results=list(result_collector.tests.values()),
             )
         case pytest.ExitCode.INTERNAL_ERROR:
             return IPytestResult(
                 function_name=function.name,
-                function_code=function.code,
+                function_code=function.source_code,
                 status=IPytestOutcome.PYTEST_ERROR,
                 exceptions=[Exception("Internal error")],
             )
         case pytest.ExitCode.NO_TESTS_COLLECTED:
             return IPytestResult(
                 function_name=function.name,
-                function_code=function.code,
+                function_code=function.source_code,
                 status=IPytestOutcome.NO_TEST_FOUND,
                 exceptions=[FunctionNotFoundError()],
             )
@@ -176,8 +176,8 @@ class TestMagic(Magics):
         return [
             AFunction(
                 name=name.removeprefix("solution_"),
-                callable=function,
-                code=functions[name],
+                implementation=function,
+                source_code=functions[name],
             )
             for name, function in self.shell.user_ns.items()
             if name in functions

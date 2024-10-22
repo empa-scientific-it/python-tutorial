@@ -1,10 +1,8 @@
 import html
-import random
 import re
 import traceback
 from dataclasses import dataclass
 from enum import Enum
-from functools import lru_cache
 from types import TracebackType
 from typing import Any, Callable, ClassVar, Dict, List, Optional
 
@@ -61,8 +59,8 @@ class AFunction:
     """Container class to store a function and its metadata"""
 
     name: str
-    callable: Callable[..., Any]
-    code: Optional[str]
+    implementation: Callable[..., Any]
+    source_code: Optional[str]
 
 
 def format_error(exception: BaseException) -> str:
@@ -376,11 +374,6 @@ class TestResultOutput:
                     explanation_output.append_display_data(
                         HTML(f"<h4>Explanation for {test_name}:</h4>{reply}")
                     )
-
-
-@lru_cache
-def sample_output(string: str) -> str:
-    return f"{string}: {random.random()}"
 
 
 @pytest.fixture
