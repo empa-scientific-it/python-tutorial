@@ -1,6 +1,87 @@
 import pathlib
+import re
 
 import pytest
+
+#
+# Example 1: Person
+#
+
+
+def reference_oop_person():
+    class Person:
+        """A class representing a person with first name and last name"""
+
+        def __init__(self, first_name: str, last_name: str):
+            self.first_name = first_name
+            self.last_name = last_name
+
+    return Person("John", "Doe")
+
+
+def test_oop_person(function_to_test):
+    solution_result = function_to_test()
+    reference_result = reference_oop_person()
+
+    assert (
+        type(solution_result).__name__ == type(reference_result).__name__
+    )  # check that the class is named 'Person'
+    assert list(vars(solution_result)) == list(
+        vars(reference_result)
+    )  # check that the instances have the same attributes
+
+
+#
+# Example 2: Person's full name
+#
+
+
+def reference_oop_fullname():
+    class Person:
+        """A class representing a person with first name and last name"""
+
+        def __init__(self, first_name: str, last_name: str):
+            self.first_name = first_name
+            self.last_name = last_name
+
+        def full_name(self) -> str:
+            return f"My name is {self.first_name} {self.last_name}"
+
+    return Person("John", "Doe")
+
+
+def verify_method_fullname(p) -> list[str]:
+    return [
+        attr
+        for attr in dir(p)
+        if callable(getattr(p, attr)) and not attr.startswith("__")
+    ]
+
+
+def verify_result_fullname(res: str) -> bool:
+    # Define the pattern to match the template "My name is {first_name} {last_name}"
+    pattern = r"^(My name is) \w+ \w+$"
+    # Check if the sentence matches the template
+    return re.match(pattern, res)
+
+
+def test_oop_fullname(function_to_test):
+    solution_result = function_to_test()
+    reference_result = reference_oop_fullname()
+
+    assert (
+        type(solution_result).__name__ == type(reference_result).__name__
+    )  # check that the class is named 'Person'
+    assert list(vars(solution_result)) == list(
+        vars(reference_result)
+    )  # check that the instances have the same attributes
+    assert verify_method_fullname(solution_result) == verify_method_fullname(
+        reference_result
+    )  # check that the instances have the same methods
+    assert verify_result_fullname(
+        solution_result.full_name()
+    ), "The result does not match the template 'My name is {first_name} {last_name}'."
+
 
 #
 # Exercise 1: Ice cream scoop
