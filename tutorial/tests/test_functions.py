@@ -69,6 +69,13 @@ def test_greet(
 #
 
 
+class UnsupportedUnitError(Exception):
+    def __init__(self) -> None:
+        super().__init__(
+            "The function should return an error string for unsupported units."
+        )
+
+
 def reference_calculate_area(length: float, width: float, unit: str = "cm") -> str:
     """Reference solution for the calculate_area exercise"""
     # Conversion factors from supported units to centimeters
@@ -88,36 +95,29 @@ def reference_calculate_area(length: float, width: float, unit: str = "cm") -> s
         return f"{area} cm^2"
 
 
-def test_calculate_area_signature(function_to_test) -> None:
-    errors = []
-
+def validate_calculate_area_signature(function_to_test) -> None:
     signature = inspect.signature(function_to_test)
     params = signature.parameters
     return_annotation = signature.return_annotation
 
-    if function_to_test.__doc__ is None:
-        errors.append("The function is missing a docstring.")
-    if len(params) != 3:
-        errors.append("The function should take three arguments.")
-    if (
-        "length" not in params.keys()
-        or "width" not in params.keys()
-        or "unit" not in params.keys()
-    ):
-        errors.append(
-            "The function's parameters should be 'length', 'width' and 'unit'."
-        )
-    if "unit" in params.keys() and not (
-        params["unit"].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring."
+    assert len(params) == 3, "The function should take three arguments."
+    assert (
+        "length" in params.keys()
+        and "width" in params.keys()
+        and "unit" in params.keys()
+    ), "The function's parameters should be 'length', 'width' and 'unit'."
+    assert (
+        "unit" in params.keys()
+        and params["unit"].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
         and params["unit"].default == "cm"
-    ):
-        errors.append("Argument 'unit' should have a default value 'cm'.")
-    if any(p.annotation == inspect.Parameter.empty for p in params.values()):
-        errors.append("The function's parameters should have type hints.")
-    if return_annotation == inspect.Signature.empty:
-        errors.append("The function's return value is missing the type hint.")
-
-    assert not errors, errors_to_list(errors)
+    ), "Argument 'unit' should have a default value 'cm'."
+    assert all(
+        p.annotation != inspect.Parameter.empty for p in params.values()
+    ), "The function's parameters should have type hints."
+    assert (
+        return_annotation != inspect.Signature.empty
+    ), "The function's return value is missing the type hint."
 
 
 @pytest.mark.parametrize(
@@ -137,29 +137,25 @@ def test_calculate_area_result(
     unit: str,
     function_to_test,
 ) -> None:
-    errors = []
+    validate_calculate_area_signature(function_to_test)
 
     if unit in ("cm", "m", "mm", "yd", "ft"):
         result = function_to_test(length, width, unit)
 
-        if not isinstance(result, str):
-            errors.append("The function should return a string.")
-        if "cm^2" not in result:
-            errors.append("The result should be in squared centimeters (cm^2).")
-        if result != reference_calculate_area(length, width, unit):
-            errors.append("The solution is incorrect.")
+        assert isinstance(result, str), "The function should return a string."
+        assert "cm^2" in result, "The result should be in squared centimeters (cm^2)."
+        assert result == reference_calculate_area(
+            length, width, unit
+        ), "The solution is incorrect."
     else:
         try:
             result = function_to_test(length, width, unit)
-        except KeyError:
-            errors.append(
-                "The function should return an error string for unsupported units."
-            )
+        except KeyError as err:
+            raise UnsupportedUnitError from err
         else:
-            if result != f"Invalid unit: {unit}":
-                errors.append("The error message is incorrectly formatted.")
-
-    assert not errors
+            assert (
+                result == f"Invalid unit: {unit}"
+            ), "The error message is incorrectly formatted."
 
 
 #
