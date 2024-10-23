@@ -4,13 +4,15 @@ import traceback
 from dataclasses import dataclass
 from enum import Enum
 from types import TracebackType
-from typing import Callable, ClassVar, Dict, List, Optional
+from typing import Any, Callable, ClassVar, Dict, List, Optional
 
 import ipywidgets
 import pytest
 from IPython.display import Code
 from IPython.display import display as ipython_display
 from ipywidgets import HTML
+
+from .ai_helpers import AIExplanation, OpenAIWrapper
 
 
 class TestOutcome(Enum):
@@ -42,11 +44,23 @@ class TestCaseResult:
 
 @dataclass
 class IPytestResult:
+    """Class to store the results of running pytest on a solution function"""
+
     function_name: Optional[str] = None
+    function_code: Optional[str] = None
     status: Optional[IPytestOutcome] = None
     test_results: Optional[List[TestCaseResult]] = None
     exceptions: Optional[List[BaseException]] = None
     test_attempts: int = 0
+
+
+@dataclass
+class AFunction:
+    """Container class to store a function and its metadata"""
+
+    name: str
+    implementation: Callable[..., Any]
+    source_code: Optional[str]
 
 
 def format_error(exception: BaseException) -> str:
@@ -108,6 +122,7 @@ class TestResultOutput:
     ipytest_result: IPytestResult
     solution: Optional[str] = None
     MAX_ATTEMPTS: ClassVar[int] = 3
+    openai_client: Optional[OpenAIWrapper] = None
 
     def display_results(self) -> None:
         """Display the test results in an output widget as a VBox"""
@@ -300,10 +315,20 @@ class TestResultOutput:
 
                             output_box_children.append(
                                 ipywidgets.Accordion(
-                                    children=[HTML(format_error(result.exception))],
+                                    children=[
+                                        HTML(format_error(result.exception)),
+                                    ],
                                     titles=("Test results",),
-                                )
+                                ),
                             )
+
+                            if self.openai_client:
+                                explanation = AIExplanation(
+                                    self.ipytest_result,
+                                    result.exception,
+                                    self.openai_client,
+                                )
+                                output_box_children.extend(explanation.output)
 
                         output_cell.append_display_data(
                             ipywidgets.VBox(children=output_box_children)
