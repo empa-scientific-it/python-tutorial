@@ -12,7 +12,7 @@ from IPython.display import Code
 from IPython.display import display as ipython_display
 from ipywidgets import HTML
 
-from .openai_api import OpenAIWrapper
+from .ai_helpers import AIExplanation, OpenAIWrapper
 
 
 class TestOutcome(Enum):
@@ -323,21 +323,12 @@ class TestResultOutput:
                             )
 
                             if self.openai_client:
-                                explanation_output = ipywidgets.Output()
-
-                                explain_button = ipywidgets.Button(
-                                    description="Explain", icon="question"
+                                explanation = AIExplanation(
+                                    self.ipytest_result,
+                                    result.exception,
+                                    self.openai_client,
                                 )
-
-                                explain_button.on_click(
-                                    lambda b, ipytest_result=self.ipytest_result, exc=result.exception, out=explanation_output, test_name=test_name: self.on_click_explain(
-                                        ipytest_result, exc, out, test_name
-                                    )
-                                )
-
-                                output_box_children.extend(
-                                    [explain_button, explanation_output]
-                                )
+                                output_box_children.extend(explanation.output)
 
                         output_cell.append_display_data(
                             ipywidgets.VBox(children=output_box_children)
@@ -347,33 +338,6 @@ class TestResultOutput:
                 output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))
 
         return output_cell
-
-    def on_click_explain(
-        self,
-        ipytest_result: IPytestResult,
-        exception: BaseException,
-        explanation_output: ipywidgets.Output,
-        test_name: str,
-    ) -> None:
-        """Callback for the explain button"""
-
-        with explanation_output:
-            explanation_output.clear_output()
-            traceback_str = "".join(traceback.format_exception_only(exception))
-
-            if self.openai_client:
-                query = (
-                    "I wrote the following Python function:\n\n"
-                    f"{ipytest_result.function_code}\n\n"
-                    "Here is the error traceback I encountered:\n\n"
-                    f"{traceback_str}"
-                )
-                response = self.openai_client.get_chat_response(query)
-                if reply := response.choices[0].message.content:
-                    reply = reply.removeprefix("```html").removesuffix("```").strip()
-                    explanation_output.append_display_data(
-                        HTML(f"<h4>Explanation for {test_name}:</h4>{reply}")
-                    )
 
 
 @pytest.fixture

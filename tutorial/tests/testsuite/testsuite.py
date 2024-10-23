@@ -17,6 +17,7 @@ import pytest
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 
+from .ai_helpers import OpenAIWrapper
 from .ast_parser import AstParser
 from .exceptions import (
     FunctionNotFoundError,
@@ -32,7 +33,6 @@ from .helpers import (
     TestOutcome,
     TestResultOutput,
 )
-from .openai_api import OpenAIWrapper
 
 
 def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
@@ -316,7 +316,9 @@ def load_ipython_extension(ipython):
     # Configure the API key for the OpenAI client
     if api_key := os.getenv("OPENAI_API_KEY"):
         openai_client = OpenAIWrapper(
-            api_key, os.getenv("OPENAI_MODEL"), os.getenv("OPENAI_LANGUAGE")
+            api_key,
+            os.getenv("OPENAI_MODEL"),
+            os.getenv("OPENAI_LANGUAGE"),
         )
         ipython.openai_client = openai_client
         print("OpenAI client configured")
