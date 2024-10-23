@@ -1,7 +1,6 @@
 import logging
 import traceback
 import typing as t
-from dataclasses import dataclass, field
 
 import ipywidgets as widgets
 import markdown2 as md
@@ -147,20 +146,20 @@ class OpenAIWrapper:
             return response
 
 
-@dataclass
 class AIExplanation:
     """Class representing an AI-generated explanation"""
 
-    ipytest_result: "IPytestResult"
-    exception: BaseException
-    openai_client: OpenAIWrapper
-
-    _query: str = field(init=False)
-    _button: widgets.Button = field(init=False)
-    _output: widgets.Output = field(init=False)
-
-    def __post_init__(self) -> None:
+    def __init__(
+        self,
+        ipytest_result: "IPytestResult",
+        exception: BaseException,
+        openai_client: "OpenAIWrapper",
+    ) -> None:
         """Initialize the explanation object"""
+        self.ipytest_result = ipytest_result
+        self.exception = exception
+        self.openai_client = openai_client
+
         self._button = widgets.Button(description="Get AI Explanation", icon="search")
         self._output = widgets.Output()
         self._button.on_click(self._fetch_explanation)
