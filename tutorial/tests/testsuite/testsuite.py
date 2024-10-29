@@ -14,6 +14,7 @@ from typing import Dict, List, Optional
 
 import ipynbname
 import pytest
+from dotenv import find_dotenv, load_dotenv
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 
@@ -314,6 +315,9 @@ def load_ipython_extension(ipython):
     autoloaded by IPython at startup time.
     """
     # Configure the API key for the OpenAI client
+    openai_env = find_dotenv("openai.env", raise_error_if_not_found=True)
+    load_dotenv(openai_env)
+
     if api_key := os.getenv("OPENAI_API_KEY"):
         openai_client = OpenAIWrapper(
             api_key,
@@ -321,14 +325,16 @@ def load_ipython_extension(ipython):
             os.getenv("OPENAI_LANGUAGE"),
         )
         ipython.openai_client = openai_client
-        print("OpenAI client configured")
+        print("OpenAI client configured.")
     else:
         ipython.openai_client = None
         print(
-            "OpenAI API key is undefined. Please use the utility tutorial.ai.config() to set it."
+            "OpenAI API key is undefined. "
+            "Please, store your key as OPENAI_API_KEY='sk-****' to the file 'openai.env'. "
+            "Check the file 'openai.env.example' for an example."
         )
 
     # Register the magic
     ipython.register_magics(TestMagic)
 
-    print("IPytest extension loaded")
+    print("IPytest extension loaded.")
