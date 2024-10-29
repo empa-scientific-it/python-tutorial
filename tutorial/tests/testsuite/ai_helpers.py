@@ -5,7 +5,7 @@ import typing as t
 import ipywidgets as widgets
 import markdown2 as md
 import openai
-from IPython.display import display_html
+from IPython.display import Code, display, display_html
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionMessage,
@@ -69,6 +69,7 @@ class OpenAIWrapper:
         api_key: str,
         model: t.Optional[str] = None,
         language: t.Optional[str] = None,
+        use_cache: bool = False,
     ) -> None:
         """Initialize the wrapper for OpenAI API with logging and checks"""
         self.api_key = api_key
@@ -81,6 +82,7 @@ class OpenAIWrapper:
                 f"Invalid model: {model}. Available models: {GPT_ALL_MODELS}"
             )
 
+        self.use_cache = use_cache
         self._cache = FuzzyCache()
 
     def change_model(self, model: str) -> None:
@@ -94,11 +96,13 @@ class OpenAIWrapper:
         self, query: str, *args, **kwargs
     ) -> ParsedChatCompletion | ChatCompletion:
         """Get a (cached) chat response from the OpenAI API"""
-        if cached_response := self._cache[query]:
+        if self.use_cache and (cached_response := self._cache[query]):
             return cached_response
 
         response = self._get_chat_response(query, *args, **kwargs)
-        self._cache[query] = response
+
+        if self.use_cache:
+            self._cache[query] = response
 
         return response
 
@@ -218,7 +222,7 @@ class AIExplanation:
                 logger.debug("Formatted response: %s", formatted_response)
 
                 if formatted_response:
-                    display_html(str(formatted_response), raw=True)
+                    display(widgets.VBox(children=formatted_response))
                 else:
                     display_html(
                         "<p>No explanation could be generated for this error.</p>",
@@ -233,11 +237,12 @@ class AIExplanation:
 
     def _format_explanation(
         self, chat_response: ParsedChatCompletion[Explanation] | ChatCompletion
-    ) -> t.Optional[str]:
+    ) -> t.Optional[t.List[t.Any]]:
         """Format the explanation response for display"""
 
-        # Initialize the Markdown > HTML converter
+        # Initialize the Markdown to HTML converter
         def to_html(text: t.Any) -> str:
+            """Markdown to HTML converter"""
             return md.markdown(str(text))
 
         explanation_response = chat_response.choices[0].message
@@ -247,33 +252,56 @@ class AIExplanation:
         ):
             logger.debug("Response is a valid `Explanation` object that can be parsed.")
 
-            # Format the summary as an <h3> heading
-            html_output = f"<h3>{to_html(explanation.summary)}</h3>"
+            # A list to store all the widgets
+            widgets_list = []
 
-            # Add steps as paragraphs
-            for step in explanation.steps:
-                if step.title:
-                    # If the step has a title, use this as a subheading
-                    html_output += f"<h4>{to_html(step.title)}</h4>"
-                html_output += f"{to_html(step.content)}"
+            # A summary of the explanation
+            summary_widget = widgets.HTML(f"<h3>{to_html(explanation.summary)}</h3>")
+            widgets_list.append(summary_widget)
 
-            # Add code snippets within <pre><code> tags
+            # Add steps as Accordion widgets
+            steps_widgets = []
+            for i, step in enumerate(explanation.steps, start=1):
+                step_title = step.title or f"Step {i}"
+                step_content = widgets.HTML(to_html(step.content))
+                step_accordion = widgets.Accordion(
+                    children=[step_content], titles=(step_title,)
+                )
+                steps_widgets.append(step_accordion)
+
+            widgets_list.extend(steps_widgets)
+
+            # Add code snippets using Code widgets
             if explanation.code_snippets:
-                html_output += "<h4>Code Snippets:</h4>"
                 for snippet in explanation.code_snippets:
-                    if snippet.description:
-                        html_output += to_html(f"**{snippet.description}**")
-                    html_output += f"<div style='margin:8px 0;'><pre><code>{snippet.code}</code></pre></div>"
+                    snippet_output = widgets.Output()
+                    snippet_description = widgets.HTML(to_html(snippet.description))
+                    snippet_output.append_display_data(snippet_description)
+
+                    snippet_code = Code(language="python", data=snippet.code)
+                    snippet_output.append_display_data(snippet_code)
+
+                    snippet_accordion = widgets.Accordion(
+                        children=[snippet_output], titles=("Code Snippet",)
+                    )
+
+                    widgets_list.append(snippet_accordion)
 
             # Add hints as bullet points
             if explanation.hints:
-                html_output += "<h4>Hints:</h4>"
-                html_output += "<ul>"
-                for hint in explanation.hints:
-                    html_output += f"<li>{to_html(hint)}</li>"
-                html_output += "</ul>"
+                hints_html = (
+                    "<ul>"
+                    + "".join(f"<li>{to_html(hint)}</li>" for hint in explanation.hints)
+                    + "</ul>"
+                )
+                hints_widget = widgets.Accordion(
+                    children=[widgets.HTML(hints_html)],
+                    titles=("Hints",),
+                )
+                widgets_list.append(hints_widget)
 
-            return html_output
+            return widgets_list
+
         elif isinstance(explanation_response, ChatCompletionMessage) and (
             explanation := explanation_response.content
         ):
@@ -283,9 +311,10 @@ class AIExplanation:
             explanation = (
                 explanation.removeprefix("```html").removesuffix("```").strip()
             )
-            return explanation
+            return [widgets.HTML(to_html(explanation))]
 
         logger.debug("Failed to parse explanation.")
+
         return None
 
     @property
