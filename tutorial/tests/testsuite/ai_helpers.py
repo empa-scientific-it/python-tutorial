@@ -22,6 +22,8 @@ from tenacity import (
     wait_random,
 )
 
+from .cache import FuzzyCache
+
 if t.TYPE_CHECKING:
     from .helpers import IPytestResult
 
@@ -79,7 +81,7 @@ class OpenAIWrapper:
                 f"Invalid model: {model}. Available models: {GPT_ALL_MODELS}"
             )
 
-        self._cache = {}
+        self._cache = FuzzyCache()
 
     def change_model(self, model: str) -> None:
         """Change the active OpenAI model in use"""
@@ -92,19 +94,13 @@ class OpenAIWrapper:
         self, query: str, *args, **kwargs
     ) -> ParsedChatCompletion | ChatCompletion:
         """Get a (cached) chat response from the OpenAI API"""
-        cache_key = self._cache_key(query)
-
-        if cache_key in self._cache:
-            return self._cache[cache_key]
+        if cached_response := self._cache[query]:
+            return cached_response
 
         response = self._get_chat_response(query, *args, **kwargs)
-        self._cache[cache_key] = response
+        self._cache[query] = response
 
         return response
-
-    def _cache_key(self, query: str) -> str:
-        """Generate a unique cache key for a query, model, and language"""
-        return f"{self.model}:{self.language}:{query}"
 
     @retry(
         retry=retry_if_exception_type(openai.RateLimitError),
