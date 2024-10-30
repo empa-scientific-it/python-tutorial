@@ -26,5 +26,3 @@ dependencies:
           - tiktoken
           - markdown2
           - python-dotenv
-          - datasketch
-          - python-Levenshtein
