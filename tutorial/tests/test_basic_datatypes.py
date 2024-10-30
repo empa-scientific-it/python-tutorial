@@ -406,10 +406,10 @@ def test_update_one_dict_with_another(my_dict1, my_dict2, function_to_test):
     my_dict1_original1 = my_dict1.copy()
     my_dict1_original2 = my_dict1.copy()
     new_dict = function_to_test(my_dict1_original1, my_dict2)
-    if new_dict == None:
+    if new_dict is None:
         new_dict = my_dict1_original1
     ref_dict = reference_update_one_dict_with_another(my_dict1_original2, my_dict2)
-    if ref_dict == None:
+    if ref_dict is None:
         ref_dict = my_dict1_original2
 
     assert new_dict == ref_dict
