@@ -212,7 +212,7 @@ def test_return_first_and_last_element_from_list(my_list, function_to_test):
     # If result is a tuple, transform to list
     result = function_to_test(my_list)
     if isinstance(result, tuple):
-        result = list(result)    
+        result = list(result)
     assert result == reference_return_first_and_last_element_from_list(my_list)
 
 
@@ -405,7 +405,7 @@ def reference_update_one_dict_with_another(
 def test_update_one_dict_with_another(my_dict1, my_dict2, function_to_test):
     my_dict1_original1 = my_dict1.copy()
     my_dict1_original2 = my_dict1.copy()
-    new_dict = function_to_test(my_dict1_original1, my_dict2) 
+    new_dict = function_to_test(my_dict1_original1, my_dict2)
     if new_dict == None:
         new_dict = my_dict1_original1
     ref_dict = reference_update_one_dict_with_another(my_dict1_original2, my_dict2)
@@ -475,12 +475,7 @@ def test_string_split_lines(function_to_test):
     assert function_to_test(my_string) == reference_string_split_lines(my_string)
 
 
-
-INT_LISTS = [
-    [],
-    [1,2,3],
-    [3,-1,0,4,42,1002]
-]
+INT_LISTS = [[], [1, 2, 3], [3, -1, 0, 4, 42, 1002]]
 
 
 def reference_list_of_lists(my_list: list[int]) -> list[list[int]]:
@@ -493,8 +488,6 @@ def test_list_of_lists(my_list, function_to_test):
     my_list1 = my_list.copy()
     new_listlist = function_to_test(my_list1)
 
-    
-    
     assert isinstance(new_listlist, list)
     assert len(new_listlist) == 3
     for sublist in new_listlist:
@@ -502,17 +495,11 @@ def test_list_of_lists(my_list, function_to_test):
     assert len(set(map(id, new_listlist))) == len(new_listlist)
 
 
-
-
-INT_TUPLES = [
-    (),
-    (1,2,3),
-    (3,-1,0,4,42,1002)
-]
+INT_TUPLES = [(), (1, 2, 3), (3, -1, 0, 4, 42, 1002)]
 
 
 def reference_tuple_increased_by_one(my_tuple: tuple[int]) -> tuple[int]:
-    increase = [n+1 for n in my_tuple]
+    increase = [n + 1 for n in my_tuple]
     return tuple(increase)
 
 
@@ -520,6 +507,5 @@ def reference_tuple_increased_by_one(my_tuple: tuple[int]) -> tuple[int]:
 def test_tuple_increased_by_one(my_tuple, function_to_test):
     new_tuple = function_to_test(my_tuple)
     ref_tuple = reference_tuple_increased_by_one(my_tuple)
-    
+
     assert new_tuple == ref_tuple
-    
