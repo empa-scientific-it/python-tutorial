@@ -9,10 +9,13 @@ from datasketch import MinHash, MinHashLSH
 class FuzzyCache:
     """A cache for fuzzy matching of strings based on MinHash and Levenshtein distance."""
 
-    def __init__(self, threshold=0.8, n_permutations=128, cache_size=50) -> None:
-        self.threshold = threshold
+    def __init__(
+        self, mh_threshold=0.6, lev_threshold=0.9, n_permutations=128, cache_size=50
+    ) -> None:
+        self.mh_threshold = mh_threshold
+        self.lev_threshold = lev_threshold
         self.n_permutations = n_permutations
-        self.lsh = MinHashLSH(threshold=threshold, num_perm=n_permutations)
+        self._lsh = MinHashLSH(threshold=mh_threshold, num_perm=n_permutations)
         self._encoder = tk.encoding_for_model("gpt-4o-mini")
         self._cache_size = cache_size
         self._cache = OrderedDict()
@@ -32,13 +35,12 @@ class FuzzyCache:
 
     def _is_similar(self, text_1: str, text_2: str) -> bool:
         distance = Lev.distance(text_1, text_2)
-        max_len = max(len(text_1), len(text_2))
-        similarity = 1 - (distance / max_len)
-        return similarity >= self.threshold
+        similarity = 1 - distance / max(len(text_1), len(text_2))
+        return similarity >= self.lev_threshold
 
     def _cache_response(self, query: str, response: t.Any) -> None:
         m = self._generate_hash(query)
-        self.lsh.insert(query, m)
+        self._lsh.insert(query, m)
         self._cache[query] = response
         self._evict_cache()
 
@@ -49,7 +51,7 @@ class FuzzyCache:
 
     def __getitem__(self, query: str) -> t.Optional[t.Any]:
         m = self._generate_hash(query)
-        similar_keys = self.lsh.query(m)
+        similar_keys = self._lsh.query(m)
 
         for key in similar_keys:
             cached_query = str(key)

@@ -82,8 +82,7 @@ class OpenAIWrapper:
                 f"Invalid model: {model}. Available models: {GPT_ALL_MODELS}"
             )
 
-        self.use_cache = use_cache
-        self._cache = FuzzyCache()
+        self._cache = FuzzyCache() if use_cache else None
 
     def change_model(self, model: str) -> None:
         """Change the active OpenAI model in use"""
@@ -96,12 +95,12 @@ class OpenAIWrapper:
         self, query: str, *args, **kwargs
     ) -> ParsedChatCompletion | ChatCompletion:
         """Get a (cached) chat response from the OpenAI API"""
-        if self.use_cache and (cached_response := self._cache[query]):
+        if self._cache and (cached_response := self._cache[query]):
             return cached_response
 
         response = self._get_chat_response(query, *args, **kwargs)
 
-        if self.use_cache:
+        if self._cache:
             self._cache[query] = response
 
         return response
@@ -170,6 +169,11 @@ class AIExplanation:
             "Here is the error traceback I encountered:\n\n"
             "{traceback}"
         )
+
+    @property
+    def output(self) -> t.Tuple[widgets.Button, widgets.Output]:
+        """Return the button and output widgets as a tuple"""
+        return self._button, self._output
 
     @property
     def query(self) -> str:
@@ -316,8 +320,3 @@ class AIExplanation:
         logger.debug("Failed to parse explanation.")
 
         return None
-
-    @property
-    def output(self) -> t.Tuple[widgets.Button, widgets.Output]:
-        """Return the button and output widgets as a tuple"""
-        return self._button, self._output
