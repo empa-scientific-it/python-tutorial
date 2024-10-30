@@ -102,7 +102,8 @@ class OpenAIWrapper:
             "Follow these guidelines strictly:\n"
             "- Offer hints, even for trivial errors.\n"
             "- Avoid providing exact solutions.\n"
-            f"- Respond in {self.language}."
+            f"- Respond in {self.language}.\n"
+            "- Any text or string must be written in Markdown."
         )
 
         messages: t.List[ChatCompletionMessageParam] = [
@@ -135,7 +136,7 @@ class AIExplanation:
         ipytest_result: "IPytestResult",
         exception: BaseException,
         openai_client: "OpenAIWrapper",
-        wait_time: int = 10,
+        wait_time: int = 60,  # Wait time in seconds
     ) -> None:
         """Initialize the explanation object"""
         self.ipytest_result = ipytest_result
@@ -145,10 +146,10 @@ class AIExplanation:
         # The output widget for displaying the explanation
         self._output = widgets.Output()
 
-        # State tracking
+        # Timer and state
         self._timer: t.Optional[Timer] = None
         self._is_throttled = False
-        self._wait_time = float(wait_time)  # wait time in seconds
+        self._wait_time = float(wait_time)
 
         # The button widget for fetching the explanation
         self._button_states = {
@@ -159,10 +160,7 @@ class AIExplanation:
                 "icon": "hourglass-start",
             },
         }
-        self._button = widgets.Button(
-            description=self._button_states["ready"]["description"],
-            icon=self._button_states["ready"]["icon"],
-        )
+        self._button = widgets.Button(**self._button_states["ready"])
         self._button.on_click(self._handle_click)
         self._button.observe(self._handle_state_change, names=["disabled"])
 
