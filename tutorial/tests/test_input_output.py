@@ -35,8 +35,8 @@ def test_print_odd(function_to_test, n: int):
     assert solution_text == reference_text
 
 
-def reference_find_all_files(f: pl.Path) -> List[pl.Path]:
-    return list(f.parent.iterdir())
+def reference_find_all_files(current_path: pl.Path) -> List[pl.Path]:
+    return list(current_path.iterdir())
 
 
 def test_find_all_files(function_to_test):
@@ -54,8 +54,10 @@ def test_count_dirs(function_to_test):
 
 
 def reference_read_file(file: pl.Path) -> List[str]:
-    with file.open("r") as lines:
-        return list(lines.readlines())
+    text = file.open("r")
+    lines = text.readlines()
+    text.close()
+    return lines
 
 
 def test_read_file(function_to_test):
@@ -86,15 +88,18 @@ def test_write_file(function_to_test, tmp_path: pl.Path):
 
 def reference_read_write_file(input_file: pl.Path, output_file: pl.Path) -> None:
     # We open the input and output file at the same time
-    with input_file.open("r") as read_file, output_file.open("w") as write_file:
-        # Here we iterate over each line of the input file
-        for line in read_file.readlines():
-            # We remove line breaks and write the line to the output file
-            clean_line = line.strip("\n\r")
-            # We crete the output line
-            output_line = f"{clean_line}, {len(clean_line)}\n"
-            # Finally we write the line and its length to the output file
-            write_file.write(output_line)
+    read_file = input_file.open("r")
+    write_file = output_file.open("w") 
+    # Here we iterate over each line of the input file
+    for line in read_file.readlines():
+        # We remove line breaks and write the line to the output file
+        clean_line = line.strip("\n\r")
+        # We crete the output line
+        output_line = f"{clean_line}, {len(clean_line)}\n"
+        # Finally we write the line and its length to the output file
+        write_file.write(output_line)
+    read_file.close()
+    write_file.close()
 
 
 def test_read_write_file(function_to_test, tmp_path: pl.Path):
@@ -109,30 +114,27 @@ def test_read_write_file(function_to_test, tmp_path: pl.Path):
     assert output_file.read_text() == test_output_file.read_text()
 
 
-def reference_exercise1(file: pl.Path) -> Dict[str, List[str]]:
-    with file.open("r") as lines:
-        reader = csv.reader(lines)
+def reference_exercise1(input_file: pl.Path) -> Dict[str, List[str]]:
+    my_dict = {}
+    with open(input_file) as csv_file:
+        reader = csv.reader(csv_file)
         headers = next(reader)
-        return {
-            k.strip(): list(v) for k, v in zip(headers, itertools.zip_longest(*reader))
-        }
+        for line in reader:
+            key, value = line
+            my_dict[key] = value
+    return my_dict
 
 
-@pytest.mark.parametrize("file", ["example.csv"])
+@pytest.mark.parametrize("file", ["example_dictionary.csv"])
 def test_exercise1(function_to_test, file: str):
     f = get_data(file)
     assert function_to_test(f) == reference_exercise1(f)
 
 
 def reference_exercise2(file: pl.Path) -> int:
-    with file.open("r") as lines:
-        return len(
-            list(
-                itertools.chain.from_iterable(
-                    [line.split() for line in lines.readlines()]
-                )
-            )
-        )
+    with open(input_file, "r") as file_ob:
+        text = file_ob.read()
+    return len(text.split())
 
 
 @pytest.mark.parametrize("file", ["lines.txt", "lines2.txt"])
@@ -141,19 +143,24 @@ def test_exercise2(function_to_test, file: str):
     assert function_to_test(f) == reference_exercise2(f)
 
 
-def reference_exercise3(file: pl.Path) -> Dict[str, int]:
-    with file.open("r") as lines:
-        res = sorted(
-            line
-            for line in itertools.chain.from_iterable(lines.readlines())
-            if line.isalpha()
-        )
-    return Counter(res)
+def reference_exercise3(input_file: pl.Path) -> Dict[str, int]:
+    my_dict = {}
+    # Initialize dictionary with all letters set to 0
+    my_dict = {letter: 0 for letter in string.ascii_lowercase}
+    with open(input_file, "r") as file_ob:
+        text = file_ob.read()
+        for char in text:
+            if char in string.ascii_lowercase:
+                my_dict[char.lower()] += 1
+    return my_dict
 
 
 def test_exercise3(function_to_test):
     f = get_data("lines.txt")
-    assert function_to_test(f) == reference_exercise3(f)
+    # Clear '0' values from the dictionary
+    solution_dict = {k: v for k, v in function_to_test(f).items() if v != 0}
+    reference_dict = {k: v for k, v in reference_exercise3(f).items() if v != 0}
+    assert solution_dict == reference_dict
 
 
 def reference_exercise4(english: pl.Path, dictionary: pl.Path) -> List[Tuple[str, str]]:
