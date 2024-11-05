@@ -84,6 +84,97 @@ def test_oop_fullname(function_to_test):
 
 
 #
+# Example 3: Person class with __str__ and __repr__
+#
+
+
+def reference_oop_str_and_repr():
+    class Person:
+        """A class representing a person with first name and last name"""
+
+        def __init__(self, first_name: str, last_name: str):
+            self.first_name = first_name
+            self.last_name = last_name
+
+        def __str__(self):
+            return f"My name is {self.first_name} {self.last_name}"
+
+        def __repr__(self):
+            return (
+                f"{self.first_name} {self.last_name} is an instance of the class Person"
+            )
+
+    return Person("John", "Doe")
+
+
+def verify_result_repr(res: str) -> bool:
+    # Define the pattern to match the template "{first_name} {last_name} is an instance of the class Person"
+    pattern = r"^[A-Z][a-z]+ [A-Z][a-z]+ is an instance of the class Person$"
+    # Check if the sentence matches the template
+    return re.match(pattern, res)
+
+
+def test_oop_str_and_repr(function_to_test):
+    solution_result = function_to_test()
+    reference_result = reference_oop_str_and_repr()
+
+    assert (
+        type(solution_result).__name__ == type(reference_result).__name__
+    )  # check that the class is named 'Person'
+    assert list(vars(solution_result)) == list(
+        vars(reference_result)
+    )  # check that the instances have the same attributes
+    assert verify_result_fullname(
+        str(solution_result)
+    ), "The __str__ result does not match the template 'My name is {first_name} {last_name}'."
+    assert verify_result_repr(
+        solution_result.__repr__()
+    ), "The __repr__ result does not match the template '{first_name} {last_name} is an instance of the class Person'."
+
+
+#
+# Example 4: Person class with equality comparison
+#
+
+
+def reference_oop_compare_persons(
+    first_name: str = "John", last_name: str = "Doe", age: int = 25
+):
+    class Person:
+        """A class representing a person with first name, last name and age"""
+
+        def __init__(self, first_name: str, last_name: str, age: int):
+            self.first_name = first_name
+            self.last_name = last_name
+            self.age = age
+
+        def __eq__(self, other):
+            return (self.first_name, self.last_name, self.age) == (
+                other.first_name,
+                other.last_name,
+                other.age,
+            )
+
+    return Person(first_name, last_name, age)
+
+
+@pytest.mark.parametrize(
+    "first_name, last_name, age, result",
+    [
+        ("Jane", "Doe", 30, False),
+        ("John", "Smith", 25, False),
+        ("John", "Doe", 20, False),
+        ("John", "Doe", 25, True),
+    ],
+)
+def test_oop_compare_persons(first_name, last_name, age, result, function_to_test):
+    solution_result = function_to_test()
+    reference_result = reference_oop_compare_persons(first_name, last_name, age)
+
+    assert (solution_result == reference_result) == result
+
+
+#
 # Exercise 1: Ice cream scoop
 #
 
