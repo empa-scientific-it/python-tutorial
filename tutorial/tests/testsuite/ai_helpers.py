@@ -1,6 +1,7 @@
 import logging
 import traceback
 import typing as t
+from threading import Timer
 
 import ipywidgets as widgets
 import markdown2 as md
@@ -21,8 +22,6 @@ from tenacity import (
     wait_fixed,
     wait_random,
 )
-
-from .cache import FuzzyCache
 
 if t.TYPE_CHECKING:
     from .helpers import IPytestResult
@@ -69,7 +68,6 @@ class OpenAIWrapper:
         api_key: str,
         model: t.Optional[str] = None,
         language: t.Optional[str] = None,
-        use_cache: bool = False,
     ) -> None:
         """Initialize the wrapper for OpenAI API with logging and checks"""
         self.api_key = api_key
@@ -82,9 +80,6 @@ class OpenAIWrapper:
                 f"Invalid model: {model}. Available models: {GPT_ALL_MODELS}"
             )
 
-        self.use_cache = use_cache
-        self._cache = FuzzyCache()
-
     def change_model(self, model: str) -> None:
         """Change the active OpenAI model in use"""
         if model not in GPT_ALL_MODELS:
@@ -92,26 +87,12 @@ class OpenAIWrapper:
         self.model = model
         logger.info("Model changed to %s", self.model)
 
-    def get_chat_response(
-        self, query: str, *args, **kwargs
-    ) -> ParsedChatCompletion | ChatCompletion:
-        """Get a (cached) chat response from the OpenAI API"""
-        if self.use_cache and (cached_response := self._cache[query]):
-            return cached_response
-
-        response = self._get_chat_response(query, *args, **kwargs)
-
-        if self.use_cache:
-            self._cache[query] = response
-
-        return response
-
     @retry(
         retry=retry_if_exception_type(openai.RateLimitError),
         stop=stop_after_attempt(3),
         wait=wait_fixed(10) + wait_random(0, 5),
     )
-    def _get_chat_response(
+    def get_chat_response(
         self, query: str, *args, **kwargs
     ) -> ParsedChatCompletion | ChatCompletion:
         """Fetch a completion from the chat model"""
@@ -121,7 +102,8 @@ class OpenAIWrapper:
             "Follow these guidelines strictly:\n"
             "- Offer hints, even for trivial errors.\n"
             "- Avoid providing exact solutions.\n"
-            f"- Respond in {self.language}."
+            f"- Respond in {self.language}.\n"
+            "- Any text or string must be written in Markdown."
         )
 
         messages: t.List[ChatCompletionMessageParam] = [
@@ -154,15 +136,34 @@ class AIExplanation:
         ipytest_result: "IPytestResult",
         exception: BaseException,
         openai_client: "OpenAIWrapper",
+        wait_time: int = 60,  # Wait time in seconds
     ) -> None:
         """Initialize the explanation object"""
         self.ipytest_result = ipytest_result
         self.exception = exception
         self.openai_client = openai_client
 
-        self._button = widgets.Button(description="Get AI Explanation", icon="search")
+        # The output widget for displaying the explanation
         self._output = widgets.Output()
-        self._button.on_click(self._fetch_explanation)
+
+        # Timer and state
+        self._timer: t.Optional[Timer] = None
+        self._is_throttled = False
+        self._wait_time = float(wait_time)
+
+        # The button widget for fetching the explanation
+        self._button_states = {
+            "ready": {"description": "Get AI Explanation", "icon": "search"},
+            "loading": {"description": "Loading...", "icon": "spinner"},
+            "wait": {
+                "description": f"Wait {wait_time} seconds",
+                "icon": "hourglass-start",
+            },
+        }
+        self._button = widgets.Button(**self._button_states["ready"])
+        self._button.on_click(self._handle_click)
+        self._button.observe(self._handle_state_change, names=["disabled"])
+
         # Set a default query
         self._query = (
             "I wrote the following Python function:\n\n"
@@ -170,6 +171,11 @@ class AIExplanation:
             "Here is the error traceback I encountered:\n\n"
             "{traceback}"
         )
+
+    @property
+    def output(self) -> t.Tuple[widgets.Button, widgets.Output]:
+        """Return the button and output widgets as a tuple"""
+        return self._button, self._output
 
     @property
     def query(self) -> str:
@@ -189,15 +195,48 @@ class AIExplanation:
             raise ValueError
         self._query = q
 
-    def _fetch_explanation(self, _) -> None:
+    def _set_button_state(self, state: str) -> None:
+        """Update the button state"""
+        if state in self._button_states:
+            self._button.description = self._button_states[state]["description"]
+            self._button.icon = self._button_states[state]["icon"]
+
+    def _handle_state_change(self, change):
+        """Handle the state change of the button"""
+        if change["new"]:
+            if self._is_throttled:
+                self._set_button_state("wait")
+        else:
+            self._is_throttled = False
+            self._set_button_state("ready")
+
+    def _enable_button(self):
+        """Enable the button after a delay"""
+        self._button.disabled = False
+        self._timer = None
+
+    def _handle_click(self, _) -> None:
+        """Handle the button click event with throttling"""
+        if self._is_throttled:
+            return
+
+        self._is_throttled = True
+        self._button.disabled = True
+
+        self._timer = Timer(self._wait_time, self._enable_button)
+        self._timer.start()
+
+        # Call the method to fetch the explanation
+        self._fetch_explanation()
+
+    def _fetch_explanation(self) -> None:
         """Fetch the explanation from OpenAI API"""
         logger.debug("Attempting to fetch explanation from OpenAI API.")
 
         if not self.openai_client:
             return
 
-        self._button.description = "Loading..."
-        self._button.icon = "spinner"
+        self._set_button_state("loading")
 
         traceback_str = "".join(traceback.format_exception_only(self.exception))
         logger.debug("Formatted traceback: %s", traceback_str)
@@ -232,8 +271,10 @@ class AIExplanation:
                 logger.exception("An error occurred while fetching the explanation.")
                 display_html(f"<p>Failed to fetch explanation: {e}</p>", raw=True)
             finally:
-                self._button.description = "Get AI Explanation"
-                self._button.icon = "search"
+                if self._is_throttled:
+                    self._set_button_state("wait")
+                else:
+                    self._set_button_state("ready")
 
     def _format_explanation(
         self, chat_response: ParsedChatCompletion[Explanation] | ChatCompletion
@@ -316,8 +357,3 @@ class AIExplanation:
         logger.debug("Failed to parse explanation.")
 
         return None
-
-    @property
-    def output(self) -> t.Tuple[widgets.Button, widgets.Output]:
-        """Return the button and output widgets as a tuple"""
-        return self._button, self._output
