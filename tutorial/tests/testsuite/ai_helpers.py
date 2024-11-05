@@ -168,7 +168,9 @@ class AIExplanation:
         self._query = (
             "I wrote the following Python function:\n\n"
             "{function_code}\n\n"
-            "Here is the error traceback I encountered:\n\n"
+            "Whose docstring describes the purpose, arguments, and expected return values:\n\n"
+            "{docstring}\n\n"
+            "Running pytest on this function failed, and here is the error traceback I encountered:\n\n"
             "{traceback}"
         )
 
@@ -188,9 +190,13 @@ class AIExplanation:
         if not q:
             logger.error("Query cannot be empty.")
             raise ValueError
-        if "{function_code}" not in q or "{traceback}" not in q:
+        if (
+            "{function_code}" not in q
+            or "{traceback}" not in q
+            or "{docstring}" not in q
+        ):
             logger.error(
-                "Query must contain placeholders: {function_code}, {traceback}"
+                "Query must contain placeholders: {function_code}, {docstring}, {traceback}"
             )
             raise ValueError
         self._query = q
@@ -245,12 +251,15 @@ class AIExplanation:
             self._output.clear_output()
 
             try:
-                # TODO: allow using a custom query
+                assert self.ipytest_result.function is not None
+
+                query = self._query.format(
+                    function_code=self.ipytest_result.function.source_code,
+                    docstring=self.ipytest_result.function.implementation.__doc__,
+                    traceback=traceback_str,
+                )
                 response = self.openai_client.get_chat_response(
-                    "I wrote the following Python function:\n\n"
-                    f"{self.ipytest_result.function_code}\n\n"
-                    "Here is the error traceback I encountered:\n\n"
-                    f"{traceback_str}",
+                    query,
                     temperature=0.2,
                 )
 

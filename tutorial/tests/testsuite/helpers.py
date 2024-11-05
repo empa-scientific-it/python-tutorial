@@ -43,24 +43,23 @@ class TestCaseResult:
 
 
 @dataclass
-class IPytestResult:
-    """Class to store the results of running pytest on a solution function"""
-
-    function_name: Optional[str] = None
-    function_code: Optional[str] = None
-    status: Optional[IPytestOutcome] = None
-    test_results: Optional[List[TestCaseResult]] = None
-    exceptions: Optional[List[BaseException]] = None
-    test_attempts: int = 0
-
-
-@dataclass
 class AFunction:
     """Container class to store a function and its metadata"""
 
     name: str
     implementation: Callable[..., Any]
     source_code: Optional[str]
+
+
+@dataclass
+class IPytestResult:
+    """Class to store the results of running pytest on a solution function"""
+
+    function: Optional[AFunction] = None
+    status: Optional[IPytestOutcome] = None
+    test_results: Optional[List[TestCaseResult]] = None
+    exceptions: Optional[List[BaseException]] = None
+    test_attempts: int = 0
 
 
 def format_error(exception: BaseException) -> str:
@@ -195,10 +194,12 @@ class TestResultOutput:
 
     def prepare_output_cell(self) -> ipywidgets.Output:
         """Prepare the cell to display the test results"""
+        assert self.ipytest_result.function is not None
+
         output_cell = ipywidgets.Output()
         output_cell.append_display_data(
             HTML(
-                f'<h2>Test Results for <span style="color: #00f;">solution_{self.ipytest_result.function_name}</span></h2>'
+                f'<h2>Test Results for <span style="color: #00f;">solution_{self.ipytest_result.function.name}</span></h2>'
             )
         )
 
