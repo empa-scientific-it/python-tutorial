@@ -1,5 +1,4 @@
 import pathlib
-import re
 
 import pytest
 
@@ -8,7 +7,7 @@ import pytest
 #
 
 
-def reference_oop_person():
+def reference_oop_person(first_name: str, last_name: str):
     class Person:
         """A class representing a person with first name and last name"""
 
@@ -16,19 +15,36 @@ def reference_oop_person():
             self.first_name = first_name
             self.last_name = last_name
 
-    return Person("John", "Doe")
+    return Person(first_name, last_name)
 
 
-def test_oop_person(function_to_test):
-    solution_result = function_to_test()
-    reference_result = reference_oop_person()
-
+def validate_oop_person(solution_result):
+    params = list(vars(solution_result))
     assert (
-        type(solution_result).__name__ == type(reference_result).__name__
-    )  # check that the class is named 'Person'
-    assert list(vars(solution_result)) == list(
-        vars(reference_result)
-    )  # check that the instances have the same attributes
+        type(solution_result).__name__ == "Person"
+    ), "The class should be named 'Person'."
+    assert len(params) == 2, "The class should have 2 attributes."
+    assert (
+        "first_name" in params and "last_name" in params
+    ), "The class attributes should be 'first_name' and 'last_name'."
+
+
+@pytest.mark.parametrize(
+    "first_name, last_name",
+    [
+        ("Jane", "Doe"),
+        ("John", "Doe"),
+    ],
+)
+def test_oop_person(first_name, last_name, function_to_test):
+    solution_result = function_to_test(first_name, last_name)
+    reference_result = reference_oop_person(first_name, last_name)
+
+    validate_oop_person(solution_result)
+    assert (
+        solution_result.first_name == reference_result.first_name
+        and solution_result.last_name == reference_result.last_name
+    )
 
 
 #
@@ -36,7 +52,7 @@ def test_oop_person(function_to_test):
 #
 
 
-def reference_oop_fullname():
+def reference_oop_fullname(first_name: str, last_name: str):
     class Person:
         """A class representing a person with first name and last name"""
 
@@ -47,40 +63,33 @@ def reference_oop_fullname():
         def full_name(self) -> str:
             return f"My name is {self.first_name} {self.last_name}"
 
-    return Person("John", "Doe")
+    return Person(first_name, last_name)
 
 
-def verify_method_fullname(p) -> list[str]:
-    return [
+def validate_oop_fullname(solution_result):
+    methods = [
         attr
-        for attr in dir(p)
-        if callable(getattr(p, attr)) and not attr.startswith("__")
+        for attr in dir(solution_result)
+        if callable(getattr(solution_result, attr)) and not attr.startswith("__")
     ]
+    assert len(methods) == 1, "The class should have 1 method."
+    assert "full_name" in methods, "The class method should be called 'full_name'."
 
 
-def verify_result_fullname(res: str) -> bool:
-    # Define the pattern to match the template "My name is {first_name} {last_name}"
-    pattern = r"^(My name is) \w+ \w+$"
-    # Check if the sentence matches the template
-    return re.match(pattern, res)
+@pytest.mark.parametrize(
+    "first_name, last_name",
+    [
+        ("Jane", "Doe"),
+        ("John", "Doe"),
+    ],
+)
+def test_oop_fullname(first_name, last_name, function_to_test):
+    solution_result = function_to_test(first_name, last_name)
+    reference_result = reference_oop_fullname(first_name, last_name)
 
-
-def test_oop_fullname(function_to_test):
-    solution_result = function_to_test()
-    reference_result = reference_oop_fullname()
-
-    assert (
-        type(solution_result).__name__ == type(reference_result).__name__
-    )  # check that the class is named 'Person'
-    assert list(vars(solution_result)) == list(
-        vars(reference_result)
-    )  # check that the instances have the same attributes
-    assert verify_method_fullname(solution_result) == verify_method_fullname(
-        reference_result
-    )  # check that the instances have the same methods
-    assert verify_result_fullname(
-        solution_result.full_name()
-    ), "The result does not match the template 'My name is {first_name} {last_name}'."
+    validate_oop_person(solution_result)
+    validate_oop_fullname(solution_result)
+    assert solution_result.full_name() == reference_result.full_name()
 
 
 #
@@ -88,7 +97,7 @@ def test_oop_fullname(function_to_test):
 #
 
 
-def reference_oop_str_and_repr():
+def reference_oop_str_and_repr(first_name: str, last_name: str):
     class Person:
         """A class representing a person with first name and last name"""
 
@@ -104,32 +113,27 @@ def reference_oop_str_and_repr():
                 f"{self.first_name} {self.last_name} is an instance of the class Person"
             )
 
-    return Person("John", "Doe")
+    return Person(first_name, last_name)
 
 
-def verify_result_repr(res: str) -> bool:
-    # Define the pattern to match the template "{first_name} {last_name} is an instance of the class Person"
-    pattern = r"^[A-Z][a-z]+ [A-Z][a-z]+ is an instance of the class Person$"
-    # Check if the sentence matches the template
-    return re.match(pattern, res)
+@pytest.mark.parametrize(
+    "first_name, last_name",
+    [
+        ("Jane", "Doe"),
+        ("John", "Doe"),
+    ],
+)
+def test_oop_str_and_repr(first_name, last_name, function_to_test):
+    solution_result = function_to_test(first_name, last_name)
+    reference_result = reference_oop_str_and_repr(first_name, last_name)
 
-
-def test_oop_str_and_repr(function_to_test):
-    solution_result = function_to_test()
-    reference_result = reference_oop_str_and_repr()
-
+    validate_oop_person(solution_result)
+    assert str(solution_result) == str(
+        reference_result
+    ), "The __str__() result does not match the template 'My name is {first_name} {last_name}'."
     assert (
-        type(solution_result).__name__ == type(reference_result).__name__
-    )  # check that the class is named 'Person'
-    assert list(vars(solution_result)) == list(
-        vars(reference_result)
-    )  # check that the instances have the same attributes
-    assert verify_result_fullname(
-        str(solution_result)
-    ), "The __str__ result does not match the template 'My name is {first_name} {last_name}'."
-    assert verify_result_repr(
-        solution_result.__repr__()
-    ), "The __repr__ result does not match the template '{first_name} {last_name} is an instance of the class Person'."
+        solution_result.__repr__() == reference_result.__repr__()
+    ), "The __repr__() result does not match the template '{first_name} {last_name} is an instance of the class Person'."
 
 
 #
@@ -137,9 +141,7 @@ def test_oop_str_and_repr(function_to_test):
 #
 
 
-def reference_oop_compare_persons(
-    first_name: str = "John", last_name: str = "Doe", age: int = 25
-):
+def reference_oop_compare_persons(first_name: str, last_name: str, age: int):
     class Person:
         """A class representing a person with first name, last name and age"""
 
@@ -149,29 +151,51 @@ def reference_oop_compare_persons(
             self.age = age
 
         def __eq__(self, other):
-            return (self.first_name, self.last_name, self.age) == (
-                other.first_name,
-                other.last_name,
-                other.age,
-            )
+            if isinstance(other, Person):
+                return (self.first_name, self.last_name, self.age) == (
+                    other.first_name,
+                    other.last_name,
+                    other.age,
+                )
+            else:
+                return False
 
     return Person(first_name, last_name, age)
 
 
+def validate_oop_compare_persons(solution_result):
+    params = list(vars(solution_result))
+    assert (
+        type(solution_result).__name__ == "Person"
+    ), "The class should be named 'Person'."
+    assert len(params) == 3, "The class should have 3 attributes."
+    assert (
+        "first_name" in params and "last_name" in params and "age" in params
+    ), "The class attributes should be 'first_name', 'last_name' and 'age'."
+
+
 @pytest.mark.parametrize(
-    "first_name, last_name, age, result",
+    "first_name_a, last_name_a, age_a, first_name_b, last_name_b, age_b",
     [
-        ("Jane", "Doe", 30, False),
-        ("John", "Smith", 25, False),
-        ("John", "Doe", 20, False),
-        ("John", "Doe", 25, True),
+        ("Jane", "Doe", 30, "John", "Doe", 25),
+        ("John", "Smith", 25, "John", "Doe", 25),
+        ("John", "Doe", 20, "John", "Doe", 25),
+        ("John", "Doe", 25, "John", "Doe", 25),
     ],
 )
-def test_oop_compare_persons(first_name, last_name, age, result, function_to_test):
-    solution_result = function_to_test()
-    reference_result = reference_oop_compare_persons(first_name, last_name, age)
+def test_oop_compare_persons(
+    first_name_a, last_name_a, age_a, first_name_b, last_name_b, age_b, function_to_test
+):
+    solution_result_a = function_to_test(first_name_a, last_name_a, age_a)
+    reference_result_a = reference_oop_compare_persons(first_name_a, last_name_a, age_a)
 
-    assert (solution_result == reference_result) == result
+    solution_result_b = function_to_test(first_name_b, last_name_b, age_b)
+    reference_result_b = reference_oop_compare_persons(first_name_b, last_name_b, age_b)
+
+    validate_oop_compare_persons(solution_result_a)
+    assert (solution_result_a == solution_result_b) == (
+        reference_result_a == reference_result_b
+    ), "Comparison failed."
 
 
 #
