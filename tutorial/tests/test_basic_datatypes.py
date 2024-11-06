@@ -475,7 +475,7 @@ def test_string_split_lines(function_to_test):
     assert function_to_test(my_string) == reference_string_split_lines(my_string)
 
 
-INT_SETS = [set(), set([1, 2, 3]), set([3, -1, 0, 4, 42, 1002])]
+INT_SETS = [set(), {1, 2, 3}, {3, -1, 0, 4, 42, 1002}]
 
 
 def reference_sets_of_even_and_odd(my_set: set[int]) -> tuple(set[int]):
