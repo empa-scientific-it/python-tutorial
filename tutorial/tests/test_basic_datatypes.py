@@ -475,31 +475,38 @@ def test_string_split_lines(function_to_test):
     assert function_to_test(my_string) == reference_string_split_lines(my_string)
 
 
-INT_LISTS = [[], [1, 2, 3], [3, -1, 0, 4, 42, 1002]]
+INT_SETS = [set(), set([1, 2, 3]), set([3, -1, 0, 4, 42, 1002])]
 
 
-def reference_list_of_lists(my_list: list[int]) -> list[list[int]]:
+def reference_sets_of_even_and_odd(my_set: set[int]) -> tuple(set[int]):
+    even_set = my_set.copy()
+    odd_set = my_set.copy()
+    for n in my_set:
+        if n % 2 == 0:
+            odd_set.remove(n)
+        else:
+            even_set.remove(n)
+    return even_set, odd_set
 
-    return [my_list.copy() for i in range(3)]
 
+@pytest.mark.parametrize("my_set", INT_SETS)
+def test_sets_of_even_and_odd(my_set, function_to_test):
+    sol_set = my_set.copy()
+    ref_set = my_set.copy()
+    sol_even_set, sol_odd_set = function_to_test(sol_set)
+    ref_even_set, ref_odd_set = reference_sets_of_even_and_odd(ref_set)
 
-@pytest.mark.parametrize("my_list", INT_LISTS)
-def test_list_of_lists(my_list, function_to_test):
-    my_list1 = my_list.copy()
-    new_listlist = function_to_test(my_list1)
-
-    assert isinstance(new_listlist, list)
-    assert len(new_listlist) == 3
-    for sublist in new_listlist:
-        assert sublist == my_list
-    assert len(set(map(id, new_listlist))) == len(new_listlist)
+    assert sol_even_set == ref_even_set
+    assert sol_odd_set == ref_odd_set
 
 
 INT_TUPLES = [(), (1, 2, 3), (3, -1, 0, 4, 42, 1002)]
 
 
 def reference_tuple_increased_by_one(my_tuple: tuple[int]) -> tuple[int]:
-    increase = [n + 1 for n in my_tuple]
+    increase = []
+    for n in my_tuple:
+        increase.append(n + 1)
     return tuple(increase)
 
 
