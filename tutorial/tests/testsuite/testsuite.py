@@ -56,7 +56,7 @@ def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
     match result:
         case pytest.ExitCode.OK:
             return IPytestResult(
-                function_name=function.name,
+                function=function,
                 status=IPytestOutcome.FINISHED,
                 test_results=list(result_collector.tests.values()),
             )
@@ -66,8 +66,7 @@ def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
                 for test in result_collector.tests.values()
             ):
                 return IPytestResult(
-                    function_name=function.name,
-                    function_code=function.source_code,
+                    function=function,
                     status=IPytestOutcome.PYTEST_ERROR,
                     exceptions=[
                         test.exception
@@ -77,22 +76,19 @@ def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
                 )
 
             return IPytestResult(
-                function_name=function.name,
-                function_code=function.source_code,
+                function=function,
                 status=IPytestOutcome.FINISHED,
                 test_results=list(result_collector.tests.values()),
             )
         case pytest.ExitCode.INTERNAL_ERROR:
             return IPytestResult(
-                function_name=function.name,
-                function_code=function.source_code,
+                function=function,
                 status=IPytestOutcome.PYTEST_ERROR,
                 exceptions=[Exception("Internal error")],
             )
         case pytest.ExitCode.NO_TESTS_COLLECTED:
             return IPytestResult(
-                function_name=function.name,
-                function_code=function.source_code,
+                function=function,
                 status=IPytestOutcome.NO_TEST_FOUND,
                 exceptions=[FunctionNotFoundError()],
             )
@@ -160,8 +156,7 @@ class TestMagic(Magics):
         # This is monkey-patching suppress printing any exception or traceback
 
     def extract_functions_to_test(self) -> List[AFunction]:
-        """"""
-        # Retrieve the functions names defined in the current cell
+        """Retrieve the functions names and implementations defined in the current cell"""
         # Only functions with names starting with `solution_` will be candidates for tests
         functions: Dict[str, str] = {}
         tree = ast.parse(self.cell)
@@ -169,10 +164,6 @@ class TestMagic(Magics):
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name.startswith("solution_"):
                 functions.update({str(node.name): ast.unparse(node)})
-
-        # functions_names: List[str] = re.findall(
-        #     r"^(?:async\s+?)?def\s+(solution_.*?)\s*\(", self.cell, re.M
-        # )
 
         return [
             AFunction(
@@ -297,8 +288,8 @@ class TestMagic(Magics):
         # Display the test results and the solution code
         for result in results:
             solution = (
-                ast_parser.get_solution_code(result.function_name)
-                if result.function_name
+                ast_parser.get_solution_code(result.function.name)
+                if result.function and result.function.name
                 else None
             )
             TestResultOutput(
