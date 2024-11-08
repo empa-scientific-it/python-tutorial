@@ -230,29 +230,32 @@ class TestResultOutput:
                 )
 
             case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
-                captures: Dict[str, Dict[str, str]] = {}
+                captures: Dict[str, Dict[str, Optional[str]]] = {}
 
                 for test in self.ipytest_result.test_results:
-                    captures[test.test_name.split("::")[-1]] = {
-                        "stdout": test.stdout,
-                        "stderr": test.stderr,
+                    test_name = test.test_name.split("::")[-1]
+                    captures[test_name] = {
+                        "stdout": test.stdout or None,
+                        "stderr": test.stderr or None,
                     }
 
-                # Create lists of HTML outs and errs
+                # Create lists of captured outs and errs in valid HTML
                 outs = [
-                    f"<h3>{test_name}</h3><br>{captures[test_name]['stdout']}"
-                    for test_name in captures
-                    if captures[test_name]["stdout"]
+                    f"<h3>{test_name}</h3><br>{capture['stdout']}"
+                    for test_name, capture in captures.items()
+                    if capture["stdout"]
                 ]
                 errs = [
-                    f"<h3>{test_name}</h3><br>{captures[test_name]['stderr']}"
-                    for test_name in captures
-                    if captures[test_name]["stderr"]
+                    f"<h3>{test_name}</h3><br>{capture['stderr']}"
+                    for test_name, capture in captures.items()
+                    if capture["stderr"]
                 ]
 
-                output_cell.append_display_data(
-                    ipywidgets.VBox(
-                        children=(
+                if outs or errs:
+                    children = []
+
+                    if outs:
+                        children.append(
                             ipywidgets.Accordion(
                                 children=(
                                     ipywidgets.VBox(
@@ -263,7 +266,11 @@ class TestResultOutput:
                                     ),
                                 ),
                                 titles=("Captured output",),
-                            ),
+                            )
+                        )
+
+                    if errs:
+                        children.append(
                             ipywidgets.Accordion(
                                 children=(
                                     ipywidgets.VBox(
@@ -274,10 +281,10 @@ class TestResultOutput:
                                     ),
                                 ),
                                 titles=("Captured error",),
-                            ),
+                            )
                         )
-                    )
-                )
+
+                    output_cell.append_display_data(ipywidgets.VBox(children=children))
 
                 success = all(
                     test.outcome == TestOutcome.PASS
