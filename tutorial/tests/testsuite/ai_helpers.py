@@ -8,10 +8,8 @@ import markdown2 as md
 import openai
 from IPython.display import Code, display, display_html
 from openai.types.chat import (
-    ChatCompletion,
     ChatCompletionMessage,
     ChatCompletionMessageParam,
-    ParsedChatCompletion,
     ParsedChatCompletionMessage,
 )
 from pydantic import BaseModel
@@ -94,7 +92,7 @@ class OpenAIWrapper:
     )
     def get_chat_response(
         self, query: str, *args, **kwargs
-    ) -> ParsedChatCompletion | ChatCompletion:
+    ) -> ParsedChatCompletionMessage | ChatCompletionMessage:
         """Fetch a completion from the chat model"""
         system_prompt = (
             "As an expert Python developer, provide clear and concise explanations of error tracebacks, "
@@ -125,7 +123,7 @@ class OpenAIWrapper:
             logger.exception("Input prompt has too many tokens.")
             raise
         else:
-            return response
+            return response.choices[0].message
 
 
 class AIExplanation:
@@ -286,7 +284,7 @@ class AIExplanation:
                     self._set_button_state("ready")
 
     def _format_explanation(
-        self, chat_response: ParsedChatCompletion[Explanation] | ChatCompletion
+        self, chat_response: ParsedChatCompletionMessage | ChatCompletionMessage
     ) -> t.Optional[t.List[t.Any]]:
         """Format the explanation response for display"""
 
@@ -295,10 +293,9 @@ class AIExplanation:
             """Markdown to HTML converter"""
             return md.markdown(str(text))
 
-        explanation_response = chat_response.choices[0].message
-
-        if isinstance(explanation_response, ParsedChatCompletionMessage) and (
-            explanation := explanation_response.parsed
+        if (
+            isinstance(chat_response, ParsedChatCompletionMessage)
+            and (explanation := chat_response.parsed) is not None
         ):
             logger.debug("Response is a valid `Explanation` object that can be parsed.")
 
@@ -323,7 +320,7 @@ class AIExplanation:
 
             # Add code snippets using Code widgets
             if explanation.code_snippets:
-                for snippet in explanation.code_snippets:
+                for i, snippet in enumerate(explanation.code_snippets, start=1):
                     snippet_output = widgets.Output()
                     snippet_description = widgets.HTML(to_html(snippet.description))
                     snippet_output.append_display_data(snippet_description)
@@ -332,7 +329,7 @@ class AIExplanation:
                     snippet_output.append_display_data(snippet_code)
 
                     snippet_accordion = widgets.Accordion(
-                        children=[snippet_output], titles=("Code Snippet",)
+                        children=[snippet_output], titles=(f"Code Snippet #{i}",)
                     )
 
                     widgets_list.append(snippet_accordion)
@@ -352,8 +349,9 @@ class AIExplanation:
 
             return widgets_list
 
-        elif isinstance(explanation_response, ChatCompletionMessage) and (
-            explanation := explanation_response.content
+        elif (
+            isinstance(chat_response, ChatCompletionMessage)
+            and (explanation := chat_response.content) is not None
         ):
             logger.debug(
                 "Response is not a structured `Explanation` object, returning as-is."
