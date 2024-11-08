@@ -1,6 +1,7 @@
 import logging
 import traceback
 import typing as t
+from enum import Enum
 from threading import Timer
 
 import ipywidgets as widgets
@@ -126,6 +127,14 @@ class OpenAIWrapper:
             return response.choices[0].message
 
 
+class ButtonState(Enum):
+    """The state of the explanation button"""
+
+    READY = "ready"
+    LOADING = "loading"
+    WAIT = "waiting"
+
+
 class AIExplanation:
     """Class representing an AI-generated explanation"""
 
@@ -148,17 +157,29 @@ class AIExplanation:
         self._timer: t.Optional[Timer] = None
         self._is_throttled = False
         self._wait_time = float(wait_time)
+        self._remaining_time = float(wait_time)
 
         # The button widget for fetching the explanation
-        self._button_states = {
-            "ready": {"description": "Get AI Explanation", "icon": "search"},
-            "loading": {"description": "Loading...", "icon": "spinner"},
-            "wait": {
-                "description": f"Wait {wait_time} seconds",
+        self._button_styles = {
+            ButtonState.READY: {
+                "description": "Get AI Explanation",
+                "icon": "search",
+                "disabled": False,
+            },
+            ButtonState.LOADING: {
+                "description": "Loading...",
+                "icon": "spinner",
+                "disabled": True,
+            },
+            ButtonState.WAIT: {
+                "description": "Wait {seconds} seconds",
                 "icon": "hourglass-start",
+                "disabled": True,
             },
         }
-        self._button = widgets.Button(**self._button_states["ready"])
+        self._current_state = ButtonState.READY
+        self._button = widgets.Button()
+        self._update_button_state(ButtonState.READY)
         self._button.on_click(self._handle_click)
         self._button.observe(self._handle_state_change, names=["disabled"])
 
@@ -199,35 +220,60 @@ class AIExplanation:
             raise ValueError
         self._query = q
 
-    def _set_button_state(self, state: str) -> None:
+    def _update_remaining_time(self):
+        """Update the button label with remaining time"""
+        self._remaining_time = max(0, self._remaining_time - 1)
+        if self._is_throttled:
+            self._update_button_state(ButtonState.WAIT)
+
+    def _update_button_state(self, state: ButtonState) -> None:
         """Update the button state"""
-        if state in self._button_states:
-            self._button.description = self._button_states[state]["description"]
-            self._button.icon = self._button_states[state]["icon"]
+        self._current_state = state
+        style = self._button_styles[state].copy()
+
+        if state == ButtonState.WAIT:
+            style["description"] = style["description"].format(
+                seconds=int(self._remaining_time)
+            )
+
+        self._button.description = style["description"]
+        self._button.icon = style["icon"]
+        self._button.disabled = style["disabled"]
 
     def _handle_state_change(self, change):
         """Handle the state change of the button"""
         if change["new"]:
             if self._is_throttled:
-                self._set_button_state("wait")
+                self._update_button_state(ButtonState.WAIT)
         else:
             self._is_throttled = False
-            self._set_button_state("ready")
+            self._update_button_state(ButtonState.READY)
 
     def _enable_button(self):
         """Enable the button after a delay"""
         self._button.disabled = False
         self._timer = None
+        self._remaining_time = self._wait_time
 
     def _handle_click(self, _) -> None:
         """Handle the button click event with throttling"""
         if self._is_throttled:
+            self._update_button_state(ButtonState.WAIT)
             return
 
         self._is_throttled = True
         self._button.disabled = True
+        self._remaining_time = self._wait_time
 
-        self._timer = Timer(self._wait_time, self._enable_button)
+        def update_timer():
+            if self._remaining_time > 0:
+                self._update_remaining_time()
+                self._timer = Timer(1, update_timer)
+                self._timer.start()
+            else:
+                self._enable_button()
+
+        self._timer = Timer(1.0, update_timer)
         self._timer.start()
 
         # Call the method to fetch the explanation
@@ -240,7 +286,7 @@ class AIExplanation:
         if not self.openai_client:
             return
 
-        self._set_button_state("loading")
+        self._update_button_state(ButtonState.LOADING)
 
         traceback_str = "".join(traceback.format_exception_only(self.exception))
         logger.debug("Formatted traceback: %s", traceback_str)
@@ -279,9 +325,9 @@ class AIExplanation:
                 display_html(f"<p>Failed to fetch explanation: {e}</p>", raw=True)
             finally:
                 if self._is_throttled:
-                    self._set_button_state("wait")
+                    self._update_button_state(ButtonState.WAIT)
                 else:
-                    self._set_button_state("ready")
+                    self._update_button_state(ButtonState.READY)
 
     def _format_explanation(
         self, chat_response: ParsedChatCompletionMessage | ChatCompletionMessage
