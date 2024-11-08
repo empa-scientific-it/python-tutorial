@@ -35,6 +35,18 @@ def test_print_odd(function_to_test, n: int):
     assert solution_text == reference_text
 
 
+def reference_check_for_file(current_path: pl.Path, file_name: str) -> List[pl.Path]:
+    for file_path in list(current_path.iterdir()):
+        if file_name == file_path.name:
+            return True
+    return False
+
+
+@pytest.mark.parametrize("input_path, file_name", [(pl.Path("tutorial/tests/data/"), "notpresentfile.txt"), (pl.Path("tutorial/tests/data/"), "hello.txt")])
+def test_check_for_file(function_to_test, input_path: pl.Path, file_name: str):
+    assert function_to_test(input_path, file_name) == reference_check_for_file(input_path, file_name)
+
+
 def reference_find_all_files(current_path: pl.Path) -> List[pl.Path]:
     return list(current_path.iterdir())
 
