@@ -145,7 +145,7 @@ class AIExplanation:
         openai_client: "OpenAIWrapper",
         wait_time: int = 60,  # Wait time in seconds
     ) -> None:
-        """Initialize the explanation object"""
+        """Public constructor for an explanation widget"""
         self.ipytest_result = ipytest_result
         self.exception = exception
         self.openai_client = openai_client
@@ -195,7 +195,7 @@ class AIExplanation:
 
     @property
     def output(self) -> t.Tuple[widgets.Button, widgets.Output]:
-        """Return the button and output widgets as a tuple"""
+        """Return the button and output widget as a tuple"""
         return self._button, self._output
 
     @property

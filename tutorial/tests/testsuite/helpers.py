@@ -196,6 +196,8 @@ class TestResultOutput:
         """Prepare the cell to display the test results"""
         assert self.ipytest_result.function is not None
 
+        output_box_children: List[ipywidgets.Widget]
+
         output_cell = ipywidgets.Output()
         output_cell.append_display_data(
             HTML(
@@ -212,16 +214,27 @@ class TestResultOutput:
                 # We know that there is exactly one exception
                 assert self.ipytest_result.exceptions is not None
                 exception = self.ipytest_result.exceptions[0]
+
                 exceptions_str = (
                     format_error(exception) if self.ipytest_result.exceptions else ""
                 )
-                output_cell.append_display_data(
-                    ipywidgets.VBox(
-                        children=[
-                            HTML(f"<h3>{type(exception).__name__}</h3>"),
-                            HTML(exceptions_str),
-                        ]
+
+                output_box_children = [
+                    HTML(f"<h3>{type(exception).__name__}</h3>"),
+                    HTML(exceptions_str),
+                ]
+
+                if self.openai_client:
+                    explanation = AIExplanation(
+                        openai_client=self.openai_client,
+                        ipytest_result=self.ipytest_result,
+                        exception=exception,
                     )
+
+                    output_box_children.extend(explanation.output)
+
+                output_cell.append_display_data(
+                    ipywidgets.VBox(children=output_box_children)
                 )
 
             case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
@@ -305,7 +318,7 @@ class TestResultOutput:
                         test_succeded = result.outcome == TestOutcome.PASS
                         test_name = result.test_name.split("::")[-1]
 
-                        output_box_children: List[ipywidgets.Widget] = [
+                        output_box_children = [
                             HTML(
                                 f'<h3>{"&#10004" if test_succeded else "&#10060"} Test <code>{test_name}</code></h3>',
                                 style={
@@ -332,10 +345,11 @@ class TestResultOutput:
 
                             if self.openai_client:
                                 explanation = AIExplanation(
-                                    self.ipytest_result,
-                                    result.exception,
-                                    self.openai_client,
+                                    openai_client=self.openai_client,
+                                    ipytest_result=self.ipytest_result,
+                                    exception=result.exception,
                                 )
+
                                 output_box_children.extend(explanation.output)
 
                         output_cell.append_display_data(
