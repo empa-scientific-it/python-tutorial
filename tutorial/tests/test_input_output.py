@@ -2,7 +2,6 @@ import contextlib
 import csv
 import itertools
 import pathlib as pl
-from collections import Counter
 from io import StringIO
 from typing import Dict, List, Tuple
 
@@ -42,9 +41,17 @@ def reference_check_for_file(current_path: pl.Path, file_name: str) -> List[pl.P
     return False
 
 
-@pytest.mark.parametrize("input_path, file_name", [(pl.Path("tutorial/tests/data/"), "notpresentfile.txt"), (pl.Path("tutorial/tests/data/"), "hello.txt")])
+@pytest.mark.parametrize(
+    "input_path, file_name",
+    [
+        (pl.Path("tutorial/tests/data/"), "notpresentfile.txt"),
+        (pl.Path("tutorial/tests/data/"), "hello.txt"),
+    ],
+)
 def test_check_for_file(function_to_test, input_path: pl.Path, file_name: str):
-    assert function_to_test(input_path, file_name) == reference_check_for_file(input_path, file_name)
+    assert function_to_test(input_path, file_name) == reference_check_for_file(
+        input_path, file_name
+    )
 
 
 def reference_find_all_files(current_path: pl.Path) -> List[pl.Path]:
@@ -101,7 +108,7 @@ def test_write_file(function_to_test, tmp_path: pl.Path):
 def reference_read_write_file(input_file: pl.Path, output_file: pl.Path) -> None:
     # We open the input and output file at the same time
     read_file = input_file.open("r")
-    write_file = output_file.open("w") 
+    write_file = output_file.open("w")
     # Here we iterate over each line of the input file
     for line in read_file.readlines():
         # We remove line breaks and write the line to the output file
@@ -130,7 +137,7 @@ def reference_exercise1(input_file: pl.Path) -> Dict[str, List[str]]:
     my_dict = {}
     with open(input_file) as csv_file:
         reader = csv.reader(csv_file)
-        headers = next(reader)
+        next(reader)
         for line in reader:
             key, value = line
             my_dict[key] = value
@@ -144,7 +151,7 @@ def test_exercise1(function_to_test, file: str):
 
 
 def reference_exercise2(file: pl.Path) -> int:
-    with open(input_file, "r") as file_ob:
+    with open(input_file) as file_ob:
         text = file_ob.read()
     return len(text.split())
 
@@ -159,7 +166,7 @@ def reference_exercise3(input_file: pl.Path) -> Dict[str, int]:
     my_dict = {}
     # Initialize dictionary with all letters set to 0
     my_dict = {letter: 0 for letter in string.ascii_lowercase}
-    with open(input_file, "r") as file_ob:
+    with open(input_file) as file_ob:
         text = file_ob.read()
         for char in text:
             if char in string.ascii_lowercase:
