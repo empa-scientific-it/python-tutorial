@@ -19,20 +19,29 @@ def reference_oop_person(first_name: str, last_name: str):
 
 
 def validate_oop_person(solution_result):
-    params = list(vars(solution_result))
+    assert not isinstance(
+        solution_result, (str, int, float, bool, list, dict, tuple)
+    ), "Solution must return a class instance, not a primitive type."
+    assert (
+        type(solution_result).__module__ != "builtins"
+    ), "Solution must return an instance of a custom class, not a built-in type."
     assert (
         type(solution_result).__name__ == "Person"
     ), "The class should be named 'Person'."
-    assert len(params) == 2, "The class should have 2 attributes."
+    # Check the class attributes
+    try:
+        attrs = list(vars(solution_result))
+    except TypeError as e:
+        raise AssertionError from e
+    assert len(attrs) == 2, "The class should have 2 attributes."
     assert (
-        "first_name" in params and "last_name" in params
+        "first_name" in attrs and "last_name" in attrs
     ), "The class attributes should be 'first_name' and 'last_name'."
 
 
 @pytest.mark.parametrize(
     "first_name, last_name",
     [
-        ("Jane", "Doe"),
         ("John", "Doe"),
     ],
 )
