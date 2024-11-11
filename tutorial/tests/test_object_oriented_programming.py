@@ -83,6 +83,9 @@ def validate_oop_fullname(solution_result):
     ]
     assert len(methods) == 1, "The class should have 1 method."
     assert "full_name" in methods, "The class method should be called 'full_name'."
+    assert (
+        solution_result.full_name.__closure__ is None
+    ), "The full_name() method should be using the class attributes."
 
 
 @pytest.mark.parametrize(
@@ -100,14 +103,6 @@ def test_oop_fullname(first_name, last_name, function_to_test):
     assert (
         solution_result.full_name() == reference_result.full_name()
     ), "The full_name() result does not match the template 'My name is {first_name} {last_name}'."
-
-    solution_result.first_name = "Jane"
-    solution_result.last_name = "Smith"
-    reference_result.first_name = "Jane"
-    reference_result.last_name = "Smith"
-    assert (
-        solution_result.full_name() == reference_result.full_name()
-    ), "The full_name() method should be using the class attributes."
 
 
 #
@@ -145,23 +140,19 @@ def test_oop_str_and_repr(first_name, last_name, function_to_test):
     reference_result = reference_oop_str_and_repr(first_name, last_name)
 
     validate_oop_person(solution_result)
+    assert (
+        solution_result.__str__.__closure__ is None
+    ), "The __str__() method should be using the class attributes."
+    assert (
+        solution_result.__repr__.__closure__ is None
+    ), "The __repr__() method should be using the class attributes."
+
     assert str(solution_result) == str(
         reference_result
     ), "The __str__() result does not match the template 'My name is {first_name} {last_name}'."
     assert (
         solution_result.__repr__() == reference_result.__repr__()
     ), "The __repr__() result does not match the template '{first_name} {last_name} is an instance of the class Person'."
-
-    solution_result.first_name = "Jane"
-    solution_result.last_name = "Smith"
-    reference_result.first_name = "Jane"
-    reference_result.last_name = "Smith"
-    assert str(solution_result) == str(
-        reference_result
-    ), "The __str__() method should be using the class attributes."
-    assert (
-        solution_result.__repr__() == reference_result.__repr__()
-    ), "The __repr__() method should be using the class attributes."
 
 
 #
