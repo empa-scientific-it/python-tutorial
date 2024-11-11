@@ -79,7 +79,6 @@ def validate_oop_fullname(solution_result):
 @pytest.mark.parametrize(
     "first_name, last_name",
     [
-        ("Jane", "Doe"),
         ("John", "Doe"),
     ],
 )
@@ -89,7 +88,17 @@ def test_oop_fullname(first_name, last_name, function_to_test):
 
     validate_oop_person(solution_result)
     validate_oop_fullname(solution_result)
-    assert solution_result.full_name() == reference_result.full_name()
+    assert (
+        solution_result.full_name() == reference_result.full_name()
+    ), "The full_name() result does not match the template 'My name is {first_name} {last_name}'."
+
+    solution_result.first_name = "Jane"
+    solution_result.last_name = "Smith"
+    reference_result.first_name = "Jane"
+    reference_result.last_name = "Smith"
+    assert (
+        solution_result.full_name() == reference_result.full_name()
+    ), "The full_name() method should be using the class attributes."
 
 
 #
@@ -119,7 +128,6 @@ def reference_oop_str_and_repr(first_name: str, last_name: str):
 @pytest.mark.parametrize(
     "first_name, last_name",
     [
-        ("Jane", "Doe"),
         ("John", "Doe"),
     ],
 )
@@ -134,6 +142,17 @@ def test_oop_str_and_repr(first_name, last_name, function_to_test):
     assert (
         solution_result.__repr__() == reference_result.__repr__()
     ), "The __repr__() result does not match the template '{first_name} {last_name} is an instance of the class Person'."
+
+    solution_result.first_name = "Jane"
+    solution_result.last_name = "Smith"
+    reference_result.first_name = "Jane"
+    reference_result.last_name = "Smith"
+    assert str(solution_result) == str(
+        reference_result
+    ), "The __str__() method should be using the class attributes."
+    assert (
+        solution_result.__repr__() == reference_result.__repr__()
+    ), "The __repr__() method should be using the class attributes."
 
 
 #
