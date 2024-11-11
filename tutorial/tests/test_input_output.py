@@ -63,8 +63,8 @@ def test_find_all_files(function_to_test):
     assert function_to_test(f) == reference_find_all_files(f)
 
 
-def reference_count_dirs(path: pl.Path) -> int:
-    return len([obj for obj in path.glob("*") if obj.is_dir()])
+def reference_count_dirs(input_path: pl.Path) -> int:
+    return len([obj for obj in input_path.glob("*") if obj.is_dir()])
 
 
 def test_count_dirs(function_to_test):
@@ -72,8 +72,8 @@ def test_count_dirs(function_to_test):
     assert function_to_test(path) == reference_count_dirs(path)
 
 
-def reference_read_file(file: pl.Path) -> List[str]:
-    text = file.open("r")
+def reference_read_file(input_file: pl.Path) -> List[str]:
+    text = input_file.open("r")
     lines = text.readlines()
     text.close()
     return lines
