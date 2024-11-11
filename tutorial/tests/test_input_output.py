@@ -1,12 +1,11 @@
 import contextlib
 import csv
-import itertools
 import pathlib as pl
+import string
 from io import StringIO
 from typing import Dict, List, Tuple
 
 import pytest
-
 from tutorial.prepare_magic_file import decode_secret_message
 
 
@@ -150,7 +149,7 @@ def test_exercise1(function_to_test, file: str):
     assert function_to_test(f) == reference_exercise1(f)
 
 
-def reference_exercise2(file: pl.Path) -> int:
+def reference_exercise2(input_file: pl.Path) -> int:
     with open(input_file) as file_ob:
         text = file_ob.read()
     return len(text.split())
@@ -164,8 +163,7 @@ def test_exercise2(function_to_test, file: str):
 
 def reference_exercise3(input_file: pl.Path) -> Dict[str, int]:
     my_dict = {}
-    # Initialize dictionary with all letters set to 0
-    my_dict = {letter: 0 for letter in string.ascii_lowercase}
+    my_dict = dict.fromkeys(string.ascii_lowercase, 0)
     with open(input_file) as file_ob:
         text = file_ob.read()
         for char in text:
