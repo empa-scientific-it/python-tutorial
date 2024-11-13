@@ -122,9 +122,7 @@ def reference_oop_str_and_repr(first_name: str, last_name: str):
             return f"My name is {self.first_name} {self.last_name}"
 
         def __repr__(self):
-            return (
-                f"{self.first_name} {self.last_name} is an instance of the class Person"
-            )
+            return f"Person({self.first_name}, {self.last_name})"
 
     return Person(first_name, last_name)
 
@@ -152,7 +150,7 @@ def test_oop_str_and_repr(first_name, last_name, function_to_test):
     ), "The __str__() result does not match the template 'My name is {first_name} {last_name}'."
     assert (
         solution_result.__repr__() == reference_result.__repr__()
-    ), "The __repr__() result does not match the template '{first_name} {last_name} is an instance of the class Person'."
+    ), "The __repr__() result does not match the template 'Person({first_name}, {last_name})'."
 
 
 #
