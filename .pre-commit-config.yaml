@@ -8,52 +8,70 @@ repos:
       hooks:
           - id: end-of-file-fixer
           - id: trailing-whitespace
-            exclude: miscellaneous/structures/SiO2.xyz
           - id: check-yaml
           - id: check-added-large-files
             args: [--maxkb=6000]
-    - repo: https://github.com/pycqa/isort
-      rev: 5.13.2
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.7.3
       hooks:
-          - id: isort
-            args: [--profile, black, --filter-files]
-    - repo: https://github.com/PyCQA/autoflake
-      rev: v2.3.1
-      hooks:
-          - id: autoflake
-    - repo: https://github.com/asottile/pyupgrade
-      rev: v3.16.0
-      hooks:
-          - id: pyupgrade
-            args: [--py38-plus]
-    - repo: https://github.com/psf/black
-      rev: 24.4.2
-      hooks:
-          - id: black
-            language_version: python3 # Should be a command that runs python3.6+
-    - repo: https://github.com/PyCQA/flake8
-      rev: 7.1.0
-      hooks:
-          - id: flake8
-            args: [--count, --show-source, --statistics]
-            additional_dependencies:
-                - flake8-bugbear
-                - flake8-builtins
-                - flake8-comprehensions
-                - flake8-debugger
-                - flake8-logging-format
-                - pep8-naming
-                - pyflakes
-                - tryceratops
-    # - repo: https://github.com/pre-commit/mirrors-mypy
-    #   rev: v1.5.1
-    #   hooks:
-    #       - id: mypy
-    #         additional_dependencies:
-    #             - types-click-spinner
-    #             - types-requests
-    #             - types-tabulate
-    #             - types-toml
+      # Ruff check
+          - id: ruff
+            types_or: [python, pyi]
+            args: [--no-fix]
+            name: ruff (check)
+      # Ruff fix
+          - id: ruff
+            types_or: [python, pyi]
+            args: [--fix]
+            name: ruff (fix)
+      # Ruff formatter
+          - id: ruff-format
+            types_or: [python, pyi]
+            name: ruff (format)
+  #
+  # - repo: https://github.com/pycqa/isort
+  #   rev: 5.13.2
+  #   hooks:
+  #     - id: isort
+  #       args: [--profile, black, --filter-files]
+  # - repo: https://github.com/PyCQA/autoflake
+  #   rev: v2.3.1
+  #   hooks:
+  #     - id: autoflake
+  # - repo: https://github.com/asottile/pyupgrade
+  #   rev: v3.16.0
+  #   hooks:
+  #     - id: pyupgrade
+  #       args: [--py38-plus]
+  # - repo: https://github.com/psf/black
+  #   rev: 24.4.2
+  #   hooks:
+  #     - id: black
+  #       language_version: python3 # Should be a command that runs python3.6+
+  # - repo: https://github.com/PyCQA/flake8
+  #   rev: 7.1.0
+  #   hooks:
+  #     - id: flake8
+  #       args: [--count, --show-source, --statistics]
+  #       additional_dependencies:
+  #         - flake8-bugbear
+  #         - flake8-builtins
+  #         - flake8-comprehensions
+  #         - flake8-debugger
+  #         - flake8-logging-format
+  #         - pep8-naming
+  #         - pyflakes
+  #         - tryceratops
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.5.1
+  #   hooks:
+  #       - id: mypy
+  #         additional_dependencies:
+  #             - types-click-spinner
+  #             - types-requests
+  #             - types-tabulate
+  #             - types-toml
+  #
     - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
       rev: 0.2.3
       hooks:
