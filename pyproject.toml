@@ -1,0 +1,50 @@
+[tool.ruff]
+# Line length (same as Black)
+line-length = 88
+
+# Python target version
+target-version = "py38"
+
+# Ignored rules for the entire project
+[tool.ruff.lint]
+ignore = [
+    "E501",   # Line too long
+    "E203",   # Whitespace before ':'
+    "TRY301", # Raise within try block
+    # "W503"  # Line break before binary operator (not PEP8 enforced, so not implemented in Ruff)
+]
+
+# flake8 plugins to enable:
+# - flake8-bugbear          B
+# - flake8-builtins         A
+# - flake8-comprehensions   C4
+# - flake8-debugger         T10
+# - flake8-logging-format   G
+# - pep8-naming             N
+# - pyflakes                F
+# - tryceratops             TRY
+select = [
+    "A",   # flake8-builtins
+    "T10", # flake8-debugger
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "TRY", # tryceratops
+]
+
+# Per-file rule ignores
+[tool.ruff.lint.per-file-ignores]
+"binder/ipython_config.py" = ["E266"] # Trailing whitespace in comment
+
+# Ruff formatting
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# pytest
+[tool.pytest.ini_options]
+addopts = "-v --tb=short"
