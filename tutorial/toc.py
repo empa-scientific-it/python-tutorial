@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """CLI script to build a table of contents for an IPython notebook"""
+
 import argparse as ap
 import pathlib
 import re

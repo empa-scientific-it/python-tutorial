@@ -75,9 +75,7 @@ def test_write_file(function_to_test, tmp_path: pl.Path):
     function_to_test(tmp_user)
     reference_write_file(tmp_test)
 
-    assert (
-        tmp_user.exists()
-    ), """The file was not created. Make sure to create the file in the function. Hint: use `open(output_file, "w")`"""
+    assert tmp_user.exists(), """The file was not created. Make sure to create the file in the function. Hint: use `open(output_file, "w")`"""
 
     assert (
         tmp_user.read_text() == tmp_test.read_text()
