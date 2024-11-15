@@ -524,8 +524,7 @@ def reference_intcode_computer(intcode: str) -> int:
         """An Intcode computer class"""
 
         def __init__(self, program: str):
-            self.program = [int(c.strip()) for c in program.split(",")]
-            self._backup = self.program[:]
+            self.program = [int(code.strip()) for code in program.split(",")]
 
         def run(self, pos=0):
             while True:
