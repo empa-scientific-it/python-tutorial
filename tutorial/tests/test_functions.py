@@ -297,7 +297,9 @@ def test_password_validator2(start: int, end: int, function_to_test) -> None:
 # Exercise: Buckets reorganization
 #
 
-prio = {letter: i for i, letter in enumerate(ascii_lowercase + ascii_uppercase, start=1)}
+prio = {
+    letter: i for i, letter in enumerate(ascii_lowercase + ascii_uppercase, start=1)
+}
 buckets_1, buckets_2 = (read_data(f"buckets_{num}.txt") for num in (1, 2))
 
 
