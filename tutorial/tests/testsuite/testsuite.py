@@ -276,7 +276,7 @@ class TestMagic(Magics):
         if not (
             module_file := pathlib.Path(f"tutorial/tests/test_{self.module_name}.py")
         ).exists():
-            raise FileNotFoundError(f"Module file '{module_file}' does not exist")
+            raise FileNotFoundError(module_file)
 
         self.module_file = module_file
 
