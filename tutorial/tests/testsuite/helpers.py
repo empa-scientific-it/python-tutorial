@@ -472,15 +472,19 @@ class TestResultOutput:
             ):
                 # We know that there is exactly one exception
                 assert self.ipytest_result.exceptions is not None
+                # We know that there is no test results
+                assert self.ipytest_result.test_results is None
+
                 exception = self.ipytest_result.exceptions[0]
-                output_cell.append_display_data(
-                    HTML(
-                        '<div class="test-result test-error" style="margin-top: 0.5rem;">'
-                        f'<div class="error-title">{type(exception).__name__}</div>'
-                        f'<pre class="error-message">{html.escape(str(exception))}</pre>'
-                        "</div>"
-                    )
+
+                # Create a TestCaseResult for consistency
+                error_result = TestCaseResult(
+                    test_name=f"error::solution_{self.ipytest_result.function.name}",
+                    outcome=TestOutcome.TEST_ERROR,
+                    exception=exception,
                 )
+
+                output_cell.append_display_data(HTML(error_result.to_html()))
 
                 if self.openai_client:
                     ai_explains = AIExplanation(
@@ -490,16 +494,6 @@ class TestResultOutput:
                     )
 
                     output_cell.append_display_data(ai_explains.render())
-
-            case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
-                output_cell.append_display_data(
-                    HTML(
-                        '<div class="test-result test-error" style="margin-top: 1rem;">'
-                        '<div class="error-title">Solution Function Missing</div>'
-                        "<p>Please implement the required solution function.</p>"
-                        "</div>"
-                    )
-                )
 
             case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
                 # Calculate test statistics
@@ -527,14 +521,30 @@ class TestResultOutput:
                 for test in self.ipytest_result.test_results:
                     output_cell.append_display_data(HTML(test.to_html()))
 
-                    if self.openai_client:
-                        ai_explains = AIExplanation(
-                            ipytest_result=self.ipytest_result,
-                            exception=test.exception,
-                            openai_client=self.openai_client,
-                        )
+                failed_tests = (
+                    test
+                    for test in self.ipytest_result.test_results
+                    if test.outcome != TestOutcome.PASS
+                )
+
+                if self.openai_client and any(failed_tests):
+                    ai_explains = AIExplanation(
+                        ipytest_result=self.ipytest_result,
+                        exception=next(failed_tests).exception,
+                        openai_client=self.openai_client,
+                    )
 
                     output_cell.append_display_data(ai_explains.render())
+
+            case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
+                output_cell.append_display_data(
+                    HTML(
+                        '<div class="test-result test-error" style="margin-top: 1rem;">'
+                        '<div class="error-title">Solution Function Missing</div>'
+                        "<p>Please implement the required solution function.</p>"
+                        "</div>"
+                    )
+                )
 
             case IPytestOutcome.NO_TEST_FOUND:
                 output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))

@@ -17,3 +17,10 @@ class TestModuleNotFoundError(Exception):
 
     def __init__(self) -> None:
         super().__init__("Test module is not defined")
+
+
+class PytestInteralError(Exception):
+    """Custom exception raised when the test module cannot be found"""
+
+    def __init__(self) -> None:
+        super().__init__("Pytest internal error")

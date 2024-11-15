@@ -278,9 +278,6 @@ class AIExplanation:
             "{traceback}"
         )
 
-        # Create a container for all the renderable components
-        self._container = widgets.VBox(layout=widgets.Layout(margin="1rem 0"))
-
         # Create a header with button and timer
         self._header = widgets.Box(
             layout=widgets.Layout(
@@ -295,10 +292,6 @@ class AIExplanation:
             value="", layout=widgets.Layout(margin="0 0 0 0.75rem")
         )
 
-        # Apply styles to the output widget
-        with self._output:
-            display(widgets.HTML(self._STYLES))
-
         # Initialize the button
         self._current_state = ButtonState.READY
         self._button = widgets.Button()
@@ -308,9 +301,11 @@ class AIExplanation:
 
     def render(self) -> widgets.Widget:
         """Return a single widget containing all the components"""
+        style_html = widgets.HTML(self._STYLES)
+
         header_html = widgets.HTML(
             '<div class="ai-header">'
-            '<span class="ai-title">🤖 AI-Powered Error Analysis</span>'
+            '<span class="ai-title">🤖 Explain With AI</span>'
             "</div>"
         )
 
@@ -322,14 +317,18 @@ class AIExplanation:
             layout=widgets.Layout(display="flex", align_iterms="center"),
         )
 
-        # Update the container
-        self._container.children = [
-            header_html,
-            button_container,
-            self._output,
-        ]
+        # Create the rendered container
+        container = widgets.VBox(
+            children=[
+                style_html,
+                header_html,
+                button_container,
+                self._output,
+            ],
+            layout=widgets.Layout(margin="1rem 0 0 0", padding="0"),
+        )
 
-        return self._container
+        return container
 
     @property
     def query(self) -> str:
