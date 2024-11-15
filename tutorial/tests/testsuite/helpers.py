@@ -10,9 +10,7 @@ from IPython.display import Code
 from IPython.display import display as ipython_display
 from ipywidgets import HTML
 
-from .ai_helpers import OpenAIWrapper
-
-# TODO: from .ai_helpers import AIExplanation
+from .ai_helpers import AIExplanation, OpenAIWrapper
 
 
 class TestOutcome(Enum):
@@ -315,12 +313,6 @@ class TestResultOutput:
                         "</div>"
                     )
                 )
-            else:
-                cells.append(
-                    HTML(
-                        "<h4>&#9888;&#65039; Your code could not run because of an error. Please, double-check it.</h4>"
-                    )
-                )
 
         ipython_display(
             ipywidgets.VBox(
@@ -329,7 +321,7 @@ class TestResultOutput:
                     "border": "1px solid #e5e7eb",
                     "background-color": "#ffffff",
                     "margin": "5px",
-                    "padding": "1rem",
+                    "padding": "0.75rem",
                     "border-radius": "0.5rem",
                 },
             )
@@ -464,9 +456,9 @@ class TestResultOutput:
         # Header with test function name
         output_cell.append_display_data(
             HTML(
-                '<div style="margin-bottom: 1.5rem;">'
+                '<div style="margin-bottom: 1rem;">'
                 f'<h2 style="font-size: 1.5rem; margin: 0;">Test Results for '
-                f'<code style="font-size: 1.1rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem;">'
+                f'<code style="font-size: 1.1rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-family: ui-monospace, monospace;">'
                 f"solution_{self.ipytest_result.function.name}</code></h2>"
                 "</div>"
             )
@@ -483,14 +475,21 @@ class TestResultOutput:
                 exception = self.ipytest_result.exceptions[0]
                 output_cell.append_display_data(
                     HTML(
-                        '<div class="test-result test-error" style="margin-top: 1rem;">'
+                        '<div class="test-result test-error" style="margin-top: 0.5rem;">'
                         f'<div class="error-title">{type(exception).__name__}</div>'
                         f'<pre class="error-message">{html.escape(str(exception))}</pre>'
                         "</div>"
                     )
                 )
 
-                # TODO: Add AI explanation
+                if self.openai_client:
+                    ai_explains = AIExplanation(
+                        ipytest_result=self.ipytest_result,
+                        exception=exception,
+                        openai_client=self.openai_client,
+                    )
+
+                    output_cell.append_display_data(ai_explains.render())
 
             case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
                 output_cell.append_display_data(
@@ -528,7 +527,14 @@ class TestResultOutput:
                 for test in self.ipytest_result.test_results:
                     output_cell.append_display_data(HTML(test.to_html()))
 
-                    # TODO: Add AI explanation
+                    if self.openai_client:
+                        ai_explains = AIExplanation(
+                            ipytest_result=self.ipytest_result,
+                            exception=test.exception,
+                            openai_client=self.openai_client,
+                        )
+
+                    output_cell.append_display_data(ai_explains.render())
 
             case IPytestOutcome.NO_TEST_FOUND:
                 output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))

@@ -75,15 +75,17 @@ class OpenAIWrapper:
         self.client = openai.OpenAI(api_key=self.api_key)
 
         if self.model not in GPT_ALL_MODELS:
-            raise ValueError(
-                f"Invalid model: {model}. Available models: {GPT_ALL_MODELS}"
-            )
+            msg = f"Invalid model: {model}. Available models: {GPT_ALL_MODELS}"
+            raise ValueError(msg)
 
     def change_model(self, model: str) -> None:
         """Change the active OpenAI model in use"""
         if model not in GPT_ALL_MODELS:
-            raise ValueError(f"Unknown model: {model}")
+            msg = f"Unknown model: {model}"
+            raise ValueError(msg)
+
         self.model = model
+
         logger.info("Model changed to %s", self.model)
 
     @retry(
@@ -138,11 +140,99 @@ class ButtonState(Enum):
 class AIExplanation:
     """Class representing an AI-generated explanation"""
 
+    _STYLES = """
+        <style>
+            .ai-container {
+                margin-top: 1.5rem;
+                font-family: system-ui, -apple-system, sans-serif;
+            }
+            .ai-header {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                margin-bottom: 1rem;
+            }
+            .ai-title {
+                font-size: 1.1rem;
+                font-weight: 500;
+            }
+            .ai-button {
+                background-color: #4b88ff;
+                color: white;
+                border: none;
+                padding: 0;
+                border-radius: 0.5rem;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                min-width: 200px;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+            .ai-button:hover:not(:disabled) {
+                background-color: #3b7bff;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+            }
+            .ai-button:disabled {
+                background-color: #94a3b8;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+            .ai-timer {
+                font-size: 0.9rem;
+                color: #64748b;
+                margin-left: 1rem;
+                font-weight: 500;
+            }
+            .ai-content {
+                margin-top: 1rem;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.5rem;
+                overflow: hidden;
+            }
+            .ai-explanation h3 {
+                margin: 0 0 1rem 0;
+                font-size: 1.1rem;
+                color: #1f2937;
+            }
+            .ai-explanation .jupyter-widgets.accordion {
+                margin: 0.75rem 0;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.375rem;
+                overflow: hidden;
+            }
+            .ai-explanation .jupyter-widgets.accordion > .accordion-header {
+                background: #f9fafb;
+                padding: 0.75rem 1rem;
+                font-weight: 500;
+            }
+            .ai-explanation .jupyter-widgets.accordion > .accordion-content {
+                padding: 1rem;
+                background: white;
+            }
+            .ai-explanation code {
+                background: #f3f4f6;
+                padding: 0.2rem 0.4rem;
+                border-radius: 0.25rem;
+                font-size: 0.9em;
+            }
+            .ai-explanation pre {
+                background: #f8f9fa;
+                padding: 1rem;
+                border-radius: 0.375rem;
+                overflow-x: auto;
+            }
+        </style>
+    """
+
     def __init__(
         self,
         ipytest_result: "IPytestResult",
-        exception: BaseException,
         openai_client: "OpenAIWrapper",
+        exception: t.Optional[BaseException] = None,
         wait_time: int = 60,  # Wait time in seconds
     ) -> None:
         """Public constructor for an explanation widget"""
@@ -172,16 +262,11 @@ class AIExplanation:
                 "disabled": True,
             },
             ButtonState.WAIT: {
-                "description": "Wait {seconds} seconds",
+                "description": "Please wait",
                 "icon": "hourglass-start",
                 "disabled": True,
             },
         }
-        self._current_state = ButtonState.READY
-        self._button = widgets.Button()
-        self._update_button_state(ButtonState.READY)
-        self._button.on_click(self._handle_click)
-        self._button.observe(self._handle_state_change, names=["disabled"])
 
         # Set a default query
         self._query = (
@@ -193,10 +278,58 @@ class AIExplanation:
             "{traceback}"
         )
 
-    @property
-    def output(self) -> t.Tuple[widgets.Button, widgets.Output]:
-        """Return the button and output widget as a tuple"""
-        return self._button, self._output
+        # Create a container for all the renderable components
+        self._container = widgets.VBox(layout=widgets.Layout(margin="1rem 0"))
+
+        # Create a header with button and timer
+        self._header = widgets.Box(
+            layout=widgets.Layout(
+                display="flex",
+                align_items="center",
+                margin="0 0 1rem 0",
+            )
+        )
+
+        # Create a timer display
+        self._timer_display = widgets.HTML(
+            value="", layout=widgets.Layout(margin="0 0 0 0.75rem")
+        )
+
+        # Apply styles to the output widget
+        with self._output:
+            display(widgets.HTML(self._STYLES))
+
+        # Initialize the button
+        self._current_state = ButtonState.READY
+        self._button = widgets.Button()
+        self._update_button_state(ButtonState.READY)
+        self._button.on_click(self._handle_click)
+        self._button.observe(self._handle_state_change, names=["disabled"])
+
+    def render(self) -> widgets.Widget:
+        """Return a single widget containing all the components"""
+        header_html = widgets.HTML(
+            '<div class="ai-header">'
+            '<span class="ai-title">🤖 AI-Powered Error Analysis</span>'
+            "</div>"
+        )
+
+        button_container = widgets.Box(
+            [
+                self._button,
+                self._timer_display,
+            ],
+            layout=widgets.Layout(display="flex", align_iterms="center"),
+        )
+
+        # Update the container
+        self._container.children = [
+            header_html,
+            button_container,
+            self._output,
+        ]
+
+        return self._container
 
     @property
     def query(self) -> str:
@@ -231,11 +364,17 @@ class AIExplanation:
         self._current_state = state
         style = self._button_styles[state].copy()
 
+        # Update the timer display
         if state == ButtonState.WAIT:
-            style["description"] = style["description"].format(
-                seconds=int(self._remaining_time)
+            self._timer_display.value = (
+                '<span class="ai-timer">Available in '
+                f"{int(self._remaining_time)} "
+                "seconds</span>"
             )
+        else:
+            self._timer_display.value = ""
 
+        self._button.add_class("ai-button")
         self._button.description = style["description"]
         self._button.icon = style["icon"]
         self._button.disabled = style["disabled"]
@@ -288,8 +427,11 @@ class AIExplanation:
 
         self._update_button_state(ButtonState.LOADING)
 
-        traceback_str = "".join(traceback.format_exception_only(self.exception))
-        logger.debug("Formatted traceback: %s", traceback_str)
+        if self.exception:
+            traceback_str = "".join(traceback.format_exception_only(self.exception))
+            logger.debug("Formatted traceback: %s", traceback_str)
+        else:
+            traceback_str = "No traceback available."
 
         with self._output:
             self._output.clear_output()
@@ -316,10 +458,7 @@ class AIExplanation:
                 if formatted_response:
                     display(widgets.VBox(children=formatted_response))
                 else:
-                    display_html(
-                        "<p>No explanation could be generated for this error.</p>",
-                        raw=True,
-                    )
+                    display(widgets.HTML("<p>No explanation could be generated.</p>"))
             except Exception as e:
                 logger.exception("An error occurred while fetching the explanation.")
                 display_html(f"<p>Failed to fetch explanation: {e}</p>", raw=True)
@@ -339,14 +478,17 @@ class AIExplanation:
             """Markdown to HTML converter"""
             return md.markdown(str(text))
 
+        # Reset the explanation object
+        explanation = None
+
+        # A list to store all the widgets
+        widgets_list = []
+
         if (
             isinstance(chat_response, ParsedChatCompletionMessage)
             and (explanation := chat_response.parsed) is not None
         ):
             logger.debug("Response is a valid `Explanation` object that can be parsed.")
-
-            # A list to store all the widgets
-            widgets_list = []
 
             # A summary of the explanation
             summary_widget = widgets.HTML(f"<h3>{to_html(explanation.summary)}</h3>")
@@ -393,8 +535,6 @@ class AIExplanation:
                 )
                 widgets_list.append(hints_widget)
 
-            return widgets_list
-
         elif (
             isinstance(chat_response, ChatCompletionMessage)
             and (explanation := chat_response.content) is not None
@@ -405,8 +545,18 @@ class AIExplanation:
             explanation = (
                 explanation.removeprefix("```html").removesuffix("```").strip()
             )
-            return [widgets.HTML(to_html(explanation))]
 
-        logger.debug("Failed to parse explanation.")
+            widgets_list.append(widgets.HTML(to_html(explanation)))
+
+        if explanation is not None:
+            # Wrap everything in a styled container
+            container = widgets.VBox(
+                children=[widgets.HTML('<div class="ai-explanation">')]
+                + widgets_list
+                + [widgets.HTML("</div>")]
+            )
+            return [container]
+        else:
+            logger.debug("Failed to parse explanation.")
 
         return None
