@@ -478,7 +478,7 @@ def test_string_split_lines(function_to_test):
 INT_SETS = [set(), {1, 2, 3}, {3, -1, 0, 4, 42, 1002}]
 
 
-def reference_sets_of_even_and_odd(my_set: set[int]) -> tuple(set[int]):
+def reference_sets_of_even_and_odd(my_set: set[int]) -> tuple[set[int]]:
     even_set = my_set.copy()
     odd_set = my_set.copy()
     for n in my_set:
