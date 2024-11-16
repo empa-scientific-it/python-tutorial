@@ -211,6 +211,9 @@ def validate_oop_compare_persons(solution_result):
     assert (
         type(solution_result).__name__ == "Person"
     ), "The class should be named 'Person'."
+    assert hasattr(
+        solution_result.__eq__, "__closure__"
+    ), "Make sure that the class is properly implementing the __eq__() method."
     # Check the class attributes
     try:
         attrs = list(vars(solution_result))
