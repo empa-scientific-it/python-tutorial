@@ -100,7 +100,7 @@ class ReadFiles(Quiz):
         )
 
         q2 = Question(
-            question="The function <code>readlines</code> reads the entire content of a text file into <b>one</string>. Is this correct?",
+            question="The function <code>readlines</code> reads the entire content of a text file into <b>one string</b>. Is this correct?",
             options={
                 "No": "Correct! It reads the file line by line.",
                 "Yes": "Wrong! It reads the file line by line and returns a list of <code>str</code>, with one element for each line.",
