@@ -13,6 +13,17 @@ class SubAssertionError(AssertionError):
 # Example 1: Person
 #
 
+# NOTE:
+# When testing the classes returned by the solutions function in the Examples 1-4
+# we often need to check if a class method is implemented and it's using the right attributes.
+# One way to check both is to check if the class's method has the __closure__ attribute.
+# Why?
+#   1. If __method__ is not implemented, Python will fetch object.__method__ instead, which obviously is not a closure
+#       `hasattr(solution_result.__method__, "__closure__")` will return False.
+#   2. If __method__ is implemented, but it's not using the class attributes, it will be a closure
+#       `solution_result.__method__.__closure__ is None` will return False.
+# Reference: https://github.com/empa-scientific-it/python-tutorial/pull/249#discussion_r1836867387
+
 
 def reference_oop_person(first_name: str, last_name: str):
     class Person:
