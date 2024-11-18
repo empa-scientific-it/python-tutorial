@@ -82,7 +82,7 @@ def main():
     args = parser.parse_args()
 
     if not (input_nb := pathlib.Path(args.notebook)).exists():
-        raise FileNotFoundError(f"Notebook '{input_nb}' does not exist.")
+        raise FileNotFoundError(input_nb)
 
     if args.output is None:
         output_nb = input_nb.with_suffix(".toc.ipynb")

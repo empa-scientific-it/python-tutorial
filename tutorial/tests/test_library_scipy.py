@@ -39,10 +39,10 @@ def reference_lu():
     # 1. TODO: define the matrix a_ref here:
     a_ref = np.array([[9, 3, 3], [3, 2, 2], [3, 4, 2]])
     # 2. TODO: call the lu function here:
-    p, l, u = lu(a_ref)
+    p_matrix, l_matrix, u_matrix = lu(a_ref)
 
     # 3. TODO: return p, l, u matrices in this order here:
-    return p, l, u
+    return p_matrix, l_matrix, u_matrix
 
 
 def test_lu(function_to_test):
