@@ -90,6 +90,7 @@ def reference_write_file(output_file: pl.Path) -> None:
     write_file.write("python tutorial 2023")
     write_file.close()
 
+
 def test_write_file(function_to_test, tmp_path: pl.Path):
     tmp_user = tmp_path / "user_write_file.txt"
     tmp_test = tmp_path / "test_write_file.txt"
@@ -238,7 +239,9 @@ def test_exercise4(function_to_test):
     original_dictionary_content = dictionary.read_text()
 
     try:
-        assert function_to_test(words, dictionary) == reference_exercise4(words, dictionary)
+        assert function_to_test(words, dictionary) == reference_exercise4(
+            words, dictionary
+        )
     finally:
         # Reset the input files to their original content
         words.write_text(original_words_content)
