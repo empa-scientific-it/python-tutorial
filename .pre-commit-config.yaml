@@ -1,7 +1,6 @@
 ---
 ci:
   autoupdate_schedule: quarterly
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -29,12 +28,12 @@ repos:
       - id: yamllint
         args: [--format, parsable]
         name: YAML (check)
-  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-    rev: 0.2.3
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.14.0
     hooks:
       - id: yamlfmt
-        args: [--mapping, '2', --sequence, '4', --offset, '2']
         name: YAML (format)
+        types: [yaml]
   - repo: https://github.com/asottile/setup-cfg-fmt
     rev: v2.7.0
     hooks:
