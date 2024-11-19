@@ -1,4 +1,3 @@
----
 name: Build Tutorial Container
 on:
   push:
@@ -10,7 +9,6 @@ on:
       - images/**
       - .gitignore
   workflow_dispatch:
-
 jobs:
   repo2docker:
     runs-on: ubuntu-latest
@@ -19,7 +17,6 @@ jobs:
     steps:
       - name: checkout files in repo
         uses: actions/checkout@main
-
       - name: update jupyter dependencies with repo2docker
         uses: jupyterhub/repo2docker-action@master
         with:
