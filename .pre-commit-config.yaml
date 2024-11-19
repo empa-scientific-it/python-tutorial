@@ -1,3 +1,4 @@
+---
 ci:
   autoupdate_schedule: quarterly
 repos:
