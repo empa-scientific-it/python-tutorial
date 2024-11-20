@@ -143,7 +143,7 @@ def reference_exercise6(my_list: List[Tuple[str, int]]) -> List[Tuple[str, float
 
 
 def test_exercise6(
-    function_to_test: Callable[[List[Tuple[str, int]]], List[Tuple[str, float]]]
+    function_to_test: Callable[[List[Tuple[str, int]]], List[Tuple[str, float]]],
 ):
     input_data = reference_exercise5(get_data_exercise5())
     assert function_to_test(input_data) == reference_exercise6(input_data)
