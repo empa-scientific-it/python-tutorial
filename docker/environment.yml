@@ -1,0 +1,23 @@
+---
+name: base
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - numpy
+      - matplotlib
+      - pandas
+      - ipywidgets
+      - ipynbname
+      - jupyterlab
+      - pytest
+      - pytest-timeout
+      - markdown
+      - pre-commit
+      - geostatspy
+      - gstools
+      - scikit-learn
+      - attrs
+      - multiprocess
