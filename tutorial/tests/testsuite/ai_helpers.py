@@ -102,7 +102,9 @@ class OpenAIWrapper:
             "focusing on the root cause for users with minimal Python experience. "
             "Follow these guidelines strictly:\n"
             "- Offer hints, even for trivial errors.\n"
-            "- Avoid providing exact solutions.\n"
+            "- Consider the number of attempts a studend made, "
+            "and provide an increasingly detailed hints.\n"
+            "- Do not provide exact solutions, only guidance.\n"
             f"- Respond in {self.language}.\n"
             "- Any text or string must be written in Markdown."
         )
@@ -269,14 +271,23 @@ class AIExplanation:
         }
 
         # Set a default query
-        self._query = (
+        self._query_template = (
             "I wrote the following Python function:\n\n"
             "{function_code}\n\n"
             "Whose docstring describes the purpose, arguments, and expected return values:\n\n"
             "{docstring}\n\n"
-            "Running pytest on this function failed, and here is the error traceback I encountered:\n\n"
-            "{traceback}"
+            "Running pytest on this function failed, and here is the error traceback I got:\n\n"
+            "{traceback}\n\n"
+            "Consider that this is my {attempt_number} attempt."
         )
+
+        # Default query params
+        self._query_params = {
+            "function_code": "",
+            "docstring": "",
+            "traceback": "",
+            "attempt_number": self.ipytest_result.test_attempts,
+        }
 
         # Create a header with button and timer
         self._header = widgets.Box(
@@ -330,27 +341,23 @@ class AIExplanation:
 
         return container
 
+    def set_query_template(self, template: str) -> None:
+        """Set the query template"""
+        self._query_template = template
+
+    def query_params(self, *args, **kwargs: t.Any) -> None:
+        """Add/update multiple query parameters"""
+        self._query_params.update(kwargs)
+
     @property
     def query(self) -> str:
-        """Return the query for the AI explanation"""
-        return self._query
-
-    @query.setter
-    def query(self, q: str) -> None:
-        """Set the query for the AI explanation"""
-        if not q:
-            logger.error("Query cannot be empty.")
-            raise ValueError
-        if (
-            "{function_code}" not in q
-            or "{traceback}" not in q
-            or "{docstring}" not in q
-        ):
-            logger.error(
-                "Query must contain placeholders: {function_code}, {docstring}, {traceback}"
-            )
-            raise ValueError
-        self._query = q
+        """Generate the query string"""
+        logger.debug("Building a query with parameters: %s", self._query_params)
+        try:
+            return self._query_template.format(**self._query_params)
+        except KeyError as e:
+            logger.exception("Missing key in query parameter")
+            raise ValueError from e
 
     def _update_remaining_time(self):
         """Update the button label with remaining time"""
@@ -419,6 +426,8 @@ class AIExplanation:
 
     def _fetch_explanation(self) -> None:
         """Fetch the explanation from OpenAI API"""
+        from .helpers import IPytestOutcome
+
         logger.debug("Attempting to fetch explanation from OpenAI API.")
 
         if not self.openai_client:
@@ -436,15 +445,23 @@ class AIExplanation:
             self._output.clear_output()
 
             try:
-                assert self.ipytest_result.function is not None
+                # assert self.ipytest_result.function is not None
+                match self.ipytest_result.status:
+                    case IPytestOutcome.FINISHED if self.ipytest_result.function is not None:
+                        self.query_params(
+                            function_code=self.ipytest_result.function.source_code,
+                            docstring=self.ipytest_result.function.implementation.__doc__,
+                            traceback=traceback_str,
+                        )
+                    case _:
+                        self.query_params(
+                            function_code=self.ipytest_result.cell_content,
+                            docstring="(Find it in the function's definition above.)",
+                            traceback=traceback_str,
+                        )
 
-                query = self._query.format(
-                    function_code=self.ipytest_result.function.source_code,
-                    docstring=self.ipytest_result.function.implementation.__doc__,
-                    traceback=traceback_str,
-                )
                 response = self.openai_client.get_chat_response(
-                    query,
+                    self.query,
                     temperature=0.2,
                 )
 

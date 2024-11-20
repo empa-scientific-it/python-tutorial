@@ -222,6 +222,7 @@ class TestMagic(Magics):
                 IPytestResult(
                     status=IPytestOutcome.COMPILE_ERROR,
                     exceptions=[err],
+                    cell_content=self.cell,
                 )
             ]
 

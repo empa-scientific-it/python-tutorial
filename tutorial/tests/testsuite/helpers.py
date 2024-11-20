@@ -163,18 +163,23 @@ class TestCaseResult:
         """
 
         # Determine test status and icon
-        if self.outcome == TestOutcome.PASS:
-            status_class = "test-pass"
-            icon = "✅"
-            status_text = "Passed"
-        elif self.outcome == TestOutcome.FAIL:
-            status_class = "test-fail"
-            icon = "❌"
-            status_text = "Failed"
-        else:
-            status_class = "test-error"
-            icon = "⚠️"
-            status_text = "Test Error"
+        match self.outcome:
+            case TestOutcome.PASS:
+                status_class = "test-pass"
+                icon = "✅"
+                status_text = "Passed"
+            case TestOutcome.FAIL:
+                status_class = "test-fail"
+                icon = "❌"
+                status_text = "Failed"
+            case TestOutcome.TEST_ERROR:
+                status_class = "test-error"
+                icon = "🚨"
+                status_text = "Syntax Error"
+            case _:
+                status_class = "test-error"
+                icon = "⚠️"
+                status_text = "Error"
 
         # Start building the HTML content
         test_name = self.test_name.split("::")[-1]
@@ -265,6 +270,7 @@ class IPytestResult:
     test_results: Optional[List[TestCaseResult]] = None
     exceptions: Optional[List[BaseException]] = None
     test_attempts: int = 0
+    cell_content: Optional[str] = None
 
 
 @dataclass
@@ -449,17 +455,18 @@ class TestResultOutput:
 
     def prepare_output_cell(self) -> ipywidgets.Output:
         """Prepare the cell to display the test results"""
-        assert self.ipytest_result.function is not None
+        # assert self.ipytest_result.function is not None
 
         output_cell = ipywidgets.Output()
 
         # Header with test function name
+        function = self.ipytest_result.function
         output_cell.append_display_data(
             HTML(
                 '<div style="margin-bottom: 1rem;">'
                 f'<h2 style="font-size: 1.5rem; margin: 0;">Test Results for '
                 f'<code style="font-size: 1.1rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-family: ui-monospace, monospace;">'
-                f"solution_{self.ipytest_result.function.name}</code></h2>"
+                f"solution_{function.name if function else None}</code></h2>"  # TODO: change `solution_None` as title
                 "</div>"
             )
         )
@@ -479,7 +486,7 @@ class TestResultOutput:
 
                 # Create a TestCaseResult for consistency
                 error_result = TestCaseResult(
-                    test_name=f"error::solution_{self.ipytest_result.function.name}",
+                    test_name=f"error::solution_{function.name if function else None}",  # TODO: change `solution_None`
                     outcome=TestOutcome.TEST_ERROR,
                     exception=exception,
                 )
