@@ -17,6 +17,7 @@ import pytest
 from dotenv import find_dotenv, load_dotenv
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
+from IPython.display import HTML, display
 
 from .ai_helpers import OpenAIWrapper
 from .ast_parser import AstParser
@@ -307,8 +308,9 @@ def load_ipython_extension(ipython):
     autoloaded by IPython at startup time.
     """
     # Configure the API key for the OpenAI client
-    openai_env = find_dotenv("openai.env", raise_error_if_not_found=True)
-    load_dotenv(openai_env)
+    openai_env = find_dotenv("openai.env")
+    if openai_env:
+        load_dotenv(openai_env)
 
     if api_key := os.getenv("OPENAI_API_KEY"):
         openai_client = OpenAIWrapper(
@@ -317,16 +319,27 @@ def load_ipython_extension(ipython):
             os.getenv("OPENAI_LANGUAGE"),
         )
         ipython.openai_client = openai_client
-        print("OpenAI client configured.")
+        message = (
+            "<div style='background-color: #d9ead3; border-radius: 5px; padding: 10px;'>"
+            "✅ <strong>OpenAI client configured successfully.</strong></div>"
+        )
+        display(HTML(message))
     else:
         ipython.openai_client = None
-        print(
-            "OpenAI API key is undefined. "
-            "Please, store your key as OPENAI_API_KEY='sk-****' to the file 'openai.env'. "
-            "Check the file 'openai.env.example' for an example."
+        message = (
+            "<div style='background-color: #ffebee; border-radius: 5px; padding: 10px;'>"
+            "🚫 <strong style='color: red;'>OpenAI API key is undefined.</strong><br>"
+            "If you want to enable AI, store your key as <code>OPENAI_API_KEY='sk-****'</code> "
+            "in the file <code>openai.env</code>. "
+            "Check the file <code>openai.env.example</code> for guidance.</div>"
         )
+        display(HTML(message))
 
     # Register the magic
     ipython.register_magics(TestMagic)
 
-    print("IPytest extension loaded.")
+    message = (
+        "<div style='background-color: #fffde7; border-radius: 5px; padding: 10px;'>"
+        "🔄 <strong>IPytest extension (re)loaded.</strong></div>"
+    )
+    display(HTML(message))
