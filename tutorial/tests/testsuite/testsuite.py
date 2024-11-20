@@ -23,6 +23,7 @@ from .ast_parser import AstParser
 from .exceptions import (
     FunctionNotFoundError,
     InstanceNotFoundError,
+    PytestInteralError,
     TestModuleNotFoundError,
 )
 from .helpers import (
@@ -84,7 +85,7 @@ def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
             return IPytestResult(
                 function=function,
                 status=IPytestOutcome.PYTEST_ERROR,
-                exceptions=[Exception("Internal error")],
+                exceptions=[PytestInteralError()],
             )
         case pytest.ExitCode.NO_TESTS_COLLECTED:
             return IPytestResult(
@@ -276,7 +277,7 @@ class TestMagic(Magics):
         if not (
             module_file := pathlib.Path(f"tutorial/tests/test_{self.module_name}.py")
         ).exists():
-            raise FileNotFoundError(f"Module file '{module_file}' does not exist")
+            raise FileNotFoundError(module_file)
 
         self.module_file = module_file
 

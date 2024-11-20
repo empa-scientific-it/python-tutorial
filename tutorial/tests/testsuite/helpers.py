@@ -1,6 +1,4 @@
 import html
-import re
-import traceback
 from dataclasses import dataclass
 from enum import Enum
 from types import TracebackType
@@ -36,10 +34,217 @@ class TestCaseResult:
 
     test_name: str
     outcome: TestOutcome
-    exception: BaseException | None
-    traceback: TracebackType | None
+    exception: Optional[BaseException] = None
+    traceback: Optional[TracebackType] = None
+    formatted_exception: str = ""
     stdout: str = ""
     stderr: str = ""
+    report_output: str = ""
+
+    def __str__(self) -> str:
+        """Basic string representation"""
+        return (
+            f"TestCaseResult(\n"
+            f"  test_name: {self.test_name}\n"
+            f"  outcome: {self.outcome.name if self.outcome else 'None'}\n"
+            f"  exception: {type(self.exception).__name__ if self.exception else 'None'}"
+            f" - {str(self.exception) if self.exception else ''}\n"
+            f"  formatted_exception: {self.formatted_exception[:100]}..."
+            f" ({len(self.formatted_exception)} chars)\n"
+            f"  stdout: {len(self.stdout)} chars\n"
+            f"  stderr: {len(self.stderr)} chars\n"
+            f"  report_output: {len(self.report_output)} chars\n"
+            ")"
+        )
+
+    def to_html(self) -> str:
+        """HTML representation of the test result"""
+        # CSS styles for the output
+        styles = """
+        <style>
+            .test-result {
+                font-family: system-ui, -apple-system, sans-serif;
+                margin: 0.75rem 0;
+                padding: 1rem;
+                border-radius: 0.5rem;
+                transition: all 0.2s ease;
+            }
+            .test-header {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+            .test-icon {
+                font-size: 1.25rem;
+                width: 1.5rem;
+                height: 1.5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .test-name {
+                font-family: ui-monospace, monospace;
+                font-size: 0.9rem;
+                padding: 0.25rem 0.5rem;
+                background: rgba(0, 0, 0, 0.05);
+                border-radius: 0.25rem;
+            }
+            .test-status {
+                font-weight: 600;
+                font-size: 1rem;
+            }
+            .test-pass {
+                background-color: #f0fdf4;
+                border: 1px solid #86efac;
+            }
+            .test-fail {
+                background-color: #fef2f2;
+                border: 1px solid #fecaca;
+            }
+            .test-error {
+                background-color: #fff7ed;
+                border: 1px solid #fed7aa;
+            }
+            .error-block {
+                background-color: #ffffff;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                padding: 1rem;
+                border-radius: 0.375rem;
+                margin-top: 0.75rem;
+            }
+            .error-title {
+                font-weight: 600;
+                color: #dc2626;
+                margin-bottom: 0.5rem;
+            }
+            .error-message {
+                font-family: ui-monospace, monospace;
+                font-size: 0.9rem;
+                white-space: pre-wrap;
+                margin: 0;
+            }
+            .output-section {
+                margin-top: 0.75rem;
+            }
+            .output-tabs {
+                display: flex;
+                gap: 0.5rem;
+                border-bottom: 1px solid #e5e7eb;
+                margin-bottom: 0.5rem;
+            }
+            .output-tab {
+                border: none;
+                background: transparent;
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                cursor: pointer;
+                border-bottom: 2px solid transparent;
+                color: #6b7280;
+            }
+            .output-tab.active {
+                border-bottom-color: #3b82f6;
+                color: #1f2937;
+                font-weight: 500;
+            }
+            .output-content {
+                padding: 1rem;
+                background: #ffffff;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                border-radius: 0.375rem;
+            }
+            .output-pane {
+                display: none;
+            }
+            .output-pane.active {
+                display: block;
+            }
+        </style>
+        """
+
+        # Determine test status and icon
+        if self.outcome == TestOutcome.PASS:
+            status_class = "test-pass"
+            icon = "✅"
+            status_text = "Passed"
+        elif self.outcome == TestOutcome.FAIL:
+            status_class = "test-fail"
+            icon = "❌"
+            status_text = "Failed"
+        else:
+            status_class = "test-error"
+            icon = "⚠️"
+            status_text = "Test Error"
+
+        # Start building the HTML content
+        test_name = self.test_name.split("::")[-1]
+        html_parts = [styles]
+
+        # Main container
+        html_parts.append(
+            f"""
+        <div class="test-result {status_class}">
+            <div class="test-header">
+                <span class="test-icon">{icon}</span>
+                <span class="test-name">{html.escape(test_name)}</span>
+                <span class="test-status">{html.escape(status_text)}</span>
+            </div>
+        """
+        )
+
+        # Exception information if test failed
+        if self.exception is not None:
+            exception_type = type(self.exception).__name__
+            exception_message = str(self.exception)
+
+            html_parts.append(
+                f"""
+            <div class="error-block">
+                <div class="error-title">{html.escape(exception_type)}</div>
+                <pre class="error-message">{html.escape(exception_message)}</pre>
+            </div>
+            """
+            )
+
+        # Output sections (if any)
+        if self.stdout or self.stderr:
+            # Generate unique IDs for this test's tabs
+            tab_id = f"test_{hash(self.test_name)}"
+            html_parts.append(
+                f"""
+                        <div id="{tab_id}_container" class="output-section">
+                            <div class="output-tabs">
+                                <button class="output-tab active"
+                                        onclick="
+                                            document.querySelectorAll('#{tab_id}_container .output-tab').forEach(t => t.classList.remove('active'));
+                                            document.querySelectorAll('#{tab_id}_container .output-pane').forEach(p => p.classList.remove('active'));
+                                            this.classList.add('active');
+                                            document.querySelector('#{tab_id}_output').classList.add('active');"
+                                >Output</button>
+                                <button class="output-tab"
+                                        onclick="
+                                            document.querySelectorAll('#{tab_id}_container .output-tab').forEach(t => t.classList.remove('active'));
+                                            document.querySelectorAll('#{tab_id}_container .output-pane').forEach(p => p.classList.remove('active'));
+                                            this.classList.add('active');
+                                            document.querySelector('#{tab_id}_error').classList.add('active');"
+                                >Error</button>
+                            </div>
+                            <div class="output-content">
+                                <div id="{tab_id}_output" class="output-pane active">
+                                    <pre>{html.escape(self.stdout) if self.stdout else 'No output'}</pre>
+                                </div>
+                                <div id="{tab_id}_error" class="output-pane">
+                                    <pre>{html.escape(self.stderr) if self.stderr else 'No errors'}</pre>
+                                </div>
+                            </div>
+                        </div>
+                        """
+            )
+
+        # Close main div
+        html_parts.append("</div>")
+
+        return "\n".join(html_parts)
 
 
 @dataclass
@@ -60,58 +265,6 @@ class IPytestResult:
     test_results: Optional[List[TestCaseResult]] = None
     exceptions: Optional[List[BaseException]] = None
     test_attempts: int = 0
-
-
-def format_error(exception: BaseException) -> str:
-    """
-    Takes the output of traceback.format_exception_only() for an AssertionError
-    and returns a formatted string with clear, structured information.
-    """
-    formatted_message = None
-
-    # Get a string representation of the exception, without the traceback
-    exception_str = "".join(traceback.format_exception_only(exception))
-
-    # Handle the case where we were expecting an exception but none was raised
-    if "DID NOT RAISE" in exception_str:
-        pattern = r"<class '(.*?)'>"
-        match = re.search(pattern, exception_str)
-
-        if match:
-            formatted_message = (
-                "<h3>Expected exception:</h3>"
-                f"<p>Exception <code>{html.escape(match.group(1))}</code> was not raised.</p>"
-            )
-    else:
-        # Regex pattern to extract relevant parts of the assertion message
-        pattern = (
-            r"(\w+): assert (.*?) == (.*?)\n \+  where .*? = (.*?)\n \+  and .*? = (.*)"
-        )
-        match = re.search(pattern, exception_str)
-
-        if match:
-            (
-                assertion_type,
-                actual_value,
-                expected_value,
-                actual_expression,
-                expected_expression,
-            ) = (html.escape(m) for m in match.groups())
-
-            # Formatting the output as HTML
-            formatted_message = (
-                f"<h3>{assertion_type}:</h3>"
-                "<ul>"
-                f"<li>Failed Assertion: <strong>{actual_value} == {expected_value}</strong></li>"
-                f"<li>Actual Value: <strong>{actual_value}</strong> obtained from <code>{actual_expression}</code></li>"
-                f"<li>Expected Value: <strong>{expected_value}</strong> obtained from <code>{expected_expression}</code></li>"
-                "</ul>"
-            )
-
-    # If we couldn't parse the exception message, just display it as is
-    formatted_message = formatted_message or f"<p>{exception_str}</p>"
-
-    return formatted_message
 
 
 @dataclass
@@ -142,53 +295,155 @@ class TestResultOutput:
             else False
         )
 
-        if success or self.ipytest_result.test_attempts > 2:
+        if success or self.ipytest_result.test_attempts >= self.MAX_ATTEMPTS:
             cells.append(solution_cell)
         else:
             if tests_finished:
-                cells.append(
-                    HTML(
-                        "<h4>&#128221; A proposed solution will appear after "
-                        f"{TestResultOutput.MAX_ATTEMPTS - self.ipytest_result.test_attempts} "
-                        f"more failed attempt{'s' if self.ipytest_result.test_attempts < 2 else ''}.</h4>",
-                    )
+                attempts_remaining = (
+                    self.MAX_ATTEMPTS - self.ipytest_result.test_attempts
                 )
-            else:
                 cells.append(
                     HTML(
-                        "<h4>&#9888;&#65039; Your code could not run because of an error. Please, double-check it.</h4>"
+                        '<div style="margin-top: 1.5rem; font-family: system-ui, -apple-system, sans-serif;">'
+                        f'<div style="display: flex; align-items: center; gap: 0.5rem;">'
+                        '<span style="font-size: 1.2rem;">📝</span>'
+                        '<span style="font-size: 1.1rem; font-weight: 500;">Solution will be available after '
+                        f'{attempts_remaining} more failed attempt{"s" if attempts_remaining > 1 else ""}</span>'
+                        "</div>"
+                        "</div>"
                     )
                 )
 
         ipython_display(
             ipywidgets.VBox(
                 children=cells,
-                # CSS: "border: 1px solid; border-color: lightgray; background-color: #FAFAFA; margin: 5px; padding: 10px;"
                 layout={
-                    "border": "1px solid lightgray",
-                    "background-color": "#FAFAFA",
+                    "border": "1px solid #e5e7eb",
+                    "background-color": "#ffffff",
                     "margin": "5px",
-                    "padding": "10px",
+                    "padding": "0.75rem",
+                    "border-radius": "0.5rem",
                 },
             )
         )
 
     def prepare_solution_cell(self) -> ipywidgets.Widget:
-        """Prepare the cell to display the solution code"""
-        solution_code = ipywidgets.Output()
+        """Prepare the cell to display the solution code with a redacted effect until revealed"""
+        styles = """
+        <style>
+            .solution-container {
+                margin-top: 1.5rem;
+                font-family: system-ui, -apple-system, sans-serif;
+            }
+            .solution-header {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+                font-size: 1.1rem;
+                font-weight: 500;
+            }
+            .solution-box {
+                border: 1px solid #e5e7eb;
+                border-radius: 0.5rem;
+                overflow: hidden;
+                background: #ffffff;
+                padding: 0;  /* Remove padding from container */
+            }
+            .solution-code {
+                position: relative;
+            }
+            .solution-code pre {
+                margin: 0;
+                font-family: ui-monospace, monospace;
+                line-height: 1.5;
+            }
+            /* Style adjustments for the IPython Code class output */
+            .solution-code .highlight {
+                margin: 0;
+                padding: 1rem;  /* Add padding to the actual code content */
+            }
+            .solution-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: repeating-linear-gradient(
+                    45deg,
+                    rgba(30, 35, 40, 0.98),    /* Darker base color with higher opacity */
+                    rgba(30, 35, 40, 0.98) 10px,
+                    rgba(45, 50, 55, 0.98) 10px,  /* Slightly lighter but still dark */
+                    rgba(45, 50, 55, 0.98) 20px
+                );
+                transition: opacity 0.3s ease;
+                opacity: 1;
+            }
+            .solution-button {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                padding: 0.75rem 1.5rem;
+                background: #4b88ff;  /* Slightly softer blue */
+                color: white;
+                border: none;
+                border-radius: 0.5rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                z-index: 10;
+                font-size: 0.95rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .solution-button:hover {
+                background: #3b7bff;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+                transform: translate(-50%, -52%);
+            }
+            .solution-button:disabled {
+                background: #94a3b8;
+                cursor: not-allowed;
+            }
+        </style>
+        """
+
         solution_cell = ipywidgets.Output()
 
-        solution_cell.append_display_data(HTML("<h4>&#128073; Proposed solution:</h4>"))
+        # Return an empty output widget if no solution is provided
+        if self.solution is None:
+            return solution_cell
 
-        solution_code.append_display_data(
-            Code(language="python", data=f"{self.solution}")
+        # Solution cell with redacted effect
+        solution_cell.append_display_data(
+            HTML(
+                f"""
+            {styles}
+            <div class="solution-container">
+                <div class="solution-header">
+                    <span>👉</span>
+                    <span>Proposed solution</span>
+                </div>
+                <div class="solution-box">
+                    <div class="solution-code">
+                        <div id="solution-content">
+                            {Code(data=self.solution, language="python")._repr_html_()}
+                        </div>
+                        <div class="solution-overlay" id="solution-overlay">
+                            <button class="solution-button" onclick="
+                                document.getElementById('solution-overlay').style.opacity = '0';
+                                document.getElementById('solution-overlay').style.pointerEvents = 'none';
+                                this.style.display = 'none';
+                            ">
+                                Reveal Solution
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        """
+            )
         )
-
-        solution_accordion = ipywidgets.Accordion(
-            titles=("Click here to reveal",), children=[solution_code]
-        )
-
-        solution_cell.append_display_data(ipywidgets.Box(children=[solution_accordion]))
 
         return solution_cell
 
@@ -196,12 +451,16 @@ class TestResultOutput:
         """Prepare the cell to display the test results"""
         assert self.ipytest_result.function is not None
 
-        output_box_children: List[ipywidgets.Widget]
-
         output_cell = ipywidgets.Output()
+
+        # Header with test function name
         output_cell.append_display_data(
             HTML(
-                f'<h2>Test Results for <span style="color: #00f;">solution_{self.ipytest_result.function.name}</span></h2>'
+                '<div style="margin-bottom: 1rem;">'
+                f'<h2 style="font-size: 1.5rem; margin: 0;">Test Results for '
+                f'<code style="font-size: 1.1rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-family: ui-monospace, monospace;">'
+                f"solution_{self.ipytest_result.function.name}</code></h2>"
+                "</div>"
             )
         )
 
@@ -213,148 +472,79 @@ class TestResultOutput:
             ):
                 # We know that there is exactly one exception
                 assert self.ipytest_result.exceptions is not None
+                # We know that there is no test results
+                assert self.ipytest_result.test_results is None
+
                 exception = self.ipytest_result.exceptions[0]
 
-                exceptions_str = (
-                    format_error(exception) if self.ipytest_result.exceptions else ""
+                # Create a TestCaseResult for consistency
+                error_result = TestCaseResult(
+                    test_name=f"error::solution_{self.ipytest_result.function.name}",
+                    outcome=TestOutcome.TEST_ERROR,
+                    exception=exception,
                 )
 
-                output_box_children = [
-                    HTML(f"<h3>{type(exception).__name__}</h3>"),
-                    HTML(exceptions_str),
-                ]
+                output_cell.append_display_data(HTML(error_result.to_html()))
 
                 if self.openai_client:
-                    explanation = AIExplanation(
-                        openai_client=self.openai_client,
+                    ai_explains = AIExplanation(
                         ipytest_result=self.ipytest_result,
                         exception=exception,
+                        openai_client=self.openai_client,
                     )
 
-                    output_box_children.extend(explanation.output)
+                    output_cell.append_display_data(ai_explains.render())
 
-                output_cell.append_display_data(
-                    ipywidgets.VBox(children=output_box_children)
+            case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
+                # Calculate test statistics
+                total_tests = len(self.ipytest_result.test_results)
+                passed_tests = sum(
+                    1
+                    for test in self.ipytest_result.test_results
+                    if test.outcome == TestOutcome.PASS
                 )
+                failed_tests = total_tests - passed_tests
+
+                # Display summary
+                output_cell.append_display_data(
+                    HTML(
+                        '<div style="margin-bottom: 1rem; font-size: 0.95rem;">'
+                        f'<div style="color: #059669; margin-bottom: 0.25rem;">'
+                        f"✅ {passed_tests}/{total_tests} tests passed</div>"
+                        f'<div style="color: #dc2626;">'
+                        f"❌ {failed_tests}/{total_tests} tests failed</div>"
+                        "</div>"
+                    )
+                )
+
+                # Display individual test results
+                for test in self.ipytest_result.test_results:
+                    output_cell.append_display_data(HTML(test.to_html()))
+
+                failed_tests = (
+                    test
+                    for test in self.ipytest_result.test_results
+                    if test.outcome != TestOutcome.PASS
+                )
+
+                if self.openai_client and any(failed_tests):
+                    ai_explains = AIExplanation(
+                        ipytest_result=self.ipytest_result,
+                        exception=next(failed_tests).exception,
+                        openai_client=self.openai_client,
+                    )
+
+                    output_cell.append_display_data(ai_explains.render())
 
             case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
                 output_cell.append_display_data(
-                    HTML("<h3>Solution Function Missing</h3>")
-                )
-
-            case IPytestOutcome.FINISHED if self.ipytest_result.test_results:
-                captures: Dict[str, Dict[str, Optional[str]]] = {}
-
-                for test in self.ipytest_result.test_results:
-                    test_name = test.test_name.split("::")[-1]
-                    captures[test_name] = {
-                        "stdout": test.stdout or None,
-                        "stderr": test.stderr or None,
-                    }
-
-                # Create lists of captured outs and errs in valid HTML
-                outs = [
-                    f"<h3>{test_name}</h3><br>{capture['stdout']}"
-                    for test_name, capture in captures.items()
-                    if capture["stdout"]
-                ]
-                errs = [
-                    f"<h3>{test_name}</h3><br>{capture['stderr']}"
-                    for test_name, capture in captures.items()
-                    if capture["stderr"]
-                ]
-
-                if outs or errs:
-                    children = []
-
-                    if outs:
-                        children.append(
-                            ipywidgets.Accordion(
-                                children=(
-                                    ipywidgets.VBox(
-                                        children=[
-                                            HTML(o, style={"background": "#FAFAFA"})
-                                            for o in outs
-                                        ]
-                                    ),
-                                ),
-                                titles=("Captured output",),
-                            )
-                        )
-
-                    if errs:
-                        children.append(
-                            ipywidgets.Accordion(
-                                children=(
-                                    ipywidgets.VBox(
-                                        children=[
-                                            HTML(e, style={"background": "#FAFAFA"})
-                                            for e in errs
-                                        ]
-                                    ),
-                                ),
-                                titles=("Captured error",),
-                            )
-                        )
-
-                    output_cell.append_display_data(ipywidgets.VBox(children=children))
-
-                success = all(
-                    test.outcome == TestOutcome.PASS
-                    for test in self.ipytest_result.test_results
-                )
-
-                num_results = len(self.ipytest_result.test_results)
-
-                output_cell.append_display_data(
                     HTML(
-                        f"<h4>&#128073; We ran {num_results} test{'s' if num_results > 1 else ''}. "
-                        f"""{"All tests passed!</h4>" if success else "Below you find the details for each test run:</h4>"}"""
+                        '<div class="test-result test-error" style="margin-top: 1rem;">'
+                        '<div class="error-title">Solution Function Missing</div>'
+                        "<p>Please implement the required solution function.</p>"
+                        "</div>"
                     )
                 )
-
-                if not success:
-                    for result in self.ipytest_result.test_results:
-                        test_succeded = result.outcome == TestOutcome.PASS
-                        test_name = result.test_name.split("::")[-1]
-
-                        output_box_children = [
-                            HTML(
-                                f'<h3>{"&#10004" if test_succeded else "&#10060"} Test <code>{test_name}</code></h3>',
-                                style={
-                                    "background": (
-                                        "rgba(251, 59, 59, 0.25)"
-                                        if not test_succeded
-                                        else "rgba(207, 249, 179, 0.60)"
-                                    )
-                                },
-                            )
-                        ]
-
-                        if not test_succeded:
-                            assert result.exception is not None
-
-                            output_box_children.append(
-                                ipywidgets.Accordion(
-                                    children=[
-                                        HTML(format_error(result.exception)),
-                                    ],
-                                    titles=("Test results",),
-                                ),
-                            )
-
-                            if self.openai_client:
-                                explanation = AIExplanation(
-                                    openai_client=self.openai_client,
-                                    ipytest_result=self.ipytest_result,
-                                    exception=result.exception,
-                                )
-
-                                output_box_children.extend(explanation.output)
-
-                        output_cell.append_display_data(
-                            ipywidgets.VBox(children=output_box_children)
-                        )
 
             case IPytestOutcome.NO_TEST_FOUND:
                 output_cell.append_display_data(HTML("<h3>No Test Found</h3>"))
@@ -388,24 +578,25 @@ class ResultCollector:
     def pytest_runtest_makereport(self, item: pytest.Item, call: pytest.CallInfo):
         """Called when an individual test item has finished execution."""
         if call.when == "call":
-            if call.excinfo is None:
-                # Test passes
-                self.tests[item.nodeid] = TestCaseResult(
-                    test_name=item.nodeid,
-                    outcome=TestOutcome.PASS,
-                    stdout=call.result,
-                    stderr=call.result,
-                    exception=None,
-                    traceback=None,
+            test_result = TestCaseResult(
+                test_name=item.nodeid,
+                outcome=TestOutcome.FAIL if call.excinfo else TestOutcome.PASS,
+                exception=call.excinfo.value if call.excinfo else None,
+                traceback=call.excinfo.tb if call.excinfo else None,
+            )
+
+            if call.excinfo:
+                test_result.formatted_exception = str(
+                    call.excinfo.getrepr(
+                        showlocals=True,
+                        style="long",
+                        funcargs=True,
+                        abspath=False,
+                        chain=True,
+                    )
                 )
-            else:
-                # Test fails
-                self.tests[item.nodeid] = TestCaseResult(
-                    test_name=item.nodeid,
-                    outcome=TestOutcome.FAIL,
-                    exception=call.excinfo.value,
-                    traceback=call.excinfo.tb,
-                )
+
+            self.tests[item.nodeid] = test_result
 
     def pytest_exception_interact(
         self, call: pytest.CallInfo, report: pytest.TestReport
@@ -432,3 +623,6 @@ class ResultCollector:
         if test_result := self.tests.get(report.nodeid):
             test_result.stdout = report.capstdout
             test_result.stderr = report.capstderr
+
+            if report.failed:
+                test_result.report_output = str(report.longrepr)

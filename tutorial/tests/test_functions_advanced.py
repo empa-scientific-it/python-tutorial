@@ -144,6 +144,10 @@ def hello(name):
 def reference_once(allowed_time: int = 15) -> t.Callable:
     """Decorator to run a function at most once"""
 
+    class TooSoonError(RuntimeError):
+        def __init__(self, wait: float):
+            super().__init__(f"Wait another {wait:.2f} seconds")
+
     def decorator(func: t.Callable) -> t.Callable:
         timer = 0.0
 
@@ -156,9 +160,7 @@ def reference_once(allowed_time: int = 15) -> t.Callable:
                 return func(*args, **kwargs)
 
             if (stop := time.perf_counter()) - timer < allowed_time:
-                raise RuntimeError(
-                    f"Wait another {allowed_time - (stop - timer):.2f} seconds"
-                )
+                raise TooSoonError(allowed_time - (stop - timer))
 
             timer = time.perf_counter()
 
