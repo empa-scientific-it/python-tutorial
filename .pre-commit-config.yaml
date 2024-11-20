@@ -22,12 +22,6 @@ repos:
       - id: ruff-format
         types_or: [python, pyi]
         name: ruff (format)
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
-    hooks:
-      - id: yamllint
-        args: [--format, parsable]
-        name: YAML (check)
   - repo: https://github.com/google/yamlfmt
     rev: v0.14.0
     hooks:
