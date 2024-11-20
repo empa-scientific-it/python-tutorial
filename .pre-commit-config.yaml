@@ -28,10 +28,6 @@ repos:
       - id: yamlfmt
         name: YAML (format)
         types: [yaml]
-  - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.7.0
-    hooks:
-      - id: setup-cfg-fmt
   - repo: https://github.com/kynan/nbstripout
     rev: 0.8.1
     hooks:
