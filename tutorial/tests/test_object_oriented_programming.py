@@ -177,8 +177,8 @@ def test_oop_str_and_repr(first_name, last_name, function_to_test):
     validate_oop_str_method(solution_result)
     validate_oop_repr_method(solution_result)
 
-    assert str(solution_result) == str(
-        reference_result
+    assert (
+        str(solution_result) == str(reference_result)
     ), "The __str__() result does not match the template 'My name is {first_name} {last_name}'."
     assert (
         solution_result.__repr__() == reference_result.__repr__()
