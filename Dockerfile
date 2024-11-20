@@ -10,7 +10,7 @@ WORKDIR ${HOME}
 
 # Clone the tutorial repository
 RUN git clone \
-    --branch add-dockerfile \
+    --branch main \
     --depth 1 \
     ${REPO}
 
@@ -31,24 +31,15 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy the script to setup the environment
-# RUN cp -a docker/setup_custom_env.py /opt/setup-scripts/ && \
-#     chmod +x /opt/setup-scripts/setup_custom_env.py
-
-# Copy the script to activate the Conda environment
-# RUN cp -a docker/activate-custom-env.sh /usr/local/bin/before-notebook.d/
-
 # Switch back to the default notebook user
 USER ${NB_UID}
 
 # Create the Conda environment defined in environment.yml
-RUN mamba env update -f docker/environment.yml && \
+# COPY --chown=${NB_USER}:${NB_GID} docker/environment.yml docker/environment.yml
+RUN mamba env update -n base -f docker/environment.yml && \
     mamba clean --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
-
-# Register the Jupyter kernel from the custom environment
-# RUN /opt/setup-scripts/setup_custom_env.py ${BASENAME}
 
 # Copy the IPython configuration file (binder/postBuild script)
 RUN mkdir -p ${HOME}/.ipython/profile_default && \
