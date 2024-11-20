@@ -1,6 +1,15 @@
 # Use the jupyter/minimal-notebook as the base image
 FROM quay.io/jupyter/minimal-notebook:latest
 
+# Metadata labels
+LABEL org.opencontainers.image.title="Python Tutorial"
+LABEL org.opencontainers.image.description="A containerized Python tutorial environment with Jupyter Lab."
+LABEL org.opencontainers.image.authors="Empa Scientific IT <scientificit@empa.ch>"
+LABEL org.opencontainers.image.url="https://github.com/empa-scientific-it/python-tutorial"
+LABEL org.opencontainers.image.source="https://github.com/empa-scientific-it/python-tutorial"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.licenses="MIT"
+
 # Set environment variables for the tutorial and repository
 ENV BASENAME="python-tutorial"
 ENV REPO=${HOME}/${BASENAME}
