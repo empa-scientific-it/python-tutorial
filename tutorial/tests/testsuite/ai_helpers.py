@@ -102,9 +102,8 @@ class OpenAIWrapper:
             "focusing on the root cause for users with minimal Python experience. "
             "Follow these guidelines strictly:\n"
             "- Offer hints, even for trivial errors.\n"
-            "- Consider the number of attempts a studend made, "
-            "and provide an increasingly detailed hints.\n"
-            "- Do not provide exact solutions, only guidance.\n"
+            "- Take into account the number of attempts made by providing increasingly detailed hints after a failed attempt.\n"
+            "- Do not provide verbatim solutions, only guidance.\n"
             f"- Respond in {self.language}.\n"
             "- Any text or string must be written in Markdown."
         )
