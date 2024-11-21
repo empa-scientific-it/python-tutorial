@@ -61,6 +61,12 @@ class Explanation(BaseModel):
 
 class OpenAIWrapper:
     """A simple API wrapper adapted for IPython environments"""
+    _instance = None
+
+    def __new__(cls, *args, **kwargs) -> "OpenAIWrapper":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
     def __init__(
         self,
@@ -69,6 +75,10 @@ class OpenAIWrapper:
         language: t.Optional[str] = None,
     ) -> None:
         """Initialize the wrapper for OpenAI API with logging and checks"""
+        # Avoid reinitializing the client
+        if hasattr(self, "client"):
+            return
+
         self.api_key = api_key
         self.model = model or DEFAULT_MODEL
         self.language = language or DEFAULT_LANGUAGE
