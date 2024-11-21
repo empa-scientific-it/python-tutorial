@@ -191,7 +191,7 @@ class TestCaseResult:
         <div class="test-result {status_class}">
             <div class="test-header">
                 <span class="test-icon">{icon}</span>
-                <span class="test-name">{html.escape(test_name)}</span>
+                {f'<span class="test-name">{html.escape(test_name)}</span>' if test_name else ''}
                 <span class="test-status">{html.escape(status_text)}</span>
             </div>
         """
@@ -455,18 +455,17 @@ class TestResultOutput:
 
     def prepare_output_cell(self) -> ipywidgets.Output:
         """Prepare the cell to display the test results"""
-        # assert self.ipytest_result.function is not None
-
         output_cell = ipywidgets.Output()
 
         # Header with test function name
         function = self.ipytest_result.function
+        title = "Test Results for " if function else "Test Results "
         output_cell.append_display_data(
             HTML(
-                '<div style="margin-bottom: 1rem;">'
-                f'<h2 style="font-size: 1.5rem; margin: 0;">Test Results for '
-                f'<code style="font-size: 1.1rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-family: ui-monospace, monospace;">'
-                f"solution_{function.name if function else None}</code></h2>"  # TODO: change `solution_None` as title
+                '<div>'
+                f'<h2 style="font-size: 1.5rem; margin: 0;">{title}'
+                '<code style="font-size: 1.1rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-family: ui-monospace, monospace;">'
+                f'solution_{function.name}</code></h2>' if function is not None else f'<h2 style="font-size: 1.5rem; margin: 0;">{title}</h2>'
                 "</div>"
             )
         )
@@ -486,7 +485,7 @@ class TestResultOutput:
 
                 # Create a TestCaseResult for consistency
                 error_result = TestCaseResult(
-                    test_name=f"error::solution_{function.name if function else None}",  # TODO: change `solution_None`
+                    test_name=f"error::solution_{function.name}" if function else "::",
                     outcome=TestOutcome.TEST_ERROR,
                     exception=exception,
                 )
