@@ -61,6 +61,7 @@ class Explanation(BaseModel):
 
 class OpenAIWrapper:
     """A simple API wrapper adapted for IPython environments"""
+
     _instance = None
 
     def __new__(cls, *args, **kwargs) -> "OpenAIWrapper":
