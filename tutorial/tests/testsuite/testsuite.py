@@ -24,6 +24,7 @@ from .ast_parser import AstParser
 from .exceptions import (
     FunctionNotFoundError,
     InstanceNotFoundError,
+    OpenAIValidationError,
     PytestInteralError,
     TestModuleNotFoundError,
 )
@@ -329,17 +330,27 @@ def load_ipython_extension(ipython):
         load_dotenv(openai_env)
 
     if api_key := os.getenv("OPENAI_API_KEY"):
-        openai_client = OpenAIWrapper(
-            api_key,
-            os.getenv("OPENAI_MODEL"),
-            os.getenv("OPENAI_LANGUAGE"),
-        )
-        ipython.openai_client = openai_client
+        # Validate API key first
+        validation = OpenAIWrapper.validate_api_key(api_key)
+
+        if validation.is_valid:
+            try:
+                openai_client = OpenAIWrapper(
+                    api_key,
+                    os.getenv("OPENAI_MODEL"),
+                    os.getenv("OPENAI_LANGUAGE"),
+                )
+                ipython.openai_client = openai_client
+            except (OpenAIValidationError, ValueError):
+                ipython.openai_client = None
+
         message = (
-            "<div style='background-color: #d9ead3; border-radius: 5px; padding: 10px;'>"
-            "✅ <strong>OpenAI client configured successfully.</strong></div>"
+            "<div style='background-color: "
+            f"{'#d9ead3' if validation.is_valid else '#ffebee'}"
+            "; border-radius: 5px; padding: 10px;'>"
+            f"{validation.user_message}"
+            "</div>"
         )
-        display(HTML(message))
     else:
         ipython.openai_client = None
         message = (
@@ -349,7 +360,8 @@ def load_ipython_extension(ipython):
             "in the file <code>openai.env</code>. "
             "Check the file <code>openai.env.example</code> for guidance.</div>"
         )
-        display(HTML(message))
+
+    display(HTML(message))
 
     # Register the magic
     ipython.register_magics(TestMagic)

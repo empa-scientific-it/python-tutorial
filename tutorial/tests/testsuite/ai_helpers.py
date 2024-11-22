@@ -22,6 +22,13 @@ from tenacity import (
     wait_random,
 )
 
+from .exceptions import (
+    APIConnectionError,
+    APIValidationResult,
+    InvalidAPIKeyError,
+    UnexpectedAPIError,
+)
+
 if t.TYPE_CHECKING:
     from .helpers import IPytestResult
 
@@ -64,6 +71,21 @@ class OpenAIWrapper:
 
     _instance = None
 
+    @classmethod
+    def validate_api_key(cls, api_key: str) -> APIValidationResult:
+        """Validate the OpenAI API key"""
+        try:
+            client = openai.OpenAI(api_key=api_key)
+            client.models.list()  # the simplest API call to verify the API
+        except openai.AuthenticationError:
+            return APIValidationResult(is_valid=False, error=InvalidAPIKeyError())
+        except openai.APIConnectionError:
+            return APIValidationResult(is_valid=False, error=APIConnectionError())
+        except Exception as e:
+            return APIValidationResult(is_valid=False, error=UnexpectedAPIError(str(e)))
+        else:
+            return APIValidationResult(is_valid=True)
+
     def __new__(cls, *args, **kwargs) -> "OpenAIWrapper":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -79,6 +101,12 @@ class OpenAIWrapper:
         # Avoid reinitializing the client
         if hasattr(self, "client"):
             return
+
+        # Validate the API key
+        validation = self.validate_api_key(api_key)
+        if not validation.is_valid:
+            assert validation.error is not None  # for type checking
+            raise validation.error
 
         self.api_key = api_key
         self.model = model or DEFAULT_MODEL
