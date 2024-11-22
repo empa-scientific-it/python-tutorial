@@ -29,6 +29,7 @@ from .exceptions import (
 )
 from .helpers import (
     AFunction,
+    DebugOutput,
     FunctionInjectionPlugin,
     IPytestOutcome,
     IPytestResult,
@@ -147,6 +148,7 @@ class TestMagic(Magics):
         super().__init__(shell)
         self.shell: InteractiveShell = shell
         self.cell: str = ""
+        self.debug: bool = False
         self.module_file: Optional[pathlib.Path] = None
         self.module_name: Optional[str] = None
         self.threaded: Optional[bool] = None
@@ -252,6 +254,11 @@ class TestMagic(Magics):
         self.cell = cell
         line_contents = set(line.split())
 
+        # Debug mode?
+        if "debug" in line_contents:
+            line_contents.remove("debug")
+            self.debug = True
+
         # Check if we need to run the tests on a separate thread
         if "async" in line_contents:
             line_contents.remove("async")
@@ -259,8 +266,7 @@ class TestMagic(Magics):
             self.test_queue = Queue()
 
         # If debug is in the line, then we want to show the traceback
-        if "debug" in line_contents:
-            line_contents.remove("debug")
+        if self.debug:
             self.shell._showtraceback = self._orig_traceback
         else:
             self.shell._showtraceback = lambda *args, **kwargs: None
@@ -285,6 +291,15 @@ class TestMagic(Magics):
 
         # Run the cell
         results = self.run_cell()
+
+        # If in debug mode, display debug information first
+        if self.debug:
+            debug_output = DebugOutput(
+                module_name=self.module_name,
+                module_file=self.module_file,
+                results=results,
+            )
+            display(HTML(debug_output.to_html()))
 
         # Parse the AST of the test module to retrieve the solution code
         ast_parser = AstParser(self.module_file)

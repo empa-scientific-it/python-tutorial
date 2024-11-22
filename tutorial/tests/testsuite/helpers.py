@@ -1,6 +1,7 @@
 import html
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from types import TracebackType
 from typing import Any, Callable, ClassVar, Dict, List, Optional
 
@@ -26,6 +27,98 @@ class IPytestOutcome(Enum):
     NO_TEST_FOUND = 3
     PYTEST_ERROR = 4
     UNKNOWN_ERROR = 5
+
+
+@dataclass
+class DebugOutput:
+    """Class to format debug information about test execution"""
+
+    module_name: str
+    module_file: Path
+    results: List["IPytestResult"]
+
+    def to_html(self) -> str:
+        """Format debug information as HTML"""
+        debug_parts = [
+            """
+            <style>
+                .debug-container {
+                    font-family: ui-monospace, monospace;
+                    background: #f8f9fa;
+                    padding: 1rem;
+                    border-radius: 0.5rem;
+                    margin: 1rem 0;
+                }
+                .debug-title {
+                    font-size: 1.2rem;
+                    font-weight: 600;
+                    margin-bottom: 1rem;
+                }
+                .debug-section {
+                    margin: 0.5rem 0;
+                }
+                .debug-result {
+                    margin: 1rem 0;
+                    padding: 0.5rem;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 0.375rem;
+                }
+                .debug-list {
+                    margin-left: 1rem;
+                }
+            </style>
+            <div class="debug-container">
+        """
+        ]
+
+        # Overall test run info
+        debug_parts.append('<div class="debug-title">Debug Information</div>')
+        debug_parts.append(
+            '<div class="debug-section">'
+            f"Module: {self.module_name}<br>"
+            f"Module file: {self.module_file}<br>"
+            f"Number of results: {len(self.results)}"
+            "</div>"
+        )
+
+        # Detailed results
+        for i, result in enumerate(self.results, 1):
+            debug_parts.append(
+                f'<div class="debug-result">'
+                f'<strong>Result #{i}</strong><br>'
+                f'Status: {result.status.name if result.status else "None"}<br>'
+                f'Function: {result.function.name if result.function else "None"}<br>'
+                f'Solution attempts: {result.test_attempts}'
+            )
+
+            if result.test_results:
+                debug_parts.append(
+                    f'<div class="debug-section">'
+                    f"Test Results ({len(result.test_results)}):"
+                    '<div class="debug-list">'
+                )
+                for test in result.test_results:
+                    debug_parts.append(
+                        f'• {test.test_name}: {test.outcome.name}'
+                        f'{f" - {type(test.exception).__name__}: {str(test.exception)}" if test.exception else ""}<br>'
+                    )
+                debug_parts.append("</div></div>")
+
+            if result.exceptions:
+                debug_parts.append(
+                    f'<div class="debug-section">'
+                    f"Exceptions ({len(result.exceptions)}):"
+                    '<div class="debug-list">'
+                )
+                for exc in result.exceptions:
+                    debug_parts.append(f"• {type(exc).__name__}: {str(exc)}<br>")
+                debug_parts.append("</div></div>")
+
+            debug_parts.append("</div>")
+
+        debug_parts.append("</div>")
+
+        return "\n".join(debug_parts)
 
 
 @dataclass
