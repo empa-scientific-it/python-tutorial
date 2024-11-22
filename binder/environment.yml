@@ -21,3 +21,7 @@ dependencies:
       - scikit-learn
       - attrs
       - multiprocess
+      - openai
+      - tenacity
+      - markdown2
+      - python-dotenv
