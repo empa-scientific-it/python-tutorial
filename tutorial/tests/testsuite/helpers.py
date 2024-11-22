@@ -621,16 +621,16 @@ class TestResultOutput:
                 for test in self.ipytest_result.test_results:
                     output_cell.append_display_data(HTML(test.to_html()))
 
-                failed_tests = (
+                failed_tests = [
                     test
                     for test in self.ipytest_result.test_results
                     if test.outcome != TestOutcome.PASS
-                )
+                ]
 
-                if self.openai_client and any(failed_tests):
+                if self.openai_client and failed_tests:
                     ai_explains = AIExplanation(
                         ipytest_result=self.ipytest_result,
-                        exception=next(failed_tests).exception,
+                        exception=failed_tests[0].exception,
                         openai_client=self.openai_client,
                     )
 
