@@ -356,8 +356,8 @@ def load_ipython_extension(ipython):
         message = (
             "<div style='background-color: #ffebee; border-radius: 5px; padding: 10px;'>"
             "🚫 <strong style='color: red;'>OpenAI API key is undefined.</strong><br>"
-            "If you want to enable AI, store your key as <code>OPENAI_API_KEY='sk-****'</code> "
-            "in the file <code>openai.env</code>. "
+            "If you want to enable AI, create the file <code>openai.env</code> "
+            "and store your key as <code>OPENAI_API_KEY='sk-****'</code>. "
             "Check the file <code>openai.env.example</code> for guidance.</div>"
         )
 
