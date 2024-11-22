@@ -25,7 +25,7 @@ from .exceptions import (
     FunctionNotFoundError,
     InstanceNotFoundError,
     OpenAIValidationError,
-    PytestInteralError,
+    PytestInternalError,
     TestModuleNotFoundError,
 )
 from .helpers import (
@@ -88,7 +88,7 @@ def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
             return IPytestResult(
                 function=function,
                 status=IPytestOutcome.PYTEST_ERROR,
-                exceptions=[PytestInteralError()],
+                exceptions=[PytestInternalError()],
             )
         case pytest.ExitCode.NO_TESTS_COLLECTED:
             return IPytestResult(

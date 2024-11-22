@@ -22,7 +22,7 @@ class TestModuleNotFoundError(Exception):
         super().__init__("Test module is not defined")
 
 
-class PytestInteralError(Exception):
+class PytestInternalError(Exception):
     """Custom exception raised when the test module cannot be found"""
 
     def __init__(self) -> None:
