@@ -24,7 +24,7 @@ from .ast_parser import AstParser
 from .exceptions import (
     FunctionNotFoundError,
     InstanceNotFoundError,
-    OpenAIValidationError,
+    OpenAIWrapperError,
     PytestInternalError,
     TestModuleNotFoundError,
 )
@@ -329,39 +329,51 @@ def load_ipython_extension(ipython):
     if openai_env:
         load_dotenv(openai_env)
 
-    if api_key := os.getenv("OPENAI_API_KEY"):
-        # Validate API key first
-        validation = OpenAIWrapper.validate_api_key(api_key)
+    api_key = os.getenv("OPENAI_API_KEY")
+    model = os.getenv("OPENAI_MODEL")
+    language = os.getenv("OPENAI_LANGUAGE")
 
-        if validation.is_valid:
-            try:
-                openai_client = OpenAIWrapper(
-                    api_key,
-                    os.getenv("OPENAI_MODEL"),
-                    os.getenv("OPENAI_LANGUAGE"),
-                )
+    # First, validate the key
+    key_validation = OpenAIWrapper.validate_api_key(api_key)
+    if not key_validation.is_valid:
+        message = key_validation.user_message
+        message_color = "#ffebee"  # Red
+        ipython.openai_client = None
+    else:
+        assert api_key is not None  # must be so at this point
+        try:
+            openai_client, model_validation = OpenAIWrapper.create_validated(
+                api_key, model, language
+            )
+
+            if model_validation.is_valid:
                 ipython.openai_client = openai_client
-            except (OpenAIValidationError, ValueError):
+                message_color = "#d9ead3"  # Green
+            else:
+                message_color = "#ffebee"  # Red
                 ipython.openai_client = None
 
-        message = (
+            message = model_validation.user_message
+        except OpenAIWrapperError as e:
+            ipython.openai_client = None
+            message = f"🚫 <strong style='color: red;'>OpenAI configuration error:</strong><br>{str(e)}"
+            message_color = "#ffebee"
+        except Exception as e:
+            # Handle any other unexpected errors
+            ipython.openai_client = None
+            message = (
+                f"🚫 <strong style='color: red;'>Unexpected error:</strong><br>{str(e)}"
+            )
+            message_color = "#ffebee"
+
+    display(
+        HTML(
             "<div style='background-color: "
-            f"{'#d9ead3' if validation.is_valid else '#ffebee'}"
-            "; border-radius: 5px; padding: 10px;'>"
-            f"{validation.user_message}"
+            f"{message_color}; border-radius: 5px; padding: 10px;'>"
+            f"{message}"
             "</div>"
         )
-    else:
-        ipython.openai_client = None
-        message = (
-            "<div style='background-color: #ffebee; border-radius: 5px; padding: 10px;'>"
-            "🚫 <strong style='color: red;'>OpenAI API key is undefined.</strong><br>"
-            "If you want to enable AI, create the file <code>openai.env</code> "
-            "and store your key as <code>OPENAI_API_KEY='sk-****'</code>. "
-            "Check the file <code>openai.env.example</code> for guidance.</div>"
-        )
-
-    display(HTML(message))
+    )
 
     # Register the magic
     ipython.register_magics(TestMagic)

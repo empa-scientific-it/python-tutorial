@@ -24,9 +24,10 @@ from tenacity import (
 
 from .exceptions import (
     APIConnectionError,
-    APIValidationResult,
     InvalidAPIKeyError,
+    InvalidModelError,
     UnexpectedAPIError,
+    ValidationResult,
 )
 
 if t.TYPE_CHECKING:
@@ -34,13 +35,6 @@ if t.TYPE_CHECKING:
 
 # Set logger
 logger = logging.getLogger()
-
-# OpenAI models
-GPT_STABLE_MODELS = ("gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4o-mini")
-GPT_ALL_MODELS = GPT_STABLE_MODELS
-
-DEFAULT_MODEL = "gpt-4o-mini"
-DEFAULT_LANGUAGE = "English"
 
 
 class ExplanationStep(BaseModel):
@@ -69,31 +63,95 @@ class Explanation(BaseModel):
 class OpenAIWrapper:
     """A simple API wrapper adapted for IPython environments"""
 
-    _instance = None
+    # These are the models we can use: they must support structured responses
+    GPT_STABLE_MODELS = ("gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4o-mini")
+    GPT_ALL_MODELS = GPT_STABLE_MODELS
 
-    @classmethod
-    def validate_api_key(cls, api_key: str) -> APIValidationResult:
-        """Validate the OpenAI API key"""
-        try:
-            client = openai.OpenAI(api_key=api_key)
-            client.models.list()  # the simplest API call to verify the API
-        except openai.AuthenticationError:
-            return APIValidationResult(is_valid=False, error=InvalidAPIKeyError())
-        except openai.APIConnectionError:
-            return APIValidationResult(is_valid=False, error=APIConnectionError())
-        except Exception as e:
-            return APIValidationResult(is_valid=False, error=UnexpectedAPIError(str(e)))
-        else:
-            return APIValidationResult(is_valid=True)
+    DEFAULT_MODEL = "gpt-4o-mini"
+    DEFAULT_LANGUAGE = "English"
+
+    _instance = None
 
     def __new__(cls, *args, **kwargs) -> "OpenAIWrapper":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
+    @classmethod
+    def create_validated(
+        cls,
+        api_key: str,
+        model: t.Optional[str] = None,
+        language: t.Optional[str] = None,
+    ) -> t.Tuple["OpenAIWrapper", ValidationResult]:
+        instance = cls.__new__(cls)
+
+        # Only initialize if not already
+        if not hasattr(instance, "client"):
+            instance.api_key = api_key
+            instance.language = language or cls.DEFAULT_LANGUAGE
+            instance.model = model or cls.DEFAULT_MODEL
+            instance.client = openai.OpenAI(api_key=api_key)
+
+        # Validate the model
+        model_validation = instance.validate_model(instance.model)
+        return instance, model_validation
+
+    @classmethod
+    def validate_api_key(cls, api_key: t.Optional[str]) -> ValidationResult:
+        """Validate the OpenAI API key"""
+        if not api_key:
+            return ValidationResult(
+                is_valid=False,
+                error=InvalidAPIKeyError("API key is missing."),
+                message="OpenAI API key is not provided.",
+            )
+
+        try:
+            client = openai.OpenAI(api_key=api_key)
+            client.models.list()  # the simplest API call to verify the API
+        except openai.AuthenticationError:
+            return ValidationResult(
+                is_valid=False,
+                error=InvalidAPIKeyError("The provided API key is invalid."),
+                message="Invalid OpenAI API key. Please, double check it.",
+            )
+        except openai.APIConnectionError:
+            return ValidationResult(
+                is_valid=False,
+                error=APIConnectionError("Unable to connect to OpenAI."),
+                message="Could not connect to OpenAI. Please, check your internet connection.",
+            )
+        except Exception as e:
+            return ValidationResult(
+                is_valid=False,
+                error=UnexpectedAPIError(f"Unexpected error: {e}"),
+                message="An unexpected error occurred while validating API key.",
+            )
+        else:
+            return ValidationResult(is_valid=True)
+
+    def validate_model(self, model: t.Optional[str]) -> ValidationResult:
+        """Validate the model selection"""
+        try:
+            if model not in self.GPT_ALL_MODELS:
+                return ValidationResult(
+                    is_valid=False,
+                    error=InvalidModelError(),
+                    message=f"Invalid model: {model}. Available models: {' '.join(self.GPT_ALL_MODELS)}",
+                )
+        except Exception as e:
+            return ValidationResult(
+                is_valid=False,
+                error=UnexpectedAPIError(f"Error validating model: {e}"),
+                message="Unexpected error during model validation",
+            )
+
+        return ValidationResult(is_valid=True)
+
     def __init__(
         self,
-        api_key: str,
+        api_key: t.Optional[str],
         model: t.Optional[str] = None,
         language: t.Optional[str] = None,
     ) -> None:
@@ -109,22 +167,24 @@ class OpenAIWrapper:
             raise validation.error
 
         self.api_key = api_key
-        self.model = model or DEFAULT_MODEL
-        self.language = language or DEFAULT_LANGUAGE
+        self.language = language or self.DEFAULT_LANGUAGE
         self.client = openai.OpenAI(api_key=self.api_key)
 
-        if self.model not in GPT_ALL_MODELS:
-            msg = f"Invalid model: {model}. Available models: {GPT_ALL_MODELS}"
-            raise ValueError(msg)
+        self.model = model or self.DEFAULT_MODEL
+        model_validation = self.validate_model(self.model)
+        if not model_validation.is_valid:
+            assert model_validation.error is not None  # type checking
+            raise model_validation.error
 
     def change_model(self, model: str) -> None:
         """Change the active OpenAI model in use"""
-        if model not in GPT_ALL_MODELS:
-            msg = f"Unknown model: {model}"
-            raise ValueError(msg)
+        validation = self.validate_model(model)
+        if not validation.is_valid:
+            assert validation.error is not None  # type checking
+            logger.exception("Error changing model")
+            raise validation.error
 
         self.model = model
-
         logger.info("Model changed to %s", self.model)
 
     @retry(
