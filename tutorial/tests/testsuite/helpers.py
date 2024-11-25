@@ -426,8 +426,13 @@ class TestResultOutput:
             )
         )
 
-    def prepare_solution_cell(self) -> ipywidgets.Widget:
+    # TODO: This is left for reference if we ever want to bring back this styling
+    # Perhaps we should remove it if it's unnecessary
+    def __prepare_solution_cell(self) -> ipywidgets.Widget:
         """Prepare the cell to display the solution code with a redacted effect until revealed"""
+        # Generate a unique ID for each solution cell
+        uuid = f"solution_{id(self)}"
+
         styles = """
         <style>
             .solution-container {
@@ -525,13 +530,13 @@ class TestResultOutput:
                 </div>
                 <div class="solution-box">
                     <div class="solution-code">
-                        <div id="solution-content">
+                        <div id="{uuid}_content">
                             {Code(data=self.solution, language="python")._repr_html_()}
                         </div>
-                        <div class="solution-overlay" id="solution-overlay">
+                        <div class="solution-overlay" id="{uuid}_overlay">
                             <button class="solution-button" onclick="
-                                document.getElementById('solution-overlay').style.opacity = '0';
-                                document.getElementById('solution-overlay').style.pointerEvents = 'none';
+                                document.getElementById('{uuid}_overlay').style.opacity = '0';
+                                document.getElementById('{uuid}_overlay').style.pointerEvents = 'none';
                                 this.style.display = 'none';
                             ">
                                 Reveal Solution
@@ -545,6 +550,51 @@ class TestResultOutput:
         )
 
         return solution_cell
+
+    def prepare_solution_cell(self) -> ipywidgets.Widget:
+        """Prepare the cell to display the solution code with a collapsible accordion"""
+        # Return an empty output widget if no solution is provided
+        if self.solution is None:
+            return ipywidgets.Output()
+
+        # Create the solution content
+        solution_output = ipywidgets.Output(
+            layout=ipywidgets.Layout(padding="1rem", border="1px solid #e5e7eb")
+        )
+        with solution_output:
+            ipython_display(Code(data=self.solution, language="python"))
+
+        # Create header with emoji
+        header_output = ipywidgets.Output()
+        with header_output:
+            ipython_display(
+                HTML(
+                    '<div style="display: flex; align-items: center; gap: 0.5rem;">'
+                    '<span style="font-size: 1.1rem;">👉</span>'
+                    '<span style="font-size: 1.1rem; font-weight: 500;">Proposed solution</span>'
+                    "</div>"
+                )
+            )
+
+        # Create the collapsible accordion (closed by default)
+        accordion = ipywidgets.Accordion(
+            children=[solution_output],
+            selected_index=None,  # Start collapsed
+            titles=("View solution",),
+            layout=ipywidgets.Layout(
+                margin="1.5rem 0 0 0",
+                border="1px solid #e5e7eb",
+                border_radius="0.5rem",
+            ),
+        )
+
+        return ipywidgets.VBox(
+            children=[header_output, accordion],
+            layout=ipywidgets.Layout(
+                margin="0",
+                padding="0",
+            ),
+        )
 
     def prepare_output_cell(self) -> ipywidgets.Output:
         """Prepare the cell to display the test results"""
