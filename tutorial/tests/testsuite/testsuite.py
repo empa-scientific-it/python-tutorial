@@ -40,9 +40,11 @@ from .helpers import (
 )
 
 
-def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
+def run_pytest_for_function(
+    module_file: pathlib.Path, function: AFunction
+) -> IPytestResult:
     """
-    Run the tests for a single function
+    Runs pytest for a single function and returns an `IPytestResult` object
     """
     with redirect_stdout(io.StringIO()) as _, redirect_stderr(io.StringIO()) as _:
         # Create the test collector
@@ -102,13 +104,13 @@ def _run_test(module_file: pathlib.Path, function: AFunction) -> IPytestResult:
     )
 
 
-def run_test_in_thread(
+def run_pytest_in_background(
     module_file: pathlib.Path,
     function: AFunction,
     test_queue: Queue,
 ):
-    """Run the tests for a single function and put the result in the queue"""
-    test_queue.put(_run_test(module_file, function))
+    """Runs pytest in a background thread and puts the result in the provided queue"""
+    test_queue.put(run_pytest_for_function(module_file, function))
 
 
 def _name_from_line(line: str = ""):
@@ -181,8 +183,8 @@ class TestMagic(Magics):
             and (callable(function) or inspect.iscoroutinefunction(function))
         ]
 
-    def run_test(self, function: AFunction) -> IPytestResult:
-        """Run the tests for a single function"""
+    def run_test_with_tracking(self, function: AFunction) -> IPytestResult:
+        """Runs tests for a function while tracking execution count and handling threading"""
         assert isinstance(self.module_file, pathlib.Path)
 
         # Store execution count information for each cell
@@ -193,7 +195,7 @@ class TestMagic(Magics):
         if self.threaded:
             assert isinstance(self.test_queue, Queue)
             thread = Thread(
-                target=run_test_in_thread,
+                target=run_pytest_in_background,
                 args=(
                     self.module_file,
                     function,
@@ -204,7 +206,7 @@ class TestMagic(Magics):
             thread.join()
             result = self.test_queue.get()
         else:
-            result = _run_test(self.module_file, function)
+            result = run_pytest_for_function(self.module_file, function)
 
         match result.status:
             case IPytestOutcome.FINISHED:
@@ -216,7 +218,7 @@ class TestMagic(Magics):
                 return result
 
     def run_cell(self) -> List[IPytestResult]:
-        # Run the cell through IPython
+        """Evaluates the cell via IPython and runs tests for the functions"""
         try:
             result = self.shell.run_cell(self.cell, silent=True)  # type: ignore
             result.raise_error()
@@ -240,7 +242,9 @@ class TestMagic(Magics):
             ]
 
         # Run the tests for each function
-        test_results = [self.run_test(function) for function in functions_to_run]
+        test_results = [
+            self.run_test_with_tracking(function) for function in functions_to_run
+        ]
 
         return test_results
 
