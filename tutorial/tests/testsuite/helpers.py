@@ -759,6 +759,7 @@ class ResultCollector:
             outcome = (
                 TestOutcome.FAIL
                 if exc.errisinstance(AssertionError)
+                or exc.errisinstance(pytest.fail.Exception)
                 else TestOutcome.TEST_ERROR
             )
             self.tests[report.nodeid] = TestCaseResult(
