@@ -1,18 +1,13 @@
 import pathlib
-import sys
-from collections import Counter
 from math import isclose, sqrt
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import pytest
 
 
 def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     """Read input data"""
-    current_module = sys.modules[__name__]
-    return (
-        pathlib.Path(current_module.__file__).parent / f"{data_dir}/{name}"
-    ).resolve()
+    return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
 
 
 #
@@ -145,7 +140,30 @@ nums_1, nums_2 = (
 )
 
 
-def reference_find_pair(nums: List[int]) -> int:
+def reference_find_pair(nums: List[int]):
+    """
+    Reference solutions:
+        - A solution with two nested loops
+        - A solution using a dictionary and a single loop
+    """
+
+    def find_pair_with_double_loop(nums: List[int]) -> Optional[int]:
+        """Two nested loops"""
+        for i in nums:
+            for j in nums:
+                if i + j == 2020:
+                    return i * j
+
+    def find_pair_with_sets(nums: List[int]) -> Optional[int]:
+        """Using a dictionary and a single loop"""
+        complements = {}
+        for num in nums:
+            if num in complements:
+                return num * complements[num]
+            complements[2020 - num] = num
+
+
+def __reference_find_pair(nums: List[int]) -> Optional[int]:
     """Reference solution (part 1)"""
     complements = {}
     for num in nums:
@@ -156,20 +174,39 @@ def reference_find_pair(nums: List[int]) -> int:
 
 @pytest.mark.parametrize("nums", [nums_1, nums_2])
 def test_find_pair(nums: List[int], function_to_test) -> None:
-    assert function_to_test(nums) == reference_find_pair(nums)
+    assert function_to_test(nums) == __reference_find_pair(nums)
 
 
-def reference_find_triplet_slow(nums: List[int]) -> int:
-    """Reference solution (part 2), O(n^3)"""
-    n = len(nums)
-    for i in range(n - 2):
-        for j in range(i + 1, n - 1):
-            for k in range(j + 1, n):
-                if nums[i] + nums[j] + nums[k] == 2020:
-                    return nums[i] * nums_2[j] * nums[k]
+def reference_find_triplet(nums: List[int]):
+    """
+    Reference solutions:
+        - A slow solution with three nested loops
+        - A fast solution using only two loops
+    """
+
+    def find_triplet_slow(nums: List[int]) -> Optional[int]:
+        """Slow solution with a triple loop"""
+        n = len(nums)
+        for i in range(n - 2):
+            for j in range(i + 1, n - 1):
+                for k in range(j + 1, n):
+                    if nums[i] + nums[j] + nums[k] == 2020:
+                        return nums[i] * nums_2[j] * nums[k]
+
+    def find_triplet_best(nums: List[int]) -> Optional[int]:
+        """Fast solution with two loops"""
+        n = len(nums)
+        for i in range(n - 1):
+            s = set()
+            target_sum = 2020 - nums[i]
+            for j in range(i + 1, n):
+                last_num = target_sum - nums[j]
+                if last_num in s:
+                    return nums[i] * nums[j] * last_num
+                s.add(nums[j])
 
 
-def reference_find_triplet(nums: List[int]) -> int:
+def __reference_find_triplet(nums: List[int]) -> Optional[int]:
     """Reference solution (part 2), O(n^2)"""
     n = len(nums)
     for i in range(n - 1):
@@ -184,7 +221,7 @@ def reference_find_triplet(nums: List[int]) -> int:
 
 @pytest.mark.parametrize("nums", [nums_1, nums_2])
 def test_find_triplet(nums: List[int], function_to_test) -> None:
-    assert function_to_test(nums) == reference_find_triplet(nums)
+    assert function_to_test(nums) == __reference_find_triplet(nums)
 
 
 #
@@ -201,7 +238,7 @@ def reference_cats_with_hats() -> int:
             if cat % loop == 0:
                 cats[cat] = not has_hat
 
-    return Counter(cats.values())[True]
+    return sum(cats.values())
 
 
 def test_cats_with_hats(function_to_test) -> None:
