@@ -1,6 +1,7 @@
+import contextlib
 import pathlib
 from math import isclose, sqrt
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional
 
 import pytest
 
@@ -246,69 +247,158 @@ def test_cats_with_hats(function_to_test) -> None:
 
 
 #
-# Exercise 4: Toboggan trajectory
+# Exercise 4: Base converter
 #
 
 
-def parse_data(filename: str) -> List[List[int]]:
-    """Parse a map of trees"""
-    input_data = read_data(filename).read_text()
-    return [
-        [1 if pos == "#" else 0 for pos in line] for line in input_data.splitlines()
-    ]
+def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
+    """Reference solution to convert a number from one base to another"""
+    # Validate bases
+    if not (2 <= from_base <= 16 and 2 <= to_base <= 16):
+        msg = "Bases must be between 2 and 16"
+        raise ValueError(msg)
+
+    # Handle empty input
+    if not number or number.strip() in ("", "-"):
+        msg = "Invalid empty input"
+        raise ValueError(msg)
+
+    # Same to and from bases
+    if from_base == to_base:
+        return number
+
+    # Handle negative numbers
+    is_negative = number.strip().startswith("-")
+    number = number.strip().removeprefix("-")
+
+    # Remove spaces and convert to uppercase for consistency
+    number = number.replace(" ", "").upper()
+
+    # Validate digits
+    valid_digits = "0123456789ABCDEF"
+    for digit in number:
+        if digit not in valid_digits[:from_base]:
+            msg = f"Invalid digit '{digit}' for base {from_base}"
+            raise ValueError(msg)
+
+    # Convert to base 10
+    decimal = 0
+    for digit in number:
+        decimal = decimal * from_base + valid_digits.index(digit)
+
+    # Handle 0 as a special case
+    if decimal == 0:
+        return "0"
+
+    if to_base == 10:
+        return str(decimal)
+
+    # Convert to target base
+    result = ""
+    while decimal > 0:
+        digit = decimal % to_base
+        result += valid_digits[digit]
+        decimal //= to_base
+
+    return f"-{result}" if is_negative else result
 
 
-trees_1, trees_2 = (parse_data(f"trees_{num}.txt") for num in (1, 2))
+# We need a way to "disable" the use of `int()`, otherwise it's too easy
+# Solution: replace `int()` with a function that raises an exception using a context manager
+@contextlib.contextmanager
+def block_int():
+    """Context manager to block int() usage"""
+    original_int = int
 
+    class IntReplacement:
+        def __call__(self, *args, **kwargs):
+            import inspect
 
-def reference_toboggan_p1(trees_map: List[List[int]], right: int, down: int) -> int:
-    """Reference solution (part 1)"""
-    start, trees, depth, width = [0, 0], 0, len(trees_map), len(trees_map[0])
-    while start[0] < depth:
-        trees += trees_map[start[0]][start[1]]
-        start = [start[0] + down, (start[1] + right) % width]
-    return trees
+            frame = inspect.currentframe()
+            while frame:
+                if frame.f_code.co_name == "solution_base_converter":
+                    raise AssertionError("Using int() is not allowed.")  # noqa: TRY003
+                frame = frame.f_back
+            return original_int(*args, **kwargs)
+
+        def __instancecheck__(self, instance: Any, /) -> bool:
+            return isinstance(instance, original_int)
+
+    import builtins
+
+    builtins.int = IntReplacement()
+
+    try:
+        yield
+    finally:
+        builtins.int = original_int
 
 
 @pytest.mark.parametrize(
-    "trees_map, right, down",
-    [
-        (trees_1, 3, 1),
-        (trees_2, 3, 1),
-    ],
+    "number,from_base,to_base", [("42", 10, 2), ("1A", 16, 2), ("1010", 2, 16)]
 )
-def test_toboggan_p1(
-    trees_map: List[List[int]], right: int, down: int, function_to_test
-) -> None:
-    assert function_to_test(trees_map, right, down) == reference_toboggan_p1(
-        trees_map, right, down
-    )
-
-
-def reference_toboggan_p2(trees_map: List[List[int]], slopes: Tuple[Tuple[int]]) -> int:
-    """Reference solution (part 2)"""
-    total = 1
-    for right, down in slopes:
-        total *= reference_toboggan_p1(trees_map, right, down)
-    return total
+def test_base_converter_basics(number, from_base, to_base, function_to_test):
+    with block_int():
+        expected = reference_base_converter(number, from_base, to_base)
+        assert function_to_test(number, from_base, to_base) == expected
 
 
 @pytest.mark.parametrize(
-    "trees_map, slopes",
+    "number,from_base,to_base", [("10 10", 2, 10), ("FF FF", 16, 2)]
+)
+def test_base_converter_with_spaces(number, from_base, to_base, function_to_test):
+    with block_int():
+        expected = reference_base_converter(number, from_base, to_base)
+        assert function_to_test(number, from_base, to_base) == expected
+
+
+@pytest.mark.parametrize("number,from_base,to_base", [("-42", 10, 2), ("-FF", 16, 10)])
+def test_base_converter_negative_numbers(number, from_base, to_base, function_to_test):
+    with block_int():
+        expected = reference_base_converter(number, from_base, to_base)
+        assert function_to_test(number, from_base, to_base) == expected
+
+
+@pytest.mark.parametrize(
+    "number,from_base,to_base", [("ff", 16, 10), ("FF", 16, 10), ("Ff", 16, 10)]
+)
+def test_base_converter_case_insensitive(number, from_base, to_base, function_to_test):
+    with block_int():
+        expected = reference_base_converter(number, from_base, to_base)
+        assert function_to_test(number, from_base, to_base) == expected
+
+
+@pytest.mark.parametrize(
+    "number,from_base,to_base", [("42", 1, 10), ("42", 10, 17), ("42", 0, 0)]
+)
+def test_base_converter_invalid_bases(number, from_base, to_base, function_to_test):
+    with block_int():
+        with pytest.raises(ValueError):
+            reference_base_converter(number, from_base, to_base)
+        with pytest.raises(ValueError):
+            function_to_test(number, from_base, to_base)
+
+
+@pytest.mark.parametrize(
+    "number,from_base,to_base",
     [
-        (
-            trees_1,
-            ((1, 1), (3, 1), (5, 1), (7, 1), (1, 2)),
-        ),  # 9354744432
-        (
-            trees_2,
-            ((1, 1), (3, 1), (5, 1), (7, 1), (1, 2)),
-        ),  # 1574890240
+        ("2", 2, 10),  # 2 not valid in base 2
+        ("G", 16, 2),  # G not valid in base 16
+        ("9", 8, 2),  # 9 not valid in base 8
     ],
 )
-def test_toboggan_p2(
-    trees_map: List[List[int]], slopes: Tuple[Tuple[int]], function_to_test
-) -> None:
-    assert function_to_test(trees_map, slopes) == reference_toboggan_p2(
-        trees_map, slopes
-    )
+def test_base_converter_invalid_digits(number, from_base, to_base, function_to_test):
+    with block_int():
+        with pytest.raises(ValueError):
+            function_to_test(number, from_base, to_base)
+
+
+@pytest.mark.parametrize(
+    "number,from_base,to_base", [("", 2, 2), (" ", 2, 2), ("-", 2, 2)]
+)
+def test_base_converter_empty_or_invalid_input(
+    number, from_base, to_base, function_to_test
+):
+    with block_int():
+        with pytest.raises(ValueError):
+            function_to_test(number, from_base, to_base)
