@@ -1,28 +1,36 @@
 """A module to define the `%%ipytest` cell magic"""
 
+import ast
 import dataclasses
 import inspect
 import io
+import os
 import pathlib
-import re
 from collections import defaultdict
 from contextlib import redirect_stderr, redirect_stdout
 from queue import Queue
 from threading import Thread
-from typing import Callable, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import ipynbname
 import pytest
+from dotenv import find_dotenv, load_dotenv
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
+from IPython.display import HTML, display
 
+from .ai_helpers import OpenAIWrapper
 from .ast_parser import AstParser
 from .exceptions import (
     FunctionNotFoundError,
     InstanceNotFoundError,
+    OpenAIWrapperError,
+    PytestInternalError,
     TestModuleNotFoundError,
 )
 from .helpers import (
+    AFunction,
+    DebugOutput,
     FunctionInjectionPlugin,
     IPytestOutcome,
     IPytestResult,
@@ -32,11 +40,11 @@ from .helpers import (
 )
 
 
-def run_test(
-    module_file: pathlib.Path, function_name: str, function_object: Callable
+def run_pytest_for_function(
+    module_file: pathlib.Path, function: AFunction
 ) -> IPytestResult:
     """
-    Run the tests for a single function
+    Runs pytest for a single function and returns an `IPytestResult` object
     """
     with redirect_stdout(io.StringIO()) as _, redirect_stderr(io.StringIO()) as _:
         # Create the test collector
@@ -44,9 +52,9 @@ def run_test(
 
         # Run the tests
         result = pytest.main(
-            ["-k", f"test_{function_name}", f"{module_file}"],
+            ["-k", f"test_{function.name}", f"{module_file}"],
             plugins=[
-                FunctionInjectionPlugin(function_object),
+                FunctionInjectionPlugin(function.implementation),
                 result_collector,
             ],
         )
@@ -54,7 +62,7 @@ def run_test(
     match result:
         case pytest.ExitCode.OK:
             return IPytestResult(
-                function_name=function_name,
+                function=function,
                 status=IPytestOutcome.FINISHED,
                 test_results=list(result_collector.tests.values()),
             )
@@ -64,7 +72,7 @@ def run_test(
                 for test in result_collector.tests.values()
             ):
                 return IPytestResult(
-                    function_name=function_name,
+                    function=function,
                     status=IPytestOutcome.PYTEST_ERROR,
                     exceptions=[
                         test.exception
@@ -74,19 +82,19 @@ def run_test(
                 )
 
             return IPytestResult(
-                function_name=function_name,
+                function=function,
                 status=IPytestOutcome.FINISHED,
                 test_results=list(result_collector.tests.values()),
             )
         case pytest.ExitCode.INTERNAL_ERROR:
             return IPytestResult(
-                function_name=function_name,
+                function=function,
                 status=IPytestOutcome.PYTEST_ERROR,
-                exceptions=[Exception("Internal error")],
+                exceptions=[PytestInternalError()],
             )
         case pytest.ExitCode.NO_TESTS_COLLECTED:
             return IPytestResult(
-                function_name=function_name,
+                function=function,
                 status=IPytestOutcome.NO_TEST_FOUND,
                 exceptions=[FunctionNotFoundError()],
             )
@@ -96,14 +104,13 @@ def run_test(
     )
 
 
-def run_test_in_thread(
+def run_pytest_in_background(
     module_file: pathlib.Path,
-    function_name: str,
-    function_object: Callable,
+    function: AFunction,
     test_queue: Queue,
 ):
-    """Run the tests for a single function and put the result in the queue"""
-    test_queue.put(run_test(module_file, function_name, function_object))
+    """Runs pytest in a background thread and puts the result in the provided queue"""
+    test_queue.put(run_pytest_for_function(module_file, function))
 
 
 def _name_from_line(line: str = ""):
@@ -142,9 +149,9 @@ class TestMagic(Magics):
 
     def __init__(self, shell):
         super().__init__(shell)
-        self.max_execution_count = 3
         self.shell: InteractiveShell = shell
         self.cell: str = ""
+        self.debug: bool = False
         self.module_file: Optional[pathlib.Path] = None
         self.module_name: Optional[str] = None
         self.threaded: Optional[bool] = None
@@ -155,38 +162,43 @@ class TestMagic(Magics):
         self._orig_traceback = self.shell._showtraceback  # type: ignore
         # This is monkey-patching suppress printing any exception or traceback
 
-    def extract_functions_to_test(self) -> Dict[str, Callable]:
-        """"""
-        # Retrieve the functions names defined in the current cell
+    def extract_functions_to_test(self) -> List[AFunction]:
+        """Retrieve the functions names and implementations defined in the current cell"""
         # Only functions with names starting with `solution_` will be candidates for tests
-        functions_names: List[str] = re.findall(
-            r"^(?:async\s+?)?def\s+(solution_.*?)\s*\(", self.cell, re.M
-        )
+        functions: Dict[str, str] = {}
+        tree = ast.parse(self.cell)
 
-        return {
-            name.removeprefix("solution_"): function
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("solution_"):
+                functions.update({str(node.name): ast.unparse(node)})
+
+        return [
+            AFunction(
+                name=name.removeprefix("solution_"),
+                implementation=function,
+                source_code=functions[name],
+            )
             for name, function in self.shell.user_ns.items()
-            if name in functions_names
+            if name in functions
             and (callable(function) or inspect.iscoroutinefunction(function))
-        }
+        ]
 
-    def run_test(self, function_name: str, function_object: Callable) -> IPytestResult:
-        """Run the tests for a single function"""
+    def run_test_with_tracking(self, function: AFunction) -> IPytestResult:
+        """Runs tests for a function while tracking execution count and handling threading"""
         assert isinstance(self.module_file, pathlib.Path)
 
         # Store execution count information for each cell
         cell_id = str(self.shell.parent_header["metadata"]["cellId"])  # type: ignore
-        self.cell_execution_count[cell_id][function_name] += 1
+        self.cell_execution_count[cell_id][function.name] += 1
 
         # Run the tests on a separate thread
         if self.threaded:
             assert isinstance(self.test_queue, Queue)
             thread = Thread(
-                target=run_test_in_thread,
+                target=run_pytest_in_background,
                 args=(
                     self.module_file,
-                    function_name,
-                    function_object,
+                    function,
                     self.test_queue,
                 ),
             )
@@ -194,19 +206,19 @@ class TestMagic(Magics):
             thread.join()
             result = self.test_queue.get()
         else:
-            result = run_test(self.module_file, function_name, function_object)
+            result = run_pytest_for_function(self.module_file, function)
 
         match result.status:
             case IPytestOutcome.FINISHED:
                 return dataclasses.replace(
                     result,
-                    test_attempts=self.cell_execution_count[cell_id][function_name],
+                    test_attempts=self.cell_execution_count[cell_id][function.name],
                 )
             case _:
                 return result
 
     def run_cell(self) -> List[IPytestResult]:
-        # Run the cell through IPython
+        """Evaluates the cell via IPython and runs tests for the functions"""
         try:
             result = self.shell.run_cell(self.cell, silent=True)  # type: ignore
             result.raise_error()
@@ -215,6 +227,7 @@ class TestMagic(Magics):
                 IPytestResult(
                     status=IPytestOutcome.COMPILE_ERROR,
                     exceptions=[err],
+                    cell_content=self.cell,
                 )
             ]
 
@@ -230,7 +243,7 @@ class TestMagic(Magics):
 
         # Run the tests for each function
         test_results = [
-            self.run_test(name, function) for name, function in functions_to_run.items()
+            self.run_test_with_tracking(function) for function in functions_to_run
         ]
 
         return test_results
@@ -246,6 +259,11 @@ class TestMagic(Magics):
         self.cell = cell
         line_contents = set(line.split())
 
+        # Debug mode?
+        if "debug" in line_contents:
+            line_contents.remove("debug")
+            self.debug = True
+
         # Check if we need to run the tests on a separate thread
         if "async" in line_contents:
             line_contents.remove("async")
@@ -253,8 +271,7 @@ class TestMagic(Magics):
             self.test_queue = Queue()
 
         # If debug is in the line, then we want to show the traceback
-        if "debug" in line_contents:
-            line_contents.remove("debug")
+        if self.debug:
             self.shell._showtraceback = self._orig_traceback
         else:
             self.shell._showtraceback = lambda *args, **kwargs: None
@@ -280,16 +297,29 @@ class TestMagic(Magics):
         # Run the cell
         results = self.run_cell()
 
+        # If in debug mode, display debug information first
+        if self.debug:
+            debug_output = DebugOutput(
+                module_name=self.module_name,
+                module_file=self.module_file,
+                results=results,
+            )
+            display(HTML(debug_output.to_html()))
+
         # Parse the AST of the test module to retrieve the solution code
         ast_parser = AstParser(self.module_file)
         # Display the test results and the solution code
         for result in results:
             solution = (
-                ast_parser.get_solution_code(result.function_name)
-                if result.function_name
+                ast_parser.get_solution_code(result.function.name)
+                if result.function and result.function.name
                 else None
             )
-            TestResultOutput(result, solution).display_results()
+            TestResultOutput(
+                result,
+                solution,
+                self.shell.openai_client,  # type: ignore
+            ).display_results()
 
 
 def load_ipython_extension(ipython):
@@ -298,5 +328,62 @@ def load_ipython_extension(ipython):
     can be loaded via `%load_ext module.path` or be configured to be
     autoloaded by IPython at startup time.
     """
+    # Configure the API key for the OpenAI client
+    openai_env = find_dotenv("openai.env")
+    if openai_env:
+        load_dotenv(openai_env)
 
+    api_key = os.getenv("OPENAI_API_KEY")
+    model = os.getenv("OPENAI_MODEL")
+    language = os.getenv("OPENAI_LANGUAGE")
+
+    # First, validate the key
+    key_validation = OpenAIWrapper.validate_api_key(api_key)
+    if not key_validation.is_valid:
+        message = key_validation.user_message
+        message_color = "#ffebee"  # Red
+        ipython.openai_client = None
+    else:
+        assert api_key is not None  # must be so at this point
+        try:
+            openai_client, model_validation = OpenAIWrapper.create_validated(
+                api_key, model, language
+            )
+
+            if model_validation.is_valid:
+                ipython.openai_client = openai_client
+                message_color = "#d9ead3"  # Green
+            else:
+                message_color = "#ffebee"  # Red
+                ipython.openai_client = None
+
+            message = model_validation.user_message
+        except OpenAIWrapperError as e:
+            ipython.openai_client = None
+            message = f"🚫 <strong style='color: red;'>OpenAI configuration error:</strong><br>{str(e)}"
+            message_color = "#ffebee"
+        except Exception as e:
+            # Handle any other unexpected errors
+            ipython.openai_client = None
+            message = (
+                f"🚫 <strong style='color: red;'>Unexpected error:</strong><br>{str(e)}"
+            )
+            message_color = "#ffebee"
+
+    display(
+        HTML(
+            "<div style='background-color: "
+            f"{message_color}; border-radius: 5px; padding: 10px;'>"
+            f"{message}"
+            "</div>"
+        )
+    )
+
+    # Register the magic
     ipython.register_magics(TestMagic)
+
+    message = (
+        "<div style='background-color: #fffde7; border-radius: 5px; padding: 10px;'>"
+        "🔄 <strong>IPytest extension (re)loaded.</strong></div>"
+    )
+    display(HTML(message))
