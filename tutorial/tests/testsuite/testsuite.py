@@ -281,12 +281,6 @@ class TestMagic(Magics):
             self.threaded = True
             self.test_queue = Queue()
 
-        # # If debug is in the line, then we want to show the traceback
-        # if self.debug:
-        #     self.shell._showtraceback = self._orig_traceback
-        # else:
-        #     self.shell._showtraceback = lambda *args, **kwargs: None
-
         with self.traceback_handling(self.debug):
             # Get the module containing the test(s)
             if (
