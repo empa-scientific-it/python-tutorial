@@ -612,7 +612,7 @@ class TestResultOutput:
         title = "Test Results for " if function else "Test Results "
         output_cell.append_display_data(
             HTML(
-                "<div>"
+                '<div style="overflow: hidden;">'
                 f'<h2 style="font-size: 1.5rem; margin: 0;">{title}'
                 '<code style="font-size: 1.1rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-family: ui-monospace, monospace;">'
                 f"solution_{function.name}</code></h2>"
