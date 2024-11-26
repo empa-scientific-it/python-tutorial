@@ -18,7 +18,10 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
 
 def reference_indexed_string(string: str) -> list[tuple[str, int]]:
     """Reference solution warm-up 1"""
-    return [(char, index) for index, char in enumerate(string)]
+    result = []
+    for i, char in enumerate(string):
+        result.append((char, i))
+    return result
 
 
 @pytest.mark.parametrize(
