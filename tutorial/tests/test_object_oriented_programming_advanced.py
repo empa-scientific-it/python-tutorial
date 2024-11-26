@@ -2,8 +2,9 @@ import pathlib
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-import pytest
 from numpy import average
+
+import pytest
 
 #
 # Exercise 1: Child Eye Color
