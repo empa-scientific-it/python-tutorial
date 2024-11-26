@@ -192,7 +192,7 @@ def reference_find_triplet(nums: List[int]):
             for j in range(i + 1, n - 1):
                 for k in range(j + 1, n):
                     if nums[i] + nums[j] + nums[k] == 2020:
-                        return nums[i] * nums_2[j] * nums[k]
+                        return nums[i] * nums[j] * nums[k]
 
     def find_triplet_best(nums: List[int]) -> Optional[int]:
         """Fast solution with two loops"""
