@@ -203,16 +203,18 @@ def test_remove_every_second_element_from_list(my_list, function_to_test):
     )
 
 
-def reference_return_first_and_last_element_from_list(my_list: list) -> list:
-    return [my_list[0], my_list[-1]]
+def reference_return_first_and_last_element_from_list(
+    my_list: list[float],
+) -> tuple[float, float]:
+    return my_list[0], my_list[-1]
 
 
 @pytest.mark.parametrize("my_list", LISTS)
 def test_return_first_and_last_element_from_list(my_list, function_to_test):
     # If result is a tuple, transform to list
     result = function_to_test(my_list)
-    if isinstance(result, tuple):
-        result = list(result)
+    if isinstance(result, list):
+        result = tuple(result)
     assert result == reference_return_first_and_last_element_from_list(my_list)
 
 
