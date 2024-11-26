@@ -1,4 +1,5 @@
 import html
+import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -12,6 +13,12 @@ from IPython.display import display as ipython_display
 from ipywidgets import HTML
 
 from .ai_helpers import AIExplanation, OpenAIWrapper
+
+
+def strip_ansi_codes(text: str) -> str:
+    """Remove ANSI escape sequences from text"""
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    return ansi_escape.sub("", text)
 
 
 class TestOutcome(Enum):
@@ -293,7 +300,7 @@ class TestCaseResult:
         # Exception information if test failed
         if self.exception is not None:
             exception_type = type(self.exception).__name__
-            exception_message = str(self.exception)
+            exception_message = strip_ansi_codes(str(self.exception))
 
             html_parts.append(
                 f"""
@@ -329,10 +336,10 @@ class TestCaseResult:
                             </div>
                             <div class="output-content">
                                 <div id="{tab_id}_output" class="output-pane active">
-                                    <pre>{html.escape(self.stdout) if self.stdout else 'No output'}</pre>
+                                    <pre>{html.escape(strip_ansi_codes(self.stdout)) if self.stdout else 'No output'}</pre>
                                 </div>
                                 <div id="{tab_id}_error" class="output-pane">
-                                    <pre>{html.escape(self.stderr) if self.stderr else 'No errors'}</pre>
+                                    <pre>{html.escape(strip_ansi_codes(self.stderr)) if self.stderr else 'No errors'}</pre>
                                 </div>
                             </div>
                         </div>
@@ -605,7 +612,7 @@ class TestResultOutput:
         title = "Test Results for " if function else "Test Results "
         output_cell.append_display_data(
             HTML(
-                "<div>"
+                '<div style="overflow: hidden;">'
                 f'<h2 style="font-size: 1.5rem; margin: 0;">{title}'
                 '<code style="font-size: 1.1rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-family: ui-monospace, monospace;">'
                 f"solution_{function.name}</code></h2>"
