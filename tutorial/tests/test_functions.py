@@ -12,55 +12,44 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
 
 
-def errors_to_list(errors):
-    result = "<ul>"
-    for error in errors:
-        result += "<li>" + error + "</li>"
-    result += "</ul>"
-    return result
-
-
 #
 # Exercise 1: a `greet` function
 #
 
 
 def reference_greet(name: str, age: int) -> str:
-    """Reference solution for the greet exercise"""
+    """Reference solution for `solution_greet` exercise"""
     return f"Hello, {name}! You are {age} years old."
 
 
-@pytest.mark.parametrize(
-    "name,age",
-    [
-        ("John", 30),
-    ],
-)
 def test_greet(
-    name: str,
-    age: int,
     function_to_test,
 ) -> None:
-    errors = []
+    name, age = "Alice", 30
 
-    signature = inspect.signature(function_to_test)
-    params = signature.parameters
-    return_annotation = signature.return_annotation
+    params = inspect.signature(function_to_test).parameters
+    return_annotation = inspect.signature(function_to_test).return_annotation
 
-    if function_to_test.__doc__ is None:
-        errors.append("The function is missing a docstring.")
-    if len(params) != 2:
-        errors.append("The function should take two arguments.")
-    if "name" not in params.keys() or "age" not in params.keys():
-        errors.append("The function's parameters should be 'name' and 'age'.")
-    if any(p.annotation == inspect.Parameter.empty for p in params.values()):
-        errors.append("The function's parameters should have type hints.")
-    if return_annotation == inspect.Signature.empty:
-        errors.append("The function's return value is missing the type hint.")
+    # Check docstring
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring."
 
-    # test signature
-    assert not errors, errors_to_list(errors)
-    # test result
+    # Check number and names of parameters
+    assert len(params) == 2, "The function should take two arguments."
+    assert (
+        "name" in params and "age" in params
+    ), "The function's parameters should be 'name' and 'age'."
+
+    # Check type hints for parameters
+    assert all(
+        p.annotation != inspect.Parameter.empty for p in params.values()
+    ), "The function's parameters should have type hints."
+
+    # Check return type hint
+    assert (
+        return_annotation != inspect.Signature.empty
+    ), "The function's return value is missing the type hint."
+
+    # Test the return value
     assert function_to_test(name, age) == reference_greet(name, age)
 
 
