@@ -1,7 +1,7 @@
 import contextlib
 import pathlib
 from math import isclose, sqrt
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 import pytest
 
@@ -16,7 +16,7 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
 #
 
 
-def reference_indexed_string(string: str) -> list[tuple[str, int]]:
+def reference_indexed_string(string: str) -> List[Tuple[str, int]]:
     """Reference solution warm-up 1"""
     result = []
     for i, char in enumerate(string):
@@ -45,7 +45,7 @@ def test_indexed_string(string: str, function_to_test) -> None:
     assert reference_indexed_string(string) == result
 
 
-def reference_range_of_nums(start: int, end: int) -> list[int]:
+def reference_range_of_nums(start: int, end: int) -> List[int]:
     """Reference solution warm-up 2"""
     step = 1 if start < end else -1
     return list(range(start, end + step, step))
@@ -67,7 +67,7 @@ def test_range_of_nums(start: int, end: int, function_to_test) -> None:
     ), "The function returned an empty range"
 
 
-def reference_sqrt_of_nums(nums: list[int]) -> list[float]:
+def reference_sqrt_of_nums(nums: List[int]) -> List[float]:
     """Reference solution warm-up 3"""
     result = []
     for num in nums:
@@ -121,6 +121,99 @@ def reference_divide_until(num: int) -> int:
 )
 def test_divide_until(num: int, function_to_test) -> None:
     assert reference_divide_until(num) == function_to_test(num)
+
+
+#
+# Exercise: conditionals inside loops
+#
+
+
+def reference_filter_by_position(numbers: List[int]) -> List[int]:
+    result = set()
+    for pos, number in enumerate(numbers, start=1):
+        if number > pos:
+            result.add(number)
+    return sorted(result)
+
+
+@pytest.mark.parametrize(
+    "numbers",
+    [
+        [0, 3, 1, 2],  # Basic case from example = {3}
+        [5, 4, 3, 2, 1],  # Decreasing numbers = {}
+        [1, 3, 5, 7, 9],  # All odd numbers = {3, 5, 7, 9}
+        [],  # Empty list = {}
+        [0, 0, 0],  # Same numbers with none valid = {}
+        [2, 2, 2, 2],  # Same number with one valid = {2}
+        [4, 4, 4, 4],  # Same number, three are valid but they are duplicates = {4}
+        [10, 20, 1, 2, 3],  # Mixed large and small numbers = {10, 20}
+    ],
+)
+def test_filter_by_position(numbers: List[int], function_to_test) -> None:
+    """Test filtering numbers by position."""
+    assert function_to_test(numbers) == reference_filter_by_position(numbers)
+
+
+#
+# Exercise: breaking out of loops
+#
+
+
+def reference_find_even_multiple_three(numbers: List[int]) -> Optional[int]:
+    result = None
+    for number in numbers:
+        if number % 2 == 0 and number % 3 == 0:
+            result = number
+            break
+    return result
+
+
+@pytest.mark.parametrize(
+    "numbers",
+    [
+        [1, 2, 3, 4, 6, 8],  # 6 is first even multiple of 3 = 6
+        [1, 3, 5, 7, 9],  # No even numbers = None
+        [12, 18, 24],  # All are valid, should return the first = 12
+        [],  # Empty list = None
+        [2, 4, 6, 8, 10],  # Even numbers but no multiples of 3 = None
+        [1, 3, 5, 7, 12],  # Valid number at the end = 12
+    ],
+)
+def test_find_even_multiple_three(numbers: List[int], function_to_test) -> None:
+    """Test finding first even multiple of 3."""
+    assert function_to_test(numbers) == reference_find_even_multiple_three(numbers)
+
+
+#
+# Exercise: using else in loops
+#
+
+
+def reference_is_pure_number(text: str) -> bool:
+    for char in text:
+        if char not in "1234567890":
+            return False
+    else:
+        return True
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "123456",  # OK
+        "0987654321",  # OK
+        "",  # Empty
+        "abc123",  # Mixed characters
+        "0000",  # All zeros
+        "12.34",  # With decimal point
+        "    ",  # All spaces
+        "-123",  # With negative sign
+        "١٢٣",  # Non-ASCII digits (should return False)
+    ],
+)
+def test_is_pure_number(text: str, function_to_test) -> None:
+    """Test checking for pure number strings."""
+    assert function_to_test(text) == reference_is_pure_number(text)
 
 
 #
