@@ -203,9 +203,7 @@ def test_remove_every_second_element_from_list(my_list, function_to_test):
     )
 
 
-def reference_return_first_and_last_element_from_list(
-    my_list: list[float],
-) -> tuple[float, float]:
+def reference_return_first_and_last_element_from_list(my_list: list) -> tuple:
     return my_list[0], my_list[-1]
 
 
