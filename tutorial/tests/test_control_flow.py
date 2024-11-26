@@ -197,6 +197,17 @@ def reference_is_pure_number(text: str) -> bool:
         return True
 
 
+def is_for_else_used(function) -> bool:
+    import ast
+    import inspect
+
+    tree = ast.parse(inspect.getsource(function))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.For) and node.orelse:
+            return True
+    return False
+
+
 @pytest.mark.parametrize(
     "text",
     [
@@ -213,6 +224,7 @@ def reference_is_pure_number(text: str) -> bool:
 )
 def test_is_pure_number(text: str, function_to_test) -> None:
     """Test checking for pure number strings."""
+    assert is_for_else_used(function_to_test), "You must use a for-else construct"
     assert function_to_test(text) == reference_is_pure_number(text)
 
 
