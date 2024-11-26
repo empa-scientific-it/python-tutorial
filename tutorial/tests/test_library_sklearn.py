@@ -1,7 +1,6 @@
 import numpy as np
-from sklearn import datasets, model_selection, preprocessing
-
 import pytest
+from sklearn import datasets, model_selection, preprocessing
 
 
 def get_scaled_dataset(dataset_type: str):

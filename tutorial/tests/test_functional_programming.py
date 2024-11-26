@@ -6,10 +6,9 @@ import random
 from typing import Any, Callable, List, Tuple
 
 import numpy as np
+import pytest
 import requests
 from numpy.typing import NDArray
-
-import pytest
 
 
 def reference_exercise2(my_list: List[int], k: int) -> List[int]:

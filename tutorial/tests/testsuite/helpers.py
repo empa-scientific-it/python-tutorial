@@ -6,11 +6,10 @@ from types import TracebackType
 from typing import Any, Callable, ClassVar, Dict, List, Optional
 
 import ipywidgets
+import pytest
 from IPython.display import Code
 from IPython.display import display as ipython_display
 from ipywidgets import HTML
-
-import pytest
 
 from .ai_helpers import AIExplanation, OpenAIWrapper
 

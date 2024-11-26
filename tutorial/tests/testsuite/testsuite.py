@@ -13,12 +13,11 @@ from threading import Thread
 from typing import Dict, List, Optional
 
 import ipynbname
+import pytest
 from dotenv import find_dotenv, load_dotenv
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import HTML, display
-
-import pytest
 
 from .ai_helpers import OpenAIWrapper
 from .ast_parser import AstParser
