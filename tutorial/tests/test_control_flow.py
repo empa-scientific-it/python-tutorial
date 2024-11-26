@@ -69,7 +69,11 @@ def test_range_of_nums(start: int, end: int, function_to_test) -> None:
 
 def reference_sqrt_of_nums(nums: list[int]) -> list[float]:
     """Reference solution warm-up 3"""
-    return [sqrt(num) for num in nums if num >= 0]
+    result = []
+    for num in nums:
+        if num >= 0:
+            result.append(sqrt(num))
+    return result
 
 
 @pytest.mark.parametrize(
@@ -126,7 +130,11 @@ def test_divide_until(num: int, function_to_test) -> None:
 
 def reference_find_factors(num: int) -> List[int]:
     """Reference solution to find the factors of an integer"""
-    return [m for m in range(1, num + 1) if num % m == 0]
+    factors = []
+    for m in range(1, num + 1):
+        if num % m == 0:
+            factors.append(m)
+    return factors
 
 
 @pytest.mark.parametrize("num", [350, 487, 965, 816, 598, 443, 13, 17, 211])
@@ -258,13 +266,13 @@ def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
     """Reference solution to convert a number from one base to another"""
     # Validate bases
     if not (2 <= from_base <= 16 and 2 <= to_base <= 16):
-        msg = "Bases must be between 2 and 16"
-        raise ValueError(msg)
+        err = "Bases must be between 2 and 16"
+        raise ValueError(err)
 
     # Handle empty input
     if not number or number.strip() in ("", "-"):
-        msg = "Invalid empty input"
-        raise ValueError(msg)
+        err = "Invalid empty input"
+        raise ValueError(err)
 
     # Same to and from bases
     if from_base == to_base:
@@ -281,8 +289,8 @@ def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
     valid_digits = "0123456789ABCDEF"
     for digit in number:
         if digit not in valid_digits[:from_base]:
-            msg = f"Invalid digit '{digit}' for base {from_base}"
-            raise ValueError(msg)
+            err = f"Invalid digit '{digit}' for base {from_base}"
+            raise ValueError(err)
 
     # Convert to base 10
     decimal = 0
