@@ -67,10 +67,10 @@ def test_range_of_nums(start: int, end: int, function_to_test) -> None:
     ), "The function returned an empty range"
 
 
-def reference_sqrt_of_nums(nums: List[int]) -> List[float]:
+def reference_sqrt_of_nums(numbers: List[int]) -> List[float]:
     """Reference solution warm-up 3"""
     result = []
-    for num in nums:
+    for num in numbers:
         if num >= 0:
             result.append(sqrt(num))
     return result
@@ -109,11 +109,11 @@ def test_sqrt_of_nums(nums: list[int], function_to_test) -> None:
     ), "The function should return the square root of each number"
 
 
-def reference_divide_until(num: int) -> int:
+def reference_divide_until(number: int) -> int:
     """Reference solution warm-up 4"""
-    while num % 2 == 0:
-        num //= 2
-    return num
+    while number % 2 == 0:
+        number //= 2
+    return number
 
 
 @pytest.mark.parametrize(
@@ -140,7 +140,7 @@ def reference_filter_by_position(numbers: List[int]) -> List[int]:
     "numbers",
     [
         [0, 3, 1, 2],  # Basic case from example = {3}
-        [5, 4, 3, 2, 1],  # Decreasing numbers = {}
+        [5, 4, 3, 2, 1],  # Decreasing numbers = {4, 5}
         [1, 3, 5, 7, 9],  # All odd numbers = {3, 5, 7, 9}
         [],  # Empty list = {}
         [0, 0, 0],  # Same numbers with none valid = {}
