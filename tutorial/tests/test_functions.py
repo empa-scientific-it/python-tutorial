@@ -162,7 +162,7 @@ def test_calculate_area_default_unit(function_to_test):
 
 def reference_summing_anything(*args: Any) -> Any:
     """Reference solution for the summing_anything exercise"""
-    if not args:
+    if not args or None in args:
         return args
 
     result = args[0]
@@ -174,16 +174,17 @@ def reference_summing_anything(*args: Any) -> Any:
 
 
 @pytest.mark.parametrize(
-    "args,expected",
+    "args",
     [
-        ((), ()),
-        ((1, 2, 3), 6),
-        (([1, 2, 3], [4, 5, 6]), [1, 2, 3, 4, 5, 6]),
-        (("hello", "world"), "helloworld"),
+        (()),
+        ((None, None)),
+        ((1, 2, 3)),
+        (([1, 2, 3], [4, 5, 6])),
+        (("hello", "world")),
     ],
 )
-def test_summing_anything(args: Any, expected: Any, function_to_test) -> None:
-    assert function_to_test(*args) == expected
+def test_summing_anything(args: Any, function_to_test) -> None:
+    assert function_to_test(*args) == reference_summing_anything(*args)
 
 
 #
