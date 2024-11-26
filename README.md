@@ -1,6 +1,9 @@
 # python-tutorial
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/empa-scientific-it/python-tutorial.git/main?labpath=index.ipynb) [![Build Docker container](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/build-docker-image.yml/badge.svg)](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/build-docker-image.yml)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/empa-scientific-it/python-tutorial.git/main?labpath=index.ipynb)
+[![Build Docker container](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/build-docker-image.yml/badge.svg)](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/build-docker-image.yml)
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=593234387)
 
 ## Run the tutorial on your computer
 
