@@ -58,26 +58,19 @@ def test_greet(
 #
 
 
-class UnsupportedUnitError(Exception):
-    def __init__(self) -> None:
-        super().__init__(
-            "The function should return an error string for unsupported units."
-        )
-
-
 def reference_calculate_area(length: float, width: float, unit: str = "cm") -> str:
     """Reference solution for the calculate_area exercise"""
     # Conversion factors from supported units to centimeters
     units = {
         "cm": 1.0,
         "m": 100.0,
-        "mm": 10.0,
+        "mm": 0.1,
         "yd": 91.44,
         "ft": 30.48,
     }
 
     try:
-        area = length * width * units[unit] ** 2
+        area = round(length * width * units[unit] ** 2, 2)
     except KeyError:
         return f"Invalid unit: {unit}"
     else:
@@ -91,15 +84,11 @@ def validate_calculate_area_signature(function_to_test) -> None:
 
     assert function_to_test.__doc__ is not None, "The function is missing a docstring."
     assert len(params) == 3, "The function should take three arguments."
-    assert (
-        "length" in params.keys()
-        and "width" in params.keys()
-        and "unit" in params.keys()
+    assert all(
+        p in params.keys() for p in ["length", "width", "unit"]
     ), "The function's parameters should be 'length', 'width' and 'unit'."
     assert (
-        "unit" in params.keys()
-        and params["unit"].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
-        and params["unit"].default == "cm"
+        params["unit"].default == "cm"
     ), "Argument 'unit' should have a default value 'cm'."
     assert all(
         p.annotation != inspect.Parameter.empty for p in params.values()
@@ -117,10 +106,9 @@ def validate_calculate_area_signature(function_to_test) -> None:
         (10.0, 2.0, "mm"),
         (2.0, 8.0, "yd"),
         (5.0, 4.0, "ft"),
-        (3.0, 5.0, "in"),
     ],
 )
-def test_calculate_area_result(
+def test_calculate_area_valid_units(
     length: float,
     width: float,
     unit: str,
@@ -128,23 +116,43 @@ def test_calculate_area_result(
 ) -> None:
     validate_calculate_area_signature(function_to_test)
 
-    if unit in ("cm", "m", "mm", "yd", "ft"):
-        result = function_to_test(length, width, unit)
+    result = function_to_test(length, width, unit)
+    expected = reference_calculate_area(length, width, unit)
 
-        assert isinstance(result, str), "The function should return a string."
-        assert "cm^2" in result, "The result should be in squared centimeters (cm^2)."
-        assert result == reference_calculate_area(
-            length, width, unit
-        ), "The solution is incorrect."
-    else:
-        try:
-            result = function_to_test(length, width, unit)
-        except KeyError as err:
-            raise UnsupportedUnitError from err
-        else:
-            assert (
-                result == f"Invalid unit: {unit}"
-            ), "The error message is incorrectly formatted."
+    assert isinstance(result, str), "The function should return a string."
+    assert "cm^2" in result, "The result should be in squared centimeters (cm^2)."
+    assert result == expected, "The calculated area is incorrect."
+
+
+@pytest.mark.parametrize(
+    "length,width,unit",
+    [
+        (2.0, 3.0, "in"),
+        (4.0, 5.0, "km"),
+        (3.0, 2.0, "mi"),
+        (1.0, 1.0, ""),
+    ],
+)
+def test_calculate_area_invalid_units(
+    length: float,
+    width: float,
+    unit: str,
+    function_to_test,
+) -> None:
+    """Test the function with invalid units."""
+    validate_calculate_area_signature(function_to_test)
+    result = function_to_test(length, width, unit)
+
+    assert (
+        result == f"Invalid unit: {unit}"
+    ), f"Expected 'Invalid unit: {unit}' for invalid unit"
+
+
+def test_calculate_area_default_unit(function_to_test):
+    """Test the function with default unit parameter."""
+    validate_calculate_area_signature(function_to_test)
+    result = function_to_test(2.0, 3.0)  # default unit must be "cm"
+    assert result == "6.00 cm^2", "Default unit (cm) calculation is incorrect."
 
 
 #
