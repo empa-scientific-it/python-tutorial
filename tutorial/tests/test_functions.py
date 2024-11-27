@@ -61,8 +61,8 @@ def test_greet(
 # Part 1
 def reference_calculate_basic_area(length: float, width: float) -> str:
     """Reference solution for Part 1: basic area calculation."""
-    area = length * width
-    return f"{area:.2f} cm^2"
+    area = round(length * width, 2)
+    return f"{area} cm^2"
 
 
 def validate_basic_area_signature(function_to_test) -> None:
@@ -115,8 +115,8 @@ def reference_calculate_metric_area(
         length *= 100
         width *= 100
 
-    area = length * width
-    return f"{area:.2f} cm^2"
+    area = round(length * width, 2)
+    return f"{area} cm^2"
 
 
 def validate_metric_area_signature(function_to_test) -> None:
@@ -176,8 +176,8 @@ def reference_calculate_area(length: float, width: float, unit: str = "cm") -> s
     except KeyError:
         return f"Invalid unit: {unit}"
 
-    area = length * width * factor**2
-    return f"{area:.2f} cm^2"
+    area = round(length * width * factor**2, 2)
+    return f"{area} cm^2"
 
 
 def validate_area_signature(function_to_test) -> None:
