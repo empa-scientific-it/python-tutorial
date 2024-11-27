@@ -18,8 +18,8 @@ repos:
         types_or: [python, pyi]
         args: [--fix]
         name: ruff (fix)
-      # Ruff formatter
       - id: ruff-format
+        # Ruff formatter
         types_or: [python, pyi]
         name: ruff (format)
   - repo: https://github.com/google/yamlfmt
