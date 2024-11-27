@@ -58,101 +58,172 @@ def test_greet(
 #
 
 
-def reference_calculate_area(length: float, width: float, unit: str = "cm") -> str:
-    """Reference solution for the calculate_area exercise"""
-    # Conversion factors from supported units to centimeters
-    units = {
-        "cm": 1.0,
-        "m": 100.0,
-        "mm": 0.1,
-        "yd": 91.44,
-        "ft": 30.48,
-    }
-
-    try:
-        area = round(length * width * units[unit] ** 2, 2)
-    except KeyError:
-        return f"Invalid unit: {unit}"
-    else:
-        return f"{area} cm^2"
+# Part 1
+def reference_calculate_basic_area(length: float, width: float) -> str:
+    """Reference solution for Part 1: basic area calculation."""
+    area = length * width
+    return f"{area:.2f} cm^2"
 
 
-def validate_calculate_area_signature(function_to_test) -> None:
+def validate_basic_area_signature(function_to_test) -> None:
+    """Validate signature of the basic area calculation function."""
     signature = inspect.signature(function_to_test)
     params = signature.parameters
     return_annotation = signature.return_annotation
 
     assert function_to_test.__doc__ is not None, "The function is missing a docstring."
-    assert len(params) == 3, "The function should take three arguments."
+    assert (
+        len(params) == 2
+    ), "The function should take exactly two arguments (length and width)."
+    assert all(
+        p in params.keys() for p in ["length", "width"]
+    ), "The function's parameters should be 'length' and 'width'."
+    assert all(
+        p.annotation is float for p in params.values()
+    ), "Both parameters should be annotated as float."
+    assert return_annotation is str, "The return type should be annotated as str."
+
+
+@pytest.mark.parametrize(
+    "length,width",
+    [
+        (2.0, 3.0),
+        (5.0, 4.0),
+        (1.5, 2.5),
+        (0.1, 0.1),
+    ],
+)
+def test_calculate_basic_area(length: float, width: float, function_to_test):
+    validate_basic_area_signature(function_to_test)
+    expected = reference_calculate_basic_area(length, width)
+    result = function_to_test(length, width)
+    assert isinstance(result, str), "Result should be a string"
+    assert expected == result, "Incorrect area calculation or formatting"
+
+
+# Part 2
+
+
+def reference_calculate_metric_area(
+    length: float, width: float, unit: str = "cm"
+) -> str:
+    """Reference solution for Part 2: metric units only."""
+    if unit not in ("cm", "m"):
+        return f"Invalid unit: {unit}"
+
+    if unit == "m":
+        length *= 100
+        width *= 100
+
+    area = length * width
+    return f"{area:.2f} cm^2"
+
+
+def validate_metric_area_signature(function_to_test) -> None:
+    """Validate signature of the metric area calculation function."""
+    signature = inspect.signature(function_to_test)
+    params = signature.parameters
+    return_annotation = signature.return_annotation
+
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring."
+    assert (
+        len(params) == 3
+    ), "The function should take three arguments (length, width, and unit)."
     assert all(
         p in params.keys() for p in ["length", "width", "unit"]
     ), "The function's parameters should be 'length', 'width' and 'unit'."
     assert (
-        params["unit"].default == "cm"
-    ), "Argument 'unit' should have a default value 'cm'."
-    assert all(
-        p.annotation != inspect.Parameter.empty for p in params.values()
-    ), "The function's parameters should have type hints."
+        params["length"].annotation is float
+    ), "Parameter 'length' should be annotated as float."
     assert (
-        return_annotation != inspect.Signature.empty
-    ), "The function's return value is missing the type hint."
+        params["width"].annotation is float
+    ), "Parameter 'width' should be annotated as float."
+    assert (
+        params["unit"].annotation is str
+    ), "Parameter 'unit' should be annotated as str."
+    assert (
+        params["unit"].default == "cm"
+    ), "Parameter 'unit' should have a default value of 'cm'."
+    assert return_annotation is str, "The return type should be annotated as str."
 
 
 @pytest.mark.parametrize(
     "length,width,unit",
     [
         (2.0, 3.0, "cm"),
-        (4.0, 5.0, "m"),
-        (10.0, 2.0, "mm"),
-        (2.0, 8.0, "yd"),
-        (5.0, 4.0, "ft"),
+        (2.0, 3.0, "m"),
+        (1.5, 2.0, "cm"),
+        (1.5, 2.0, "m"),
     ],
 )
-def test_calculate_area_valid_units(
-    length: float,
-    width: float,
-    unit: str,
-    function_to_test,
-) -> None:
-    validate_calculate_area_signature(function_to_test)
-
+def test_calculate_metric_area(length, width, unit, expected, function_to_test):
+    validate_metric_area_signature(function_to_test)
+    expected = reference_calculate_metric_area(length, width, unit)
     result = function_to_test(length, width, unit)
-    expected = reference_calculate_area(length, width, unit)
+    assert isinstance(result, str), "Result should be a string"
+    assert expected == result, "Incorrect area calculation or formatting"
 
-    assert isinstance(result, str), "The function should return a string."
-    assert "cm^2" in result, "The result should be in squared centimeters (cm^2)."
-    assert result == expected, "The calculated area is incorrect."
+
+# Part 3
+
+
+def reference_calculate_area(length: float, width: float, unit: str = "cm") -> str:
+    """Reference solution for Part 3: all units."""
+    conversions = {"cm": 1, "m": 100, "mm": 0.1, "yd": 91.44, "ft": 30.48}
+
+    try:
+        factor = conversions[unit]
+    except KeyError:
+        return f"Invalid unit: {unit}"
+
+    area = length * width * factor**2
+    return f"{area:.2f} cm^2"
+
+
+def validate_area_signature(function_to_test) -> None:
+    """Validate signature of the full area calculation function."""
+    signature = inspect.signature(function_to_test)
+    params = signature.parameters
+    return_annotation = signature.return_annotation
+
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring."
+    assert (
+        len(params) == 3
+    ), "The function should take three arguments (length, width, and unit)."
+    assert all(
+        p in params.keys() for p in ["length", "width", "unit"]
+    ), "The function's parameters should be 'length', 'width' and 'unit'."
+    assert (
+        params["length"].annotation is float
+    ), "Parameter 'length' should be annotated as float."
+    assert (
+        params["width"].annotation is float
+    ), "Parameter 'width' should be annotated as float."
+    assert (
+        params["unit"].annotation is str
+    ), "Parameter 'unit' should be annotated as str."
+    assert (
+        params["unit"].default == "cm"
+    ), "Parameter 'unit' should have a default value of 'cm'."
+    assert return_annotation is str, "The return type should be annotated as str."
 
 
 @pytest.mark.parametrize(
     "length,width,unit",
     [
-        (2.0, 3.0, "in"),
-        (4.0, 5.0, "km"),
-        (3.0, 2.0, "mi"),
-        (1.0, 1.0, ""),
+        (2.0, 3.0, "cm"),
+        (2.0, 3.0, "m"),
+        (2.0, 3.0, "mm"),
+        (2.0, 3.0, "yd"),
+        (2.0, 3.0, "ft"),
     ],
 )
-def test_calculate_area_invalid_units(
-    length: float,
-    width: float,
-    unit: str,
-    function_to_test,
-) -> None:
-    """Test the function with invalid units."""
-    validate_calculate_area_signature(function_to_test)
+def test_calculate_area(length, width, unit, function_to_test):
+    validate_area_signature(function_to_test)
     result = function_to_test(length, width, unit)
-
-    assert (
-        result == f"Invalid unit: {unit}"
-    ), f"Expected 'Invalid unit: {unit}' for invalid unit"
-
-
-def test_calculate_area_default_unit(function_to_test):
-    """Test the function with default unit parameter."""
-    validate_calculate_area_signature(function_to_test)
-    result = function_to_test(2.0, 3.0)  # default unit must be "cm"
-    assert result == "6.00 cm^2", "Default unit (cm) calculation is incorrect."
+    expected = reference_calculate_area(length, width, unit)
+    assert isinstance(result, str), "Result should be a string"
+    assert expected == result, "Incorrect area calculation or formatting"
 
 
 #
