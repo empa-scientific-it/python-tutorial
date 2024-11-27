@@ -156,7 +156,7 @@ def validate_metric_area_signature(function_to_test) -> None:
         (1.5, 2.0, "m"),
     ],
 )
-def test_calculate_metric_area(length, width, unit, expected, function_to_test):
+def test_calculate_metric_area(length, width, unit, function_to_test):
     validate_metric_area_signature(function_to_test)
     expected = reference_calculate_metric_area(length, width, unit)
     result = function_to_test(length, width, unit)
