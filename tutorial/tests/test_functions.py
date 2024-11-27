@@ -61,8 +61,8 @@ def test_greet(
 # Part 1
 def reference_calculate_basic_area(length: float, width: float) -> str:
     """Reference solution for Part 1: basic area calculation."""
-    area = round(length * width, 2)
-    return f"{area} cm^2"
+    area = length * width
+    return f"{area:.2f} cm^2"
 
 
 def validate_basic_area_signature(function_to_test) -> None:
@@ -115,8 +115,8 @@ def reference_calculate_metric_area(
         length *= 100
         width *= 100
 
-    area = round(length * width, 2)
-    return f"{area} cm^2"
+    area = length * width
+    return f"{area:.2f} cm^2"
 
 
 def validate_metric_area_signature(function_to_test) -> None:
@@ -156,7 +156,7 @@ def validate_metric_area_signature(function_to_test) -> None:
         (1.5, 2.0, "m"),
     ],
 )
-def test_calculate_metric_area(length, width, unit, function_to_test):
+def test_calculate_metric_area(length, width, unit, expected, function_to_test):
     validate_metric_area_signature(function_to_test)
     expected = reference_calculate_metric_area(length, width, unit)
     result = function_to_test(length, width, unit)
@@ -176,8 +176,8 @@ def reference_calculate_area(length: float, width: float, unit: str = "cm") -> s
     except KeyError:
         return f"Invalid unit: {unit}"
 
-    area = round(length * width * factor**2, 2)
-    return f"{area} cm^2"
+    area = length * width * factor**2
+    return f"{area:.2f} cm^2"
 
 
 def validate_area_signature(function_to_test) -> None:
@@ -227,7 +227,32 @@ def test_calculate_area(length, width, unit, function_to_test):
 
 
 #
-# Exercise 3: summing anything
+# Exercise 3: scopes
+#
+
+
+def reference_increment_counter() -> int:
+    """Reference implementation for counter."""
+    global counter
+    counter += 1
+    return counter
+
+
+def test_increment_counter(function_to_test, solution_globals):
+    """Test the counter increment function."""
+    assert (
+        "counter" in solution_globals
+    ), "Counter should be defined in the global scope"
+    assert solution_globals["counter"] == 0, "Counter should start at 0"
+
+    result = function_to_test()
+
+    assert result == 1, "First increment should return 1"
+    assert solution_globals["counter"] == 1, "Counter should be incremented"
+
+
+#
+# Exercise 4: summing anything
 #
 
 

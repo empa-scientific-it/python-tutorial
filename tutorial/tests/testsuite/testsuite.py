@@ -31,13 +31,12 @@ from .exceptions import (
 from .helpers import (
     AFunction,
     DebugOutput,
-    FunctionInjectionPlugin,
     IPytestOutcome,
     IPytestResult,
-    ResultCollector,
     TestOutcome,
     TestResultOutput,
 )
+from .pytest_helpers import FunctionInjectionPlugin, ResultCollector
 
 
 def run_pytest_for_function(
