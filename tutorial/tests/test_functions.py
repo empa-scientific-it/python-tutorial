@@ -240,7 +240,7 @@ def test_calculate_area(length, width, unit, function_to_test):
 
 
 def reference_combine_anything(*args: Any) -> Any:
-    """Reference solution for the summing_anything exercise"""
+    """Reference solution for the combine_anything exercise"""
     if not args:
         return args
 
