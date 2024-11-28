@@ -12,55 +12,52 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
     return (pathlib.Path(__file__).parent / f"{data_dir}/{name}").resolve()
 
 
-def errors_to_list(errors):
-    result = "<ul>"
-    for error in errors:
-        result += "<li>" + error + "</li>"
-    result += "</ul>"
-    return result
-
-
 #
 # Exercise 1: a `greet` function
 #
 
 
 def reference_greet(name: str, age: int) -> str:
-    """Reference solution for the greet exercise"""
+    """Creates a personalized greeting message using name and age.
+
+    Args:
+        name: The person's name to include in the greeting
+        age: The person's age in years
+
+    Returns:
+        - A string in the format "Hello, <name>! You are <age> years old."
+    """
     return f"Hello, {name}! You are {age} years old."
 
 
-@pytest.mark.parametrize(
-    "name,age",
-    [
-        ("John", 30),
-    ],
-)
 def test_greet(
-    name: str,
-    age: int,
     function_to_test,
 ) -> None:
-    errors = []
+    name, age = "Alice", 30
 
-    signature = inspect.signature(function_to_test)
-    params = signature.parameters
-    return_annotation = signature.return_annotation
+    params = inspect.signature(function_to_test).parameters
+    return_annotation = inspect.signature(function_to_test).return_annotation
 
-    if function_to_test.__doc__ is None:
-        errors.append("The function is missing a docstring.")
-    if len(params) != 2:
-        errors.append("The function should take two arguments.")
-    if "name" not in params.keys() or "age" not in params.keys():
-        errors.append("The function's parameters should be 'name' and 'age'.")
-    if any(p.annotation == inspect.Parameter.empty for p in params.values()):
-        errors.append("The function's parameters should have type hints.")
-    if return_annotation == inspect.Signature.empty:
-        errors.append("The function's return value is missing the type hint.")
+    # Check docstring
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring."
 
-    # test signature
-    assert not errors, errors_to_list(errors)
-    # test result
+    # Check number and names of parameters
+    assert len(params) == 2, "The function should take two arguments."
+    assert (
+        "name" in params and "age" in params
+    ), "The function's parameters should be 'name' and 'age'."
+
+    # Check type hints for parameters
+    assert all(
+        p.annotation != inspect.Parameter.empty for p in params.values()
+    ), "The function's parameters should have type hints."
+
+    # Check return type hint
+    assert (
+        return_annotation != inspect.Signature.empty
+    ), "The function's return value is missing the type hint."
+
+    # Test the return value
     assert function_to_test(name, age) == reference_greet(name, age)
 
 
@@ -69,97 +66,172 @@ def test_greet(
 #
 
 
-def reference_calculate_area(length: float, width: float, unit: str = "cm") -> str:
-    """Reference solution for the calculate_area exercise"""
-    # Conversion factors from supported units to centimeters
-    units = {
-        "cm": 1.0,
-        "m": 100.0,
-        "mm": 10.0,
-        "yd": 91.44,
-        "ft": 30.48,
-    }
-
-    try:
-        area = length * width * units[unit] ** 2
-    except KeyError:
-        return f"Invalid unit: {unit}"
-    else:
-        return f"{area} cm^2"
+# Part 1
+def reference_calculate_basic_area(length: float, width: float) -> str:
+    """Reference solution for Part 1: basic area calculation."""
+    area = round(length * width, 2)
+    return f"{area} cm^2"
 
 
-def test_calculate_area_signature(function_to_test) -> None:
-    errors = []
-
+def validate_basic_area_signature(function_to_test) -> None:
+    """Validate signature of the basic area calculation function."""
     signature = inspect.signature(function_to_test)
     params = signature.parameters
     return_annotation = signature.return_annotation
 
-    if function_to_test.__doc__ is None:
-        errors.append("The function is missing a docstring.")
-    if len(params) != 3:
-        errors.append("The function should take three arguments.")
-    if (
-        "length" not in params.keys()
-        or "width" not in params.keys()
-        or "unit" not in params.keys()
-    ):
-        errors.append(
-            "The function's parameters should be 'length', 'width' and 'unit'."
-        )
-    if "unit" in params.keys() and not (
-        params["unit"].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
-        and params["unit"].default == "cm"
-    ):
-        errors.append("Argument 'unit' should have a default value 'cm'.")
-    if any(p.annotation == inspect.Parameter.empty for p in params.values()):
-        errors.append("The function's parameters should have type hints.")
-    if return_annotation == inspect.Signature.empty:
-        errors.append("The function's return value is missing the type hint.")
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring."
+    assert (
+        len(params) == 2
+    ), "The function should take exactly two arguments (length and width)."
+    assert all(
+        p in params.keys() for p in ["length", "width"]
+    ), "The function's parameters should be 'length' and 'width'."
+    assert all(
+        p.annotation is float for p in params.values()
+    ), "Both parameters should be annotated as float."
+    assert return_annotation is str, "The return type should be annotated as str."
 
-    assert not errors, errors_to_list(errors)
+
+@pytest.mark.parametrize(
+    "length,width",
+    [
+        (2.0, 3.0),
+        (5.0, 4.0),
+        (1.5, 2.5),
+        (0.1, 0.1),
+    ],
+)
+def test_calculate_basic_area(length: float, width: float, function_to_test):
+    validate_basic_area_signature(function_to_test)
+    expected = reference_calculate_basic_area(length, width)
+    result = function_to_test(length, width)
+    assert isinstance(result, str), "Result should be a string"
+    assert expected == result, "Incorrect area calculation or formatting"
+
+
+# Part 2
+
+
+def reference_calculate_metric_area(
+    length: float, width: float, unit: str = "cm"
+) -> str:
+    """Reference solution for Part 2: metric units only."""
+    if unit not in ("cm", "m"):
+        return f"Invalid unit: {unit}"
+
+    if unit == "m":
+        length *= 100
+        width *= 100
+
+    area = round(length * width, 2)
+    return f"{area} cm^2"
+
+
+def validate_metric_area_signature(function_to_test) -> None:
+    """Validate signature of the metric area calculation function."""
+    signature = inspect.signature(function_to_test)
+    params = signature.parameters
+    return_annotation = signature.return_annotation
+
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring."
+    assert (
+        len(params) == 3
+    ), "The function should take three arguments (length, width, and unit)."
+    assert all(
+        p in params.keys() for p in ["length", "width", "unit"]
+    ), "The function's parameters should be 'length', 'width' and 'unit'."
+    assert (
+        params["length"].annotation is float
+    ), "Parameter 'length' should be annotated as float."
+    assert (
+        params["width"].annotation is float
+    ), "Parameter 'width' should be annotated as float."
+    assert (
+        params["unit"].annotation is str
+    ), "Parameter 'unit' should be annotated as str."
+    assert (
+        params["unit"].default == "cm"
+    ), "Parameter 'unit' should have a default value of 'cm'."
+    assert return_annotation is str, "The return type should be annotated as str."
 
 
 @pytest.mark.parametrize(
     "length,width,unit",
     [
         (2.0, 3.0, "cm"),
-        (4.0, 5.0, "m"),
-        (10.0, 2.0, "mm"),
-        (2.0, 8.0, "yd"),
-        (5.0, 4.0, "ft"),
-        (3.0, 5.0, "in"),
+        (2.0, 3.0, "m"),
+        (1.5, 2.0, "cm"),
+        (1.5, 2.0, "m"),
     ],
 )
-def test_calculate_area_result(
-    length: float,
-    width: float,
-    unit: str,
-    function_to_test,
-) -> None:
-    errors = []
+def test_calculate_metric_area(length, width, unit, function_to_test):
+    validate_metric_area_signature(function_to_test)
+    expected = reference_calculate_metric_area(length, width, unit)
+    result = function_to_test(length, width, unit)
+    assert isinstance(result, str), "Result should be a string"
+    assert expected == result, "Incorrect area calculation or formatting"
 
-    if unit in ("cm", "m", "mm", "yd", "ft"):
-        result = function_to_test(length, width, unit)
 
-        if not isinstance(result, str):
-            errors.append("The function should return a string.")
-        if "cm^2" not in result:
-            errors.append("The result should be in squared centimeters (cm^2).")
-        if result != reference_calculate_area(length, width, unit):
-            errors.append("The solution is incorrect.")
-    else:
-        try:
-            result = function_to_test(length, width, unit)
-        except KeyError:
-            errors.append(
-                "The function should return an error string for unsupported units."
-            )
-        else:
-            if result != f"Invalid unit: {unit}":
-                errors.append("The error message is incorrectly formatted.")
+# Part 3
 
-    assert not errors
+
+def reference_calculate_area(length: float, width: float, unit: str = "cm") -> str:
+    """Reference solution for Part 3: all units."""
+    conversions = {"cm": 1, "m": 100, "mm": 0.1, "yd": 91.44, "ft": 30.48}
+
+    try:
+        factor = conversions[unit]
+    except KeyError:
+        return f"Invalid unit: {unit}"
+
+    area = round(length * width * factor**2, 2)
+    return f"{area} cm^2"
+
+
+def validate_area_signature(function_to_test) -> None:
+    """Validate signature of the full area calculation function."""
+    signature = inspect.signature(function_to_test)
+    params = signature.parameters
+    return_annotation = signature.return_annotation
+
+    assert function_to_test.__doc__ is not None, "The function is missing a docstring."
+    assert (
+        len(params) == 3
+    ), "The function should take three arguments (length, width, and unit)."
+    assert all(
+        p in params.keys() for p in ["length", "width", "unit"]
+    ), "The function's parameters should be 'length', 'width' and 'unit'."
+    assert (
+        params["length"].annotation is float
+    ), "Parameter 'length' should be annotated as float."
+    assert (
+        params["width"].annotation is float
+    ), "Parameter 'width' should be annotated as float."
+    assert (
+        params["unit"].annotation is str
+    ), "Parameter 'unit' should be annotated as str."
+    assert (
+        params["unit"].default == "cm"
+    ), "Parameter 'unit' should have a default value of 'cm'."
+    assert return_annotation is str, "The return type should be annotated as str."
+
+
+@pytest.mark.parametrize(
+    "length,width,unit",
+    [
+        (2.0, 3.0, "cm"),
+        (2.0, 3.0, "m"),
+        (2.0, 3.0, "mm"),
+        (2.0, 3.0, "yd"),
+        (2.0, 3.0, "ft"),
+    ],
+)
+def test_calculate_area(length, width, unit, function_to_test):
+    validate_area_signature(function_to_test)
+    result = function_to_test(length, width, unit)
+    expected = reference_calculate_area(length, width, unit)
+    assert isinstance(result, str), "Result should be a string"
+    assert expected == result, "Incorrect area calculation or formatting"
 
 
 #
@@ -167,8 +239,8 @@ def test_calculate_area_result(
 #
 
 
-def reference_summing_anything(*args: Any) -> Any:
-    """Reference solution for the summing_anything exercise"""
+def reference_combine_anything(*args: Any) -> Any:
+    """Reference solution for the combine_anything exercise"""
     if not args:
         return args
 
@@ -181,16 +253,16 @@ def reference_summing_anything(*args: Any) -> Any:
 
 
 @pytest.mark.parametrize(
-    "args,expected",
+    "args",
     [
-        ((), ()),
-        ((1, 2, 3), 6),
-        (([1, 2, 3], [4, 5, 6]), [1, 2, 3, 4, 5, 6]),
-        (("hello", "world"), "helloworld"),
+        (()),
+        ((1, 2, 3)),
+        (([1, 2, 3], [4, 5, 6])),
+        (("hello", "world")),
     ],
 )
-def test_summing_anything(args: Any, expected: Any, function_to_test) -> None:
-    assert function_to_test(*args) == expected
+def test_combine_anything(args: Any, function_to_test) -> None:
+    assert function_to_test(*args) == reference_combine_anything(*args)
 
 
 #
