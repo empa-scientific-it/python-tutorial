@@ -18,7 +18,15 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
 
 
 def reference_greet(name: str, age: int) -> str:
-    """Reference solution for `solution_greet` exercise"""
+    """Creates a personalized greeting message using name and age.
+
+    Args:
+        name: The person's name to include in the greeting
+        age: The person's age in years
+
+    Returns:
+        - A string in the format "Hello, <name>! You are <age> years old."
+    """
     return f"Hello, {name}! You are {age} years old."
 
 
