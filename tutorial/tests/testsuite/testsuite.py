@@ -151,7 +151,6 @@ class TestMagic(Magics):
         super().__init__(shell)
         self.shell: InteractiveShell = shell
         self.cell: str = ""
-        self.debug: bool = False
         self.module_file: Optional[pathlib.Path] = None
         self.module_name: Optional[str] = None
         self.threaded: Optional[bool] = None
@@ -271,9 +270,9 @@ class TestMagic(Magics):
         line_contents = set(line.split())
 
         # Debug mode?
-        if "debug" in line_contents:
+        debug = "debug" in line_contents
+        if debug:
             line_contents.remove("debug")
-            self.debug = True
 
         # Check if we need to run the tests on a separate thread
         if "async" in line_contents:
@@ -281,7 +280,7 @@ class TestMagic(Magics):
             self.threaded = True
             self.test_queue = Queue()
 
-        with self.traceback_handling(self.debug):
+        with self.traceback_handling(debug):
             # Get the module containing the test(s)
             if (
                 module_name := get_module_name(
@@ -306,7 +305,7 @@ class TestMagic(Magics):
             results = self.run_cell()
 
             # If in debug mode, display debug information first
-            if self.debug:
+            if debug:
                 debug_output = DebugOutput(
                     module_name=self.module_name,
                     module_file=self.module_file,
