@@ -37,6 +37,13 @@ if t.TYPE_CHECKING:
 logger = logging.getLogger()
 
 
+# Utility: Markdown to HTML converter
+def to_html(text: t.Any) -> str:
+    """Markdown to HTML converter"""
+    return md.markdown(str(text))
+
+
+# Base models for an AI Explanation
 class ExplanationStep(BaseModel):
     """A single step in the explanation"""
 
@@ -58,6 +65,25 @@ class Explanation(BaseModel):
     steps: t.List[ExplanationStep]
     code_snippets: t.List[CodeSnippet]
     hints: t.List[str]
+
+
+# Base model for an AI Feedback
+class CodeReviewPoint(BaseModel):
+    """A single point in the code review feedback"""
+
+    category: str  # e.g. "Readability", "Style", "Performance"
+    title: str
+    details: str
+    hint: t.Optional[str]
+
+
+class SuccessFeedback(BaseModel):
+    """A structured code review feedback"""
+
+    overview: str  # General assessment
+    strengths: t.List[str]  # What's good about your solution
+    review_points: t.List[CodeReviewPoint]  # Areas for improvement
+    suggestions: t.List[str]  # Suggestions for improvement
 
 
 class OpenAIWrapper:
@@ -193,7 +219,7 @@ class OpenAIWrapper:
         wait=wait_fixed(10) + wait_random(0, 5),
     )
     def get_chat_response(
-        self, query: str, *args, **kwargs
+        self, query: str, response_format: t.Type[BaseModel], *args, **kwargs
     ) -> ParsedChatCompletionMessage | ChatCompletionMessage:
         """Fetch a completion from the chat model"""
         system_prompt = (
@@ -216,7 +242,7 @@ class OpenAIWrapper:
             response = self.client.beta.chat.completions.parse(
                 model=self.model,
                 messages=messages,
-                response_format=Explanation,
+                response_format=response_format,
                 **kwargs,
             )
         except openai.APIError:
@@ -239,6 +265,8 @@ class ButtonState(Enum):
 
 class AIExplanation:
     """Class representing an AI-generated explanation"""
+
+    reponse_format: t.ClassVar[t.Type[BaseModel]] = Explanation
 
     _STYLES = """
         <style>
@@ -327,6 +355,8 @@ class AIExplanation:
             }
         </style>
     """
+    _BUTTON_TITLE = "Get AI Explanation"
+    _WIDGET_TITLE = "🤖 Explain With AI"
 
     def __init__(
         self,
@@ -352,7 +382,7 @@ class AIExplanation:
         # The button widget for fetching the explanation
         self._button_styles = {
             ButtonState.READY: {
-                "description": "Get AI Explanation",
+                "description": f"{self._BUTTON_TITLE}",
                 "icon": "search",
                 "disabled": False,
             },
@@ -414,7 +444,7 @@ class AIExplanation:
 
         header_html = widgets.HTML(
             '<div class="ai-header">'
-            '<span class="ai-title">🤖 Explain With AI</span>'
+            f'<span class="ai-title" style="font-size: 1.3rem;">{self._WIDGET_TITLE}</span>'
             "</div>"
         )
 
@@ -524,7 +554,6 @@ class AIExplanation:
 
     def _fetch_explanation(self) -> None:
         """Fetch the explanation from OpenAI API"""
-        from .helpers import IPytestOutcome
 
         logger.debug("Attempting to fetch explanation from OpenAI API.")
 
@@ -533,33 +562,15 @@ class AIExplanation:
 
         self._update_button_state(ButtonState.LOADING)
 
-        if self.exception:
-            traceback_str = "".join(traceback.format_exception_only(self.exception))
-            logger.debug("Formatted traceback: %s", traceback_str)
-        else:
-            traceback_str = "No traceback available."
-
         with self._output:
             self._output.clear_output()
 
             try:
-                # assert self.ipytest_result.function is not None
-                match self.ipytest_result.status:
-                    case IPytestOutcome.FINISHED if self.ipytest_result.function is not None:
-                        self.query_params(
-                            function_code=self.ipytest_result.function.source_code,
-                            docstring=self.ipytest_result.function.implementation.__doc__,
-                            traceback=traceback_str,
-                        )
-                    case _:
-                        self.query_params(
-                            function_code=self.ipytest_result.cell_content,
-                            docstring="(Find it in the function's definition above.)",
-                            traceback=traceback_str,
-                        )
+                self._prepare_query()
 
                 response = self.openai_client.get_chat_response(
                     self.query,
+                    response_format=self.reponse_format,
                     temperature=0.2,
                 )
 
@@ -582,16 +593,34 @@ class AIExplanation:
                 else:
                     self._update_button_state(ButtonState.READY)
 
+    def _prepare_query(self) -> None:
+        """Prepare the query parameters before fetching the explanation"""
+        from .helpers import IPytestOutcome
+
+        if self.exception:
+            traceback_str = "".join(traceback.format_exception_only(self.exception))
+            logger.debug("Formatted traceback: %s", traceback_str)
+        else:
+            traceback_str = "No traceback available."
+
+        match self.ipytest_result.status:
+            case IPytestOutcome.FINISHED if self.ipytest_result.function is not None:
+                self.query_params(
+                    function_code=self.ipytest_result.function.source_code,
+                    docstring=self.ipytest_result.function.implementation.__doc__,
+                    traceback=traceback_str,
+                )
+            case _:
+                self.query_params(
+                    function_code=self.ipytest_result.cell_content,
+                    docstring="(Find it in the function's definition above.)",
+                    traceback=traceback_str,
+                )
+
     def _format_explanation(
         self, chat_response: ParsedChatCompletionMessage | ChatCompletionMessage
     ) -> t.Optional[t.List[t.Any]]:
         """Format the explanation response for display"""
-
-        # Initialize the Markdown to HTML converter
-        def to_html(text: t.Any) -> str:
-            """Markdown to HTML converter"""
-            return md.markdown(str(text))
-
         # Reset the explanation object
         explanation = None
 
@@ -674,3 +703,186 @@ class AIExplanation:
             logger.debug("Failed to parse explanation.")
 
         return None
+
+
+class AISuccessFeedback(AIExplanation):
+    """A subclass of AIExplanation for successful feedback"""
+
+    reponse_format = SuccessFeedback
+
+    __STYLES = (
+        AIExplanation._STYLES
+        + """
+        <style>
+        .ai-success-feedback .review-point {
+            margin: 0.75rem 0;
+        }
+        .ai-success-feedback .category-tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+        .ai-success-feedback .category-style { background: #e0f2fe; color: #0369a1; }
+        .ai-success-feedback .category-performance { background: #fef3c7; color: #92400e; }
+        .ai-success-feedback .category-maintainability { background: #dcfce7; color: #166534; }
+        .ai-success-feedback .suggestions-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .ai-success-feedback .suggestions-list li {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        .ai-success-feedback .suggestions-list li:before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+    </style>
+    """
+    )
+    _WIDGET_TITLE = "🎯 Code Review"
+    _BUTTON_TITLE = "Get Code Review"
+
+    def __init__(
+        self,
+        ipytest_result: "IPytestResult",
+        openai_client: "OpenAIWrapper",
+        reference_solution: t.Optional[str] = None,
+        wait_time: int = 30,
+    ) -> None:
+        super().__init__(
+            ipytest_result=ipytest_result,
+            openai_client=openai_client,
+            wait_time=wait_time,
+        )
+
+        self.reference_solution = reference_solution
+
+        # Different query templates based on whether we have a valid reference solution
+        if reference_solution:
+            self._query_template = (
+                "I wrote the following Python function:\n\n"
+                "{function_code}\n\n"
+                "Here's the reference solution:\n\n"
+                "{reference_solution}\n\n"
+                "All tests have passed. Please review my solution, analyzing these distinct aspects:\n"
+                "1. Implementation: choice of data structures, algorithms, built-in functions\n"
+                "2. Performance: time/space complexity, resource usage\n"
+                "3. Design Pattern: code organization, abstraction, reusability\n\n"
+                "For each aspect:\n"
+                "- Highlight what works well\n"
+                "- Point out potential improvements\n"
+                "- Provide concrete examples where relevant\n"
+                "- Compare with the reference solution when meaningful\n\n"
+                "Include specific suggestions that could make the code more efficient or maintainable."
+            )
+        else:
+            self._query_template = (
+                "I wrote the following Python function:\n\n"
+                "{function_code}\n\n"
+                "All tests have passed. Please review my solution, analyzing these distinct aspects:\n"
+                "1. Implementation: choice of data structures, algorithms, built-in functions\n"
+                "2. Performance: time/space complexity, resource usage\n"
+                "3. Design Pattern: code organization, abstraction, reusability\n\n"
+                "For each aspect:\n"
+                "- Highlight what works well\n"
+                "- Point out potential improvements\n"
+                "- Provide concrete examples where relevant\n\n"
+                "Include specific suggestions that could make the code more efficient or maintainable."
+            )
+
+    def _prepare_query(self) -> None:
+        """Include the reference solution in the query, if available"""
+        super()._prepare_query()
+        if self.reference_solution:
+            self.query_params(reference_solution=self.reference_solution)
+
+    def _format_explanation(
+        self, chat_response: ParsedChatCompletionMessage | ChatCompletionMessage
+    ) -> t.Optional[t.List[t.Any]]:
+        """Format the success feedback response for display"""
+        widgets_list = []
+
+        if isinstance(chat_response, ParsedChatCompletionMessage):
+            feedback = chat_response.parsed
+            if not isinstance(feedback, SuccessFeedback):
+                return super()._format_explanation(chat_response)
+
+            # Overview in alert-style block
+            overview_html = (
+                '<div class="alert alert-info" style="margin: 1rem 0; padding: 1rem; '
+                'border-left: 4px solid #3b82f6; background: #eff6ff; font-size: 1rem;">'
+                f'<h3 style="margin-top: 0; font-size: 1.1rem;">Overview</h3>{to_html(feedback.overview)}'
+                "</div>"
+            )
+
+            widgets_list.append(widgets.HTML(overview_html))
+
+            # Strengths in alert-style block
+            if feedback.strengths:
+                strengths_html = (
+                    '<div class="alert alert-success" style="margin: 1rem 0; padding: 1rem; '
+                    'border-left: 4px solid #22c55e; background: #f0fdf4; font-size: 1rem;">'
+                    '<h3 style="margin-top: 0; font-size: 1.1rem;">✨ Strengths</h3>'
+                    '<ul style="margin-bottom: 0;">'
+                    + "".join(
+                        f"<li>{to_html(strength)}</li>"
+                        for strength in feedback.strengths
+                    )
+                    + "</ul></div>"
+                )
+
+                widgets_list.append(widgets.HTML(strengths_html))
+
+            # Review points as accordions
+            for point in feedback.review_points:
+                point_output = widgets.Output()
+                point_output.append_display_data(
+                    widgets.HTML(
+                        f'<div style="font-size: 1rem;">{to_html(point.details)}</div>'
+                    )
+                )
+
+                if point.hint:
+                    hint_html = (
+                        '<div class="alert" style="margin: 1rem 0; padding: 0.75rem; '
+                        'border-left: 4px solid #8b5cf6; background: #f5f3ff; font-size: 0.95rem;">'
+                        "💡 <strong>Hint:</strong> "
+                        f"{to_html(point.hint)}"
+                        "</div>"
+                    )
+                    point_output.append_display_data(widgets.HTML(hint_html))
+
+                accordion = widgets.Accordion(
+                    children=[point_output],
+                    titles=(f"{point.category}: {point.title}",),
+                )
+                widgets_list.append(accordion)
+
+            # Suggestions as list
+            if feedback.suggestions:
+                suggestions_html = (
+                    '<div class="alert alert-warning" style="margin: 1rem 0; padding: 1rem; '
+                    'border-left: 4px solid #eab308; background: #fefce8; font-size: 1rem;">'
+                    '<h3 style="margin-top: 0; font-size: 1.1rem;">💡 Suggestions</h3>'
+                    '<ul style="margin-bottom: 0;">'
+                    + "".join(
+                        f"<li>{to_html(sugg)}</li>" for sugg in feedback.suggestions
+                    )
+                    + "</ul></div>"
+                )
+                widgets_list.append(widgets.HTML(suggestions_html))
+
+        elif (
+            isinstance(chat_response, ChatCompletionMessage)
+            and chat_response.content is not None
+        ):
+            # Fallback to unstructured response
+            return super()._format_explanation(chat_response)
+
+        return widgets_list if widgets_list else None
