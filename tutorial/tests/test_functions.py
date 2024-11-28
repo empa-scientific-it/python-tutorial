@@ -239,9 +239,9 @@ def test_calculate_area(length, width, unit, function_to_test):
 #
 
 
-def reference_summing_anything(*args: Any) -> Any:
+def reference_combine_anything(*args: Any) -> Any:
     """Reference solution for the summing_anything exercise"""
-    if not args or None in args:
+    if not args:
         return args
 
     result = args[0]
@@ -256,14 +256,13 @@ def reference_summing_anything(*args: Any) -> Any:
     "args",
     [
         (()),
-        ((None, None)),
         ((1, 2, 3)),
         (([1, 2, 3], [4, 5, 6])),
         (("hello", "world")),
     ],
 )
-def test_summing_anything(args: Any, function_to_test) -> None:
-    assert function_to_test(*args) == reference_summing_anything(*args)
+def test_combine_anything(args: Any, function_to_test) -> None:
+    assert function_to_test(*args) == reference_combine_anything(*args)
 
 
 #
