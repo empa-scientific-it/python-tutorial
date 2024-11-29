@@ -1,0 +1,26 @@
+---
+name: base
+channels:
+  - conda-forge
+dependencies:
+  - pip
+  - pip:
+      - numpy
+      - matplotlib
+      - pandas
+      - ipywidgets
+      - ipynbname
+      - jupyterlab
+      - pytest
+      - pytest-timeout
+      - markdown
+      - pre-commit
+      - geostatspy
+      - gstools
+      - scikit-learn
+      - attrs
+      - multiprocess
+      - openai
+      - tenacity
+      - markdown2
+      - python-dotenv
