@@ -18,6 +18,8 @@ from dotenv import find_dotenv, load_dotenv
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
 from IPython.display import HTML, display
+import ipywidgets
+from abc import ABC, abstractmethod
 
 from .ai_helpers import OpenAIWrapper
 from .ast_parser import AstParser
@@ -38,6 +40,7 @@ from .helpers import (
     TestOutcome,
     TestResultOutput,
 )
+from IPython.display import display as ipython_display
 
 
 def run_pytest_for_function(
@@ -142,12 +145,57 @@ def get_module_name(line: str, globals_dict: Dict) -> str | None:
 
     return module_name
 
+class OutputGenerator(ABC):
+    @abstractmethod
+    def display(self, content: str) -> None:
+        pass
+
+    @abstractmethod
+    def attempts_remaining_explanation(attempts_remaining: int) -> str:
+        pass
+
+
+class iPythonGenerator(OutputGenerator):
+    def attempts_remaining_explanation(attempts_remaining: int) -> str:
+        return (
+            '<div style="margin-top: 1.5rem; font-family: system-ui, -apple-system, sans-serif;">'
+            f'<div style="display: flex; align-items: center; gap: 0.5rem;">'
+            '<span style="font-size: 1.2rem;">📝</span>'
+            '<span style="font-size: 1.1rem; font-weight: 500;">Solution will be available after '
+            f'{attempts_remaining} more failed attempt{"s" if attempts_remaining > 1 else ""}</span>'
+            "</div>"
+            "</div>"
+        )
+    
+    def display_cells(cells):
+        html_cells = [HTML(cell) for cell in cells]
+        ipython_display(
+            ipywidgets.VBox(
+                children=html_cells,
+                layout={
+                    "border": "1px solid #e5e7eb",
+                    "background-color": "#ffffff",
+                    "margin": "5px",
+                    "padding": "0.75rem",
+                    "border-radius": "0.5rem",
+                },
+            )
+        )
+        return None
+    
+class DebugGenerator(OutputGenerator):
+    def attempts_remaining_explanation(attempts_remaining: int) -> str:
+        return f'{attempts_remaining}'
+
+    def display_cells(cells):
+        return cells
+
 
 @magics_class
 class TestMagic(Magics):
     """Class to add the test cell magic"""
 
-    def __init__(self, shell):
+    def __init__(self, shell, output_generator=iPythonGenerator()):
         super().__init__(shell)
         self.shell: InteractiveShell = shell
         self.cell: str = ""
@@ -160,6 +208,7 @@ class TestMagic(Magics):
         )
         self._orig_traceback = self.shell._showtraceback  # type: ignore
         # This is monkey-patching suppress printing any exception or traceback
+        self.output_generator = output_generator
 
     def extract_functions_to_test(self) -> List[AFunction]:
         """Retrieve the functions names and implementations defined in the current cell"""
@@ -311,7 +360,7 @@ class TestMagic(Magics):
                     module_file=self.module_file,
                     results=results,
                 )
-                display(HTML(debug_output.to_html()))
+                output = self.output_generator.display(debug_output)
 
             # Parse the AST of the test module to retrieve the solution code
             ast_parser = AstParser(self.module_file)
@@ -329,7 +378,7 @@ class TestMagic(Magics):
                 ).display_results()
 
 
-def load_ipython_extension(ipython):
+def load_ipython_extension(ipython, output_generator):
     """
     Any module file that define a function named `load_ipython_extension`
     can be loaded via `%load_ext module.path` or be configured to be
@@ -377,13 +426,11 @@ def load_ipython_extension(ipython):
             )
             message_color = "#ffebee"
 
-    display(
-        HTML(
+    output_generator.display(
             "<div style='background-color: "
             f"{message_color}; border-radius: 5px; padding: 10px;'>"
             f"{message}"
             "</div>"
-        )
     )
 
     # Register the magic
@@ -393,4 +440,4 @@ def load_ipython_extension(ipython):
         "<div style='background-color: #fffde7; border-radius: 5px; padding: 10px;'>"
         "🔄 <strong>IPytest extension (re)loaded.</strong></div>"
     )
-    display(HTML(message))
+    output_generator.display(message)

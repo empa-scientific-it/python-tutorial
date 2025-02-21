@@ -14,6 +14,8 @@ from ipywidgets import HTML
 
 from .ai_helpers import AIExplanation, OpenAIWrapper
 
+from testsuite import iPythonGenerator, DebugGenerator, OutputGenerator
+
 
 def strip_ansi_codes(text: str) -> str:
     """Remove ANSI escape sequences from text"""
@@ -377,6 +379,9 @@ class IPytestResult:
 class TestResultOutput:
     """Class to prepare and display test results in a Jupyter notebook"""
 
+    def __init__(self, output_generator=iPythonGenerator()) -> None:
+        self.output_generator = output_generator
+
     ipytest_result: IPytestResult
     solution: Optional[str] = None
     MAX_ATTEMPTS: ClassVar[int] = 3
@@ -409,29 +414,10 @@ class TestResultOutput:
                     self.MAX_ATTEMPTS - self.ipytest_result.test_attempts
                 )
                 cells.append(
-                    HTML(
-                        '<div style="margin-top: 1.5rem; font-family: system-ui, -apple-system, sans-serif;">'
-                        f'<div style="display: flex; align-items: center; gap: 0.5rem;">'
-                        '<span style="font-size: 1.2rem;">📝</span>'
-                        '<span style="font-size: 1.1rem; font-weight: 500;">Solution will be available after '
-                        f'{attempts_remaining} more failed attempt{"s" if attempts_remaining > 1 else ""}</span>'
-                        "</div>"
-                        "</div>"
-                    )
+                    self.output_generator.attempts_remaining_explanation(attempts_remaining)
                 )
 
-        ipython_display(
-            ipywidgets.VBox(
-                children=cells,
-                layout={
-                    "border": "1px solid #e5e7eb",
-                    "background-color": "#ffffff",
-                    "margin": "5px",
-                    "padding": "0.75rem",
-                    "border-radius": "0.5rem",
-                },
-            )
-        )
+        iPythonGenerator.display_cells(cells)
 
     # TODO: This is left for reference if we ever want to bring back this styling
     # Perhaps we should remove it if it's unnecessary
