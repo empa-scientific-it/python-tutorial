@@ -11,10 +11,9 @@ import pytest
 from IPython.display import Code
 from IPython.display import display as ipython_display
 from ipywidgets import HTML
+from testsuite import iPythonGenerator
 
 from .ai_helpers import AIExplanation, OpenAIWrapper
-
-from testsuite import iPythonGenerator, DebugGenerator, OutputGenerator
 
 
 def strip_ansi_codes(text: str) -> str:
@@ -414,7 +413,9 @@ class TestResultOutput:
                     self.MAX_ATTEMPTS - self.ipytest_result.test_attempts
                 )
                 cells.append(
-                    self.output_generator.attempts_remaining_explanation(attempts_remaining)
+                    self.output_generator.attempts_remaining_explanation(
+                        attempts_remaining
+                    )
                 )
 
         iPythonGenerator.display_cells(cells)

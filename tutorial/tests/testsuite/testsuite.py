@@ -6,6 +6,7 @@ import inspect
 import io
 import os
 import pathlib
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from queue import Queue
@@ -13,13 +14,13 @@ from threading import Thread
 from typing import Dict, List, Optional
 
 import ipynbname
+import ipywidgets
 import pytest
 from dotenv import find_dotenv, load_dotenv
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.core.magic import Magics, cell_magic, magics_class
-from IPython.display import HTML, display
-import ipywidgets
-from abc import ABC, abstractmethod
+from IPython.display import HTML
+from IPython.display import display as ipython_display
 
 from .ai_helpers import OpenAIWrapper
 from .ast_parser import AstParser
@@ -40,7 +41,6 @@ from .helpers import (
     TestOutcome,
     TestResultOutput,
 )
-from IPython.display import display as ipython_display
 
 
 def run_pytest_for_function(
@@ -145,6 +145,7 @@ def get_module_name(line: str, globals_dict: Dict) -> str | None:
 
     return module_name
 
+
 class OutputGenerator(ABC):
     @abstractmethod
     def display(self, content: str) -> None:
@@ -166,7 +167,7 @@ class iPythonGenerator(OutputGenerator):
             "</div>"
             "</div>"
         )
-    
+
     def display_cells(cells):
         html_cells = [HTML(cell) for cell in cells]
         ipython_display(
@@ -182,10 +183,11 @@ class iPythonGenerator(OutputGenerator):
             )
         )
         return None
-    
+
+
 class DebugGenerator(OutputGenerator):
     def attempts_remaining_explanation(attempts_remaining: int) -> str:
-        return f'{attempts_remaining}'
+        return f"{attempts_remaining}"
 
     def display_cells(cells):
         return cells
@@ -427,10 +429,10 @@ def load_ipython_extension(ipython, output_generator):
             message_color = "#ffebee"
 
     output_generator.display(
-            "<div style='background-color: "
-            f"{message_color}; border-radius: 5px; padding: 10px;'>"
-            f"{message}"
-            "</div>"
+        "<div style='background-color: "
+        f"{message_color}; border-radius: 5px; padding: 10px;'>"
+        f"{message}"
+        "</div>"
     )
 
     # Register the magic
