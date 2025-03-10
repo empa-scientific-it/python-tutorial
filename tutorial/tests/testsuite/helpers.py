@@ -12,7 +12,7 @@ from IPython.display import Code
 from IPython.display import display as ipython_display
 from ipywidgets import HTML
 
-from .ai_helpers import AIExplanation, OpenAIWrapper
+from .ai_helpers import AIExplanation, AISuccessFeedback, OpenAIWrapper
 
 
 def strip_ansi_codes(text: str) -> str:
@@ -577,8 +577,8 @@ class TestResultOutput:
             ipython_display(
                 HTML(
                     '<div style="display: flex; align-items: center; gap: 0.5rem;">'
-                    '<span style="font-size: 1.1rem;">👉</span>'
-                    '<span style="font-size: 1.1rem; font-weight: 500;">Proposed solution</span>'
+                    '<span style="font-size: 1.3rem;">👉</span>'
+                    '<span style="font-size: 1.3rem; font-weight: 500;">Proposed solution</span>'
                     "</div>"
                 )
             )
@@ -598,7 +598,7 @@ class TestResultOutput:
         return ipywidgets.VBox(
             children=[header_output, accordion],
             layout=ipywidgets.Layout(
-                margin="0",
+                margin="1rem 0 0 0",
                 padding="0",
             ),
         )
@@ -678,20 +678,35 @@ class TestResultOutput:
                 for test in self.ipytest_result.test_results:
                     output_cell.append_display_data(HTML(test.to_html()))
 
-                failed_tests = [
-                    test
+                all_passed = all(
+                    test.outcome == TestOutcome.PASS
                     for test in self.ipytest_result.test_results
-                    if test.outcome != TestOutcome.PASS
-                ]
+                )
 
-                if self.openai_client and failed_tests:
-                    ai_explains = AIExplanation(
-                        ipytest_result=self.ipytest_result,
-                        exception=failed_tests[0].exception,
-                        openai_client=self.openai_client,
-                    )
+                if self.openai_client:
+                    if all_passed and self.solution:
+                        # Add success feedback widget
+                        success_feedback = AISuccessFeedback(
+                            ipytest_result=self.ipytest_result,
+                            openai_client=self.openai_client,
+                            reference_solution=self.solution,
+                        )
+                        output_cell.append_display_data(success_feedback.render())
+                    else:
+                        failed_tests = [
+                            test
+                            for test in self.ipytest_result.test_results
+                            if test.outcome != TestOutcome.PASS
+                        ]
 
-                    output_cell.append_display_data(ai_explains.render())
+                        if failed_tests:
+                            ai_explains = AIExplanation(
+                                ipytest_result=self.ipytest_result,
+                                exception=failed_tests[0].exception,
+                                openai_client=self.openai_client,
+                            )
+
+                            output_cell.append_display_data(ai_explains.render())
 
             case IPytestOutcome.SOLUTION_FUNCTION_MISSING:
                 output_cell.append_display_data(
