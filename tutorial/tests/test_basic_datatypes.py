@@ -421,7 +421,7 @@ STRINGS = [
     "ab",
     "abc",
     "abcd",
-    "a b c d e" "One two three four five six seven eight nine ten",
+    "a b c d eOne two three four five six seven eight nine ten",
     "Hello world",
     "How are you?",
 ]

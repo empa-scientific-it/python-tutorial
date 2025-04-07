@@ -92,10 +92,10 @@ class DebugOutput:
         for i, result in enumerate(self.results, 1):
             debug_parts.append(
                 f'<div class="debug-result">'
-                f'<strong>Result #{i}</strong><br>'
-                f'Status: {result.status.name if result.status else "None"}<br>'
-                f'Function: {result.function.name if result.function else "None"}<br>'
-                f'Solution attempts: {result.test_attempts}'
+                f"<strong>Result #{i}</strong><br>"
+                f"Status: {result.status.name if result.status else 'None'}<br>"
+                f"Function: {result.function.name if result.function else 'None'}<br>"
+                f"Solution attempts: {result.test_attempts}"
             )
 
             if result.test_results:
@@ -106,8 +106,8 @@ class DebugOutput:
                 )
                 for test in result.test_results:
                     debug_parts.append(
-                        f'• {test.test_name}: {test.outcome.name}'
-                        f'{f" - {type(test.exception).__name__}: {str(test.exception)}" if test.exception else ""}<br>'
+                        f"• {test.test_name}: {test.outcome.name}"
+                        f"{f' - {type(test.exception).__name__}: {str(test.exception)}' if test.exception else ''}<br>"
                     )
                 debug_parts.append("</div></div>")
 
@@ -291,7 +291,7 @@ class TestCaseResult:
         <div class="test-result {status_class}">
             <div class="test-header">
                 <span class="test-icon">{icon}</span>
-                {f'<span class="test-name">{html.escape(test_name)}</span>' if test_name else ''}
+                {f'<span class="test-name">{html.escape(test_name)}</span>' if test_name else ""}
                 <span class="test-status">{html.escape(status_text)}</span>
             </div>
         """
@@ -336,10 +336,10 @@ class TestCaseResult:
                             </div>
                             <div class="output-content">
                                 <div id="{tab_id}_output" class="output-pane active">
-                                    <pre>{html.escape(strip_ansi_codes(self.stdout)) if self.stdout else 'No output'}</pre>
+                                    <pre>{html.escape(strip_ansi_codes(self.stdout)) if self.stdout else "No output"}</pre>
                                 </div>
                                 <div id="{tab_id}_error" class="output-pane">
-                                    <pre>{html.escape(strip_ansi_codes(self.stderr)) if self.stderr else 'No errors'}</pre>
+                                    <pre>{html.escape(strip_ansi_codes(self.stderr)) if self.stderr else "No errors"}</pre>
                                 </div>
                             </div>
                         </div>
@@ -414,7 +414,7 @@ class TestResultOutput:
                         f'<div style="display: flex; align-items: center; gap: 0.5rem;">'
                         '<span style="font-size: 1.2rem;">📝</span>'
                         '<span style="font-size: 1.1rem; font-weight: 500;">Solution will be available after '
-                        f'{attempts_remaining} more failed attempt{"s" if attempts_remaining > 1 else ""}</span>'
+                        f"{attempts_remaining} more failed attempt{'s' if attempts_remaining > 1 else ''}</span>"
                         "</div>"
                         "</div>"
                     )
@@ -617,7 +617,7 @@ class TestResultOutput:
                 '<code style="font-size: 1.1rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-family: ui-monospace, monospace;">'
                 f"solution_{function.name}</code></h2>"
                 if function is not None
-                else f'<h2 style="font-size: 1.5rem; margin: 0;">{title}</h2>' "</div>"
+                else f'<h2 style="font-size: 1.5rem; margin: 0;">{title}</h2></div>'
             )
         )
 

@@ -62,9 +62,9 @@ def reference_range_of_nums(start: int, end: int) -> List[int]:
     ],
 )
 def test_range_of_nums(start: int, end: int, function_to_test) -> None:
-    assert reference_range_of_nums(start, end) == function_to_test(
-        start, end
-    ), "The function returned an empty range"
+    assert reference_range_of_nums(start, end) == function_to_test(start, end), (
+        "The function returned an empty range"
+    )
 
 
 def reference_sqrt_of_nums(numbers: List[int]) -> List[float]:
@@ -101,12 +101,12 @@ def reference_sqrt_of_nums(numbers: List[int]) -> List[float]:
 def test_sqrt_of_nums(nums: list[int], function_to_test) -> None:
     reference, result = reference_sqrt_of_nums(nums), function_to_test(nums)
     assert isinstance(result, list), "The function should return a list, not 'None'"
-    assert len(reference) == len(
-        result
-    ), "The function should return a list of the same length"
-    assert all(
-        isclose(x, y) for x, y in zip(reference, result)
-    ), "The function should return the square root of each number"
+    assert len(reference) == len(result), (
+        "The function should return a list of the same length"
+    )
+    assert all(isclose(x, y) for x, y in zip(reference, result)), (
+        "The function should return the square root of each number"
+    )
 
 
 def reference_divide_until(number: int) -> int:
