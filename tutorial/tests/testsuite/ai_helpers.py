@@ -545,7 +545,9 @@ class AIExplanation:
             try:
                 # assert self.ipytest_result.function is not None
                 match self.ipytest_result.status:
-                    case IPytestOutcome.FINISHED if self.ipytest_result.function is not None:
+                    case IPytestOutcome.FINISHED if (
+                        self.ipytest_result.function is not None
+                    ):
                         self.query_params(
                             function_code=self.ipytest_result.function.source_code,
                             docstring=self.ipytest_result.function.implementation.__doc__,
