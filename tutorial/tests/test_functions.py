@@ -234,6 +234,28 @@ def test_calculate_area(length, width, unit, function_to_test):
     assert expected == result, "Incorrect area calculation or formatting"
 
 
+@pytest.mark.parametrize(
+    "length,width,unit",
+    [
+        (2.0, 3.0, "km"),  # Invalid unit
+        (2.0, 3.0, ""),  # Empty unit
+        (2.0, 3.0, "CM"),  # Case sensitive check
+        (2.0, 3.0, "inches"),  # Another invalid unit
+    ],
+)
+def test_calculate_area_invalid_units(length, width, unit, function_to_test):
+    """Test that the function properly handles invalid units."""
+    validate_area_signature(function_to_test)
+    result = function_to_test(length, width, unit)
+    expected = f"Invalid unit: {unit}"
+    assert isinstance(
+        result, str
+    ), "Result should be a string like 'Invalid unit: <unit>'"
+    assert (
+        result == expected
+    ), f"Expected '{expected}' for invalid unit '{unit}', got '{result}'"
+
+
 #
 # Exercise 3: summing anything
 #
