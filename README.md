@@ -1,7 +1,7 @@
 # python-tutorial
 
 [![Renku](https://renkulab.io/renku-badge.svg)](https://renkulab.io/v2/projects/empa-scientific-it/empa-it-python-tutorial/sessions/01JRT57GABCS15JB5NGNTQVTRB/start)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/empa-scientific-it/python-tutorial.git/main?labpath=index.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/empa-scientific-it/python-tutorial.git/main?labpath=00-index.ipynb)
 
 [![Build Docker container](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/build-docker-image.yml/badge.svg)](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/build-docker-image.yml)
 
