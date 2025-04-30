@@ -1,23 +1,35 @@
 ---
 name: python-tutorial
 channels:
-    - conda-forge
+  - conda-forge
+  - pytorch
 dependencies:
-    - python=3.10
-    - pip
-    - pip:
-          - numpy
-          - matplotlib
-          - pandas
-          - ipywidgets
-          - ipynbname
-          - jupyterlab
-          - pytest
-          - pytest-timeout
-          - markdown
-          - pre-commit
-          - geostatspy
-          - gstools
-          - scikit-learn
-          - attrs
-          - multiprocess
+  - python=3.10
+  - pip
+  - pip:
+      - numpy
+      - matplotlib
+      - pandas
+      - ipywidgets
+      - ipynbname
+      - jupyterlab
+      - pytest
+      - pytest-timeout
+      - markdown
+      - pre-commit
+      - geostatspy
+      - gstools
+      - scikit-learn
+      - attrs
+      - multiprocess
+      - openai
+      - tenacity
+      - markdown2
+      - python-dotenv
+      - pillow
+      - opencv-python
+      - torch
+      - torchaudio
+      - torchvision
+      - albumentations
+      - grad-cam

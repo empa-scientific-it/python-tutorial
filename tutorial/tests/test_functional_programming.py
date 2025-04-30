@@ -39,12 +39,12 @@ def reference_filter_even(my_list: List[int]) -> List[int]:
 def test_filter_even(function_to_test: Callable, my_list: List[int]):
     res = function_to_test(my_list)
     assert isinstance(res, list), "The function you wrote does not return a list"
-    assert res == reference_filter_even(
-        my_list
-    ), "The list you return is not equal to the expected solution"
-    assert not check_for_loop_in_body(
-        function_to_test
-    ), "You are not allowed to use a for loop in this exercise"
+    assert res == reference_filter_even(my_list), (
+        "The list you return is not equal to the expected solution"
+    )
+    assert not check_for_loop_in_body(function_to_test), (
+        "You are not allowed to use a for loop in this exercise"
+    )
 
 
 def reference_add_one(my_list: List[int]) -> List[int]:
@@ -60,12 +60,12 @@ def reference_add_one(my_list: List[int]) -> List[int]:
     ],
 )
 def test_add_one(function_to_test: Callable, my_list: List[int]):
-    assert function_to_test(my_list) == reference_add_one(
-        my_list
-    ), "The list you return is not equal to the expected solution"
-    assert not check_for_loop_in_body(
-        function_to_test
-    ), "You are not allowed to use a for loop in this exercise"
+    assert function_to_test(my_list) == reference_add_one(my_list), (
+        "The list you return is not equal to the expected solution"
+    )
+    assert not check_for_loop_in_body(function_to_test), (
+        "You are not allowed to use a for loop in this exercise"
+    )
 
 
 @pytest.mark.parametrize(
@@ -143,7 +143,7 @@ def reference_exercise6(my_list: List[Tuple[str, int]]) -> List[Tuple[str, float
 
 
 def test_exercise6(
-    function_to_test: Callable[[List[Tuple[str, int]]], List[Tuple[str, float]]]
+    function_to_test: Callable[[List[Tuple[str, int]]], List[Tuple[str, float]]],
 ):
     input_data = reference_exercise5(get_data_exercise5())
     assert function_to_test(input_data) == reference_exercise6(input_data)
