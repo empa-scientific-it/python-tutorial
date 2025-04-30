@@ -2,6 +2,7 @@
 name: python-tutorial
 channels:
   - conda-forge
+  - pytorch
 dependencies:
   - python=3.10
   - pip
@@ -25,3 +26,10 @@ dependencies:
       - tenacity
       - markdown2
       - python-dotenv
+      - pillow
+      - opencv-python
+      - torch
+      - torchaudio
+      - torchvision
+      - albumentations
+      - grad-cam
