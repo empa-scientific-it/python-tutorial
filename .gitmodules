@@ -1,0 +1,3 @@
+[submodule "tutorial/jupyterlab-ai-extension"]
+	path = tutorial/jupyterlab-ai-extension
+	url = git@github.com:empa-scientific-it/jupyterlab-ai-extension.git
