@@ -50,7 +50,7 @@ def validate_oop_person(solution_result):
     try:
         attrs = list(vars(solution_result))
     except TypeError:
-        raise SubAssertionError
+        raise SubAssertionError from None
     assert len(attrs) == 2, "The class should have 2 attributes."
     assert "first_name" in attrs and "last_name" in attrs, (
         "The class attributes should be 'first_name' and 'last_name'."
@@ -229,7 +229,7 @@ def validate_oop_compare_persons(solution_result):
     try:
         attrs = list(vars(solution_result))
     except TypeError:
-        raise SubAssertionError
+        raise SubAssertionError from None
     assert len(attrs) == 3, "The class should have 3 attributes."
     assert "first_name" in attrs and "last_name" in attrs and "age" in attrs, (
         "The class attributes should be 'first_name', 'last_name' and 'age'."
@@ -292,7 +292,7 @@ def validate_ice_cream_scoop(solution_result):
     try:
         attrs = list(vars(solution_result))
     except TypeError:
-        raise SubAssertionError
+        raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
     assert "flavor" in attrs, "The class attribute should be 'flavor'."
     assert hasattr(solution_result.__str__, "__closure__"), (
@@ -393,7 +393,7 @@ def validate_ice_cream_bowl(solution_result):
     try:
         attrs = list(vars(solution_result))
     except TypeError:
-        raise SubAssertionError
+        raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
     assert "scoops" in attrs, "The class attribute should be 'scoops'."
     assert isinstance(solution_result.scoops, (list, set, tuple)), (
@@ -487,7 +487,7 @@ def validate_ice_cream_shop(solution_result):
     try:
         attrs = list(vars(solution_result))
     except TypeError:
-        raise SubAssertionError
+        raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
     assert "flavors" in attrs, "The class attribute should be 'flavors'."
     assert isinstance(solution_result.flavors, (list, set, tuple)), (
