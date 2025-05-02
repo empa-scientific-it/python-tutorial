@@ -119,7 +119,7 @@ def _name_from_line(line: str = ""):
 
 def _name_from_ipynbname() -> str | None:
     try:
-        return ipynbname.name()
+        return str(ipynbname.name())
     except FileNotFoundError:
         return None
 
