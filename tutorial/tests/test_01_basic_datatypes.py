@@ -146,17 +146,17 @@ def test_number_is_positive_and_even(
     assert function_to_test(number) == reference_number_is_positive_and_even(number)
 
 
-def reference_number_is_lower_than_0_or_greater_than_100(number: int) -> bool:
+def reference_number_is_lower_than_0_or_greater_equal_to_100(number: int) -> bool:
     return number < 0 or number >= 100
 
 
 @pytest.mark.parametrize("number", [1, 2, 3, 4, -1, -2, -3, -4, 0, 100, 101, 102, 103])
-def test_number_is_lower_than_0_or_greater_than_100(
+def test_number_is_lower_than_0_or_greater_equal_to_100(
     number: int, function_to_test: Callable[[int], bool]
 ):
     assert function_to_test(
         number
-    ) == reference_number_is_lower_than_0_or_greater_than_100(number)
+    ) == reference_number_is_lower_than_0_or_greater_equal_to_100(number)
 
 
 LISTS = [
@@ -209,9 +209,11 @@ def reference_return_first_and_last_element_from_list(my_list: list) -> tuple:
 
 @pytest.mark.parametrize("my_list", LISTS)
 def test_return_first_and_last_element_from_list(my_list, function_to_test):
-    assert function_to_test(
-        my_list
-    ) == reference_return_first_and_last_element_from_list(my_list)
+    # If result is a tuple, transform to list
+    result = function_to_test(my_list)
+    if isinstance(result, list):
+        result = tuple(result)
+    assert result == reference_return_first_and_last_element_from_list(my_list)
 
 
 def reference_first_and_last_element_are_equal(my_list: list) -> bool:
@@ -267,7 +269,7 @@ SET1_2 = [
 
 
 def reference_sets_union(set1: set, set2: set) -> set:
-    return set1.union(set2)
+    return set1 | set2
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
@@ -277,7 +279,7 @@ def test_sets_union(set1, set2, function_to_test):
 
 
 def reference_sets_intersection(set1: set, set2: set) -> set:
-    return set1.intersection(set2)
+    return set1 & set2
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
@@ -287,7 +289,7 @@ def test_sets_intersection(set1, set2, function_to_test):
 
 
 def reference_sets_difference(set1: set, set2: set) -> set:
-    return set1.difference(set2)
+    return set1 - set2
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
@@ -297,7 +299,7 @@ def test_sets_difference(set1, set2, function_to_test):
 
 
 def reference_sets_symmetric_difference(set1: set, set2: set) -> set:
-    return set1.symmetric_difference(set2)
+    return set1 ^ set2
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
@@ -309,7 +311,7 @@ def test_sets_symmetric_difference(set1, set2, function_to_test):
 
 
 def reference_sets_subset(set1: set, set2: set) -> bool:
-    return set1.issubset(set2)
+    return set1 <= set2
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
@@ -319,7 +321,7 @@ def test_sets_subset(set1, set2, function_to_test):
 
 
 def reference_sets_superset(set1: set, set2: set) -> bool:
-    return set1.issuperset(set2)
+    return set1 >= set2
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
@@ -329,7 +331,7 @@ def test_sets_superset(set1, set2, function_to_test):
 
 
 def reference_sets_disjoint(set1: set, set2: set) -> bool:
-    return set1.isdisjoint(set2)
+    return (set1 & set2) == set()
 
 
 @pytest.mark.parametrize("set1, set2", SET1_2)
@@ -393,7 +395,8 @@ def test_dict_return_delete_value(my_dict, key, function_to_test):
 def reference_update_one_dict_with_another(
     dict1: dict[Hashable, Any], dict2: dict[Hashable, Any]
 ) -> dict[Hashable, Any]:
-    return dict1.update(dict2)
+    dict1.update(dict2)
+    return dict1
 
 
 @pytest.mark.parametrize(
@@ -402,10 +405,14 @@ def reference_update_one_dict_with_another(
 def test_update_one_dict_with_another(my_dict1, my_dict2, function_to_test):
     my_dict1_original1 = my_dict1.copy()
     my_dict1_original2 = my_dict1.copy()
-    function_to_test(my_dict1_original1, my_dict2)
-    reference_update_one_dict_with_another(my_dict1_original2, my_dict2)
+    new_dict = function_to_test(my_dict1_original1, my_dict2)
+    if new_dict is None:
+        new_dict = my_dict1_original1
+    ref_dict = reference_update_one_dict_with_another(my_dict1_original2, my_dict2)
+    if ref_dict is None:
+        ref_dict = my_dict1_original2
 
-    assert my_dict1_original1 == my_dict1_original2
+    assert new_dict == ref_dict
 
 
 STRINGS = [
@@ -414,7 +421,7 @@ STRINGS = [
     "ab",
     "abc",
     "abcd",
-    "a b c d e" "One two three four five six seven eight nine ten",
+    "a b c d eOne two three four five six seven eight nine ten",
     "Hello world",
     "How are you?",
 ]
@@ -454,8 +461,6 @@ def reference_string_join_commas(my_string: Iterable[str]) -> str:
 @pytest.mark.parametrize("my_string", STRINGS)
 def test_string_join_commas(my_string, function_to_test):
     my_string_splitted = my_string.split()
-    print(my_string_splitted)
-    print(reference_string_join_commas(my_string_splitted))
     assert function_to_test(my_string_splitted) == reference_string_join_commas(
         my_string_splitted
     )
@@ -467,5 +472,47 @@ def reference_string_split_lines(my_string: str) -> list[str]:
 
 def test_string_split_lines(function_to_test):
     my_string = "\n".join(STRINGS)
-    assert function_to_test(my_string) == STRINGS
     assert function_to_test(my_string) == reference_string_split_lines(my_string)
+
+
+INT_SETS = [set(), {1, 2, 3}, {3, -1, 0, 4, 42, 1002}]
+
+
+def reference_sets_of_even_and_odd(my_set: set[int]) -> tuple[set[int]]:
+    even_set = my_set.copy()
+    odd_set = my_set.copy()
+    for n in my_set:
+        if n % 2 == 0:
+            odd_set.remove(n)
+        else:
+            even_set.remove(n)
+    return even_set, odd_set
+
+
+@pytest.mark.parametrize("my_set", INT_SETS)
+def test_sets_of_even_and_odd(my_set, function_to_test):
+    sol_set = my_set.copy()
+    ref_set = my_set.copy()
+    sol_even_set, sol_odd_set = function_to_test(sol_set)
+    ref_even_set, ref_odd_set = reference_sets_of_even_and_odd(ref_set)
+
+    assert sol_even_set == ref_even_set
+    assert sol_odd_set == ref_odd_set
+
+
+INT_TUPLES = [(), (1, 2, 3), (3, -1, 0, 4, 42, 1002)]
+
+
+def reference_tuple_increased_by_one(my_tuple: tuple[int]) -> tuple[int]:
+    increase = []
+    for n in my_tuple:
+        increase.append(n + 1)
+    return tuple(increase)
+
+
+@pytest.mark.parametrize("my_tuple", INT_TUPLES)
+def test_tuple_increased_by_one(my_tuple, function_to_test):
+    new_tuple = function_to_test(my_tuple)
+    ref_tuple = reference_tuple_increased_by_one(my_tuple)
+
+    assert new_tuple == ref_tuple

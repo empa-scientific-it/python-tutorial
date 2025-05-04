@@ -7,7 +7,7 @@ import io
 import os
 import pathlib
 from collections import defaultdict
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from queue import Queue
 from threading import Thread
 from typing import Dict, List, Optional
@@ -119,7 +119,7 @@ def _name_from_line(line: str = ""):
 
 def _name_from_ipynbname() -> str | None:
     try:
-        return ipynbname.name()
+        return str(ipynbname.name())
     except FileNotFoundError:
         return None
 
@@ -151,7 +151,6 @@ class TestMagic(Magics):
         super().__init__(shell)
         self.shell: InteractiveShell = shell
         self.cell: str = ""
-        self.debug: bool = False
         self.module_file: Optional[pathlib.Path] = None
         self.module_name: Optional[str] = None
         self.threaded: Optional[bool] = None
@@ -248,6 +247,17 @@ class TestMagic(Magics):
 
         return test_results
 
+    @contextmanager
+    def traceback_handling(self, debug: bool):
+        """Context manager to temporarily modify traceback behavior"""
+        original_traceback = self.shell._showtraceback
+        try:
+            if not debug:
+                self.shell._showtraceback = lambda *args, **kwargs: None
+            yield
+        finally:
+            self.shell._showtraceback = original_traceback
+
     @cell_magic
     def ipytest(self, line: str, cell: str):
         """The `%%ipytest` cell magic"""
@@ -260,9 +270,9 @@ class TestMagic(Magics):
         line_contents = set(line.split())
 
         # Debug mode?
-        if "debug" in line_contents:
+        debug = "debug" in line_contents
+        if debug:
             line_contents.remove("debug")
-            self.debug = True
 
         # Check if we need to run the tests on a separate thread
         if "async" in line_contents:
@@ -270,56 +280,53 @@ class TestMagic(Magics):
             self.threaded = True
             self.test_queue = Queue()
 
-        # If debug is in the line, then we want to show the traceback
-        if self.debug:
-            self.shell._showtraceback = self._orig_traceback
-        else:
-            self.shell._showtraceback = lambda *args, **kwargs: None
+        with self.traceback_handling(debug):
+            # Get the module containing the test(s)
+            if (
+                module_name := get_module_name(
+                    " ".join(line_contents), self.shell.user_global_ns
+                )
+            ) is None:
+                raise TestModuleNotFoundError
 
-        # Get the module containing the test(s)
-        if (
-            module_name := get_module_name(
-                " ".join(line_contents), self.shell.user_global_ns
-            )
-        ) is None:
-            raise TestModuleNotFoundError
+            self.module_name = module_name
 
-        self.module_name = module_name
+            # Check that the test module file exists
+            if not (
+                module_file := pathlib.Path(
+                    f"tutorial/tests/test_{self.module_name}.py"
+                )
+            ).exists():
+                raise FileNotFoundError(module_file)
 
-        # Check that the test module file exists
-        if not (
-            module_file := pathlib.Path(f"tutorial/tests/test_{self.module_name}.py")
-        ).exists():
-            raise FileNotFoundError(module_file)
+            self.module_file = module_file
 
-        self.module_file = module_file
+            # Run the cell
+            results = self.run_cell()
 
-        # Run the cell
-        results = self.run_cell()
+            # If in debug mode, display debug information first
+            if debug:
+                debug_output = DebugOutput(
+                    module_name=self.module_name,
+                    module_file=self.module_file,
+                    results=results,
+                )
+                display(HTML(debug_output.to_html()))
 
-        # If in debug mode, display debug information first
-        if self.debug:
-            debug_output = DebugOutput(
-                module_name=self.module_name,
-                module_file=self.module_file,
-                results=results,
-            )
-            display(HTML(debug_output.to_html()))
-
-        # Parse the AST of the test module to retrieve the solution code
-        ast_parser = AstParser(self.module_file)
-        # Display the test results and the solution code
-        for result in results:
-            solution = (
-                ast_parser.get_solution_code(result.function.name)
-                if result.function and result.function.name
-                else None
-            )
-            TestResultOutput(
-                result,
-                solution,
-                self.shell.openai_client,  # type: ignore
-            ).display_results()
+            # Parse the AST of the test module to retrieve the solution code
+            ast_parser = AstParser(self.module_file)
+            # Display the test results and the solution code
+            for result in results:
+                solution = (
+                    ast_parser.get_solution_code(result.function.name)
+                    if result.function and result.function.name
+                    else None
+                )
+                TestResultOutput(
+                    result,
+                    solution,
+                    self.shell.openai_client,  # type: ignore
+                ).display_results()
 
 
 def load_ipython_extension(ipython):
