@@ -24,3 +24,10 @@ dependencies:
       - tenacity
       - markdown2
       - python-dotenv
+      - pillow
+      - opencv-python
+      - torch
+      - torchaudio
+      - torchvision
+      - albumentations
+      - grad-cam
