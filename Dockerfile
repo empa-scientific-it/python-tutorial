@@ -22,7 +22,8 @@ RUN apt-get update && \
     build-essential \
     gcc \
     g++ \
-    libffi-dev && \
+    libffi-dev \
+    libgl1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
