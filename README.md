@@ -93,7 +93,7 @@ docker pull ghcr.io/empa-scientific-it/python-tutorial:latest
 5. Run the Docker container: Once the image is downloaded, run the following command to start a Docker container from the image:
 
 ```console
-docker run -p  8888:8888  --name python_tutorial -v /path/to/python-tutorial:/home/jovyan/work ghcr.io/empa-scientific-it/python-tutorial:latest jupyter lab --ip 0.0.0.0 --no-browser
+docker run -p 8888:8888 --name python_tutorial -v /path/to/python-tutorial:/home/jovyan/python-tutorial ghcr.io/empa-scientific-it/python-tutorial:latest jupyter lab --ip 0.0.0.0 --no-browser
 ```
 
 Replace `/path/to/python-tutorial` with the path to the folder you created in step 2, for example `C:/Users/yourusername/Desktop/python-tutorial`.
