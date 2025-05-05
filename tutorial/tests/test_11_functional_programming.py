@@ -42,10 +42,11 @@ def reference_composition(x, y):
     def square(x: int) -> int:
         return x * x
 
-    def sum(x: int, y: int) -> int:
+    def add(x: int, y: int) -> int:
         return x + y
 
-    eq = lambda x, y: sum(square(x), square(y))
+    def eq(x: int, y: int) -> int:
+        return add(square(x), square(y))
 
     return eq(x, y)
 
