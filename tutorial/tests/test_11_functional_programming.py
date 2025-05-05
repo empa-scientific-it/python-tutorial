@@ -10,7 +10,6 @@ import pytest
 import requests
 from numpy.typing import NDArray
 
-
 #
 # Example: Pure Function
 #
@@ -29,7 +28,9 @@ def reference_pure_function(array, new_element):
     ],
 )
 def test_pure_function(array, new_element, function_to_test):
-    assert function_to_test(array, new_element) == reference_pure_function(array, new_element)
+    assert function_to_test(array, new_element) == reference_pure_function(
+        array, new_element
+    )
 
 
 #
