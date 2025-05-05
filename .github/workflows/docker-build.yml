@@ -68,4 +68,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: |
-            type=image,name=ghcr.io/${{ github.repository }},push-by-digest=false,name-canonical=false,push=true,annotation-index.org.opencontainers.image.description="A containerized Python tutorial environment with Jupyter Lab.",annotation-index.org.opencontainers.image.source="https://github.com/${{ github.repository }}",annotation-index.org.opencontainers.image.authors="Empa Scientific IT <scientificit@empa.ch>",annotation-index.org.opencontainers.image.licenses="MIT"
+            type=image,name=ghcr.io/${{ github.repository }},push-by-digest=false,name-canonical=false,push=true,annotation-index.org.opencontainers.image.description=A containerized Python tutorial environment with Jupyter Lab.,annotation-index.org.opencontainers.image.source=https://github.com/${{ github.repository }},annotation-index.org.opencontainers.image.authors=Empa Scientific IT <scientificit@empa.ch>,annotation-index.org.opencontainers.image.licenses=MIT
