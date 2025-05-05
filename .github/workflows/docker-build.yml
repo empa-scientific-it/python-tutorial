@@ -67,7 +67,6 @@ jobs:
             org.opencontainers.image.authors=Empa Scientific IT <scientificit@empa.ch>
             org.opencontainers.image.licenses=MIT
 
-      # Build and push the multi-architecture image
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
