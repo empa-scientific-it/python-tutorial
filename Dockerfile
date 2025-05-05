@@ -41,10 +41,6 @@ RUN mamba env update -n base -f /tmp/environment.yml && \
 RUN mkdir -p ${HOME}/.ipython/profile_default
 COPY --chown=${NB_UID}:${NB_GID} binder/ipython_config.py ${HOME}/.ipython/profile_default/
 
-# Copy the repository late in the build process
-# RUN mkdir -p ${REPO}
-# COPY --chown=${NB_UID}:${NB_GID} . ${REPO}/
-
 # Set the working directory to the repository
 WORKDIR ${REPO}
 
