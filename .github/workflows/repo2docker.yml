@@ -1,5 +1,5 @@
 ---
-name: Build Tutorial Container
+name: Build Container with repo2docker
 on:
   push:
     branches:
