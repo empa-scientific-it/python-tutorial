@@ -48,6 +48,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Tags and annotations for the image
+      # - Tags: image names in the registry
+      # - Annotations: multi-architecture manifest metadata
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -58,7 +61,13 @@ jobs:
             type=ref,event=pr
             type=ref,event=tag
             type=sha,format=short
+          annotations: |
+            org.opencontainers.image.description=A containerized Python tutorial environment with Jupyter Lab.
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.authors=Empa Scientific IT <scientificit@empa.ch>
+            org.opencontainers.image.licenses=MIT
 
+      # Build and push the multi-architecture image
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -67,3 +76,4 @@ jobs:
           push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
