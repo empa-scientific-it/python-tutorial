@@ -28,7 +28,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        arch: [amd64, arm64]
+        arch: [amd64]
       fail-fast: false
     steps:
       - name: Checkout code
