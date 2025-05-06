@@ -26,7 +26,7 @@ def test_scale_image(scale_factor, function_to_test):
 
 def reference_crop_image(image, x: int, y: int, width: int, height: int):
     x1, x2, y1, y2 = x, x + width, y, y + height
-    return image[y : y + height, x : x + width]
+    return image[y1:y2, x1:x2]
 
 
 @pytest.mark.parametrize(
@@ -64,20 +64,20 @@ def test_vertical_flip_image(function_to_test):
 def reference_rotate_image(image, angle: float):
     (h, w) = image.shape[:2]
     center = (w // 2, h // 2)
-    M = cv2.getRotationMatrix2D(center, angle, scale=1.0)
+    mat = cv2.getRotationMatrix2D(center, angle, scale=1.0)
 
     # Compute new bounding dimensions
-    cos = np.abs(M[0, 0])
-    sin = np.abs(M[0, 1])
+    cos = np.abs(mat[0, 0])
+    sin = np.abs(mat[0, 1])
     new_w = int((h * sin) + (w * cos))
     new_h = int((h * cos) + (w * sin))
 
     # Adjust rotation matrix for translation
-    M[0, 2] += (new_w / 2) - center[0]
-    M[1, 2] += (new_h / 2) - center[1]
+    mat[0, 2] += (new_w / 2) - center[0]
+    mat[1, 2] += (new_h / 2) - center[1]
 
     # Perform rotation with expanded canvas
-    return cv2.warpAffine(image, M, (new_w, new_h))
+    return cv2.warpAffine(image, mat, (new_w, new_h))
 
 
 @pytest.mark.parametrize("angle", [5, 10, 20, 30])
