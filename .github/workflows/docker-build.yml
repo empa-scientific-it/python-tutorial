@@ -97,35 +97,59 @@ jobs:
 
       - name: Create and push CPU manifest
         run: |
-          # Create and push multi-architecture manifest for CPU variant
-          docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:cpu \
-            ghcr.io/${{ github.repository }}:cpu-amd64 \
-            ghcr.io/${{ github.repository }}:cpu-arm64
+          # Determine the correct tag suffixes based on the event type
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # PR build - use the commit SHA for more predictable references
+            AMD64_TAG="cpu-amd64-sha-${{ github.sha }}"
+            ARM64_TAG="cpu-arm64-sha-${{ github.sha }}"
+            TARGET_TAG="cpu-sha-${{ github.sha }}"
+          elif [[ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]]; then
+            # Tag build - use tag version in the name
+            AMD64_TAG="cpu-amd64-${{ github.ref_name }}"
+            ARM64_TAG="cpu-arm64-${{ github.ref_name }}"
+            TARGET_TAG="cpu-${{ github.ref_name }}"
+          else
+            # Main branch build - use simple arch tags
+            AMD64_TAG="cpu-amd64"
+            ARM64_TAG="cpu-arm64"
+            TARGET_TAG="cpu"
+          fi
+
+          # Create the manifest with the correct tag names
+          echo "Creating CPU manifest using $AMD64_TAG and $ARM64_TAG"
+          docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:${TARGET_TAG} \
+            ghcr.io/${{ github.repository }}:${AMD64_TAG} \
+            ghcr.io/${{ github.repository }}:${ARM64_TAG}
 
           # If on main branch, also tag as latest
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:latest \
-              ghcr.io/${{ github.repository }}:cpu-amd64 \
-              ghcr.io/${{ github.repository }}:cpu-arm64
-          fi
-
-          # If this is a tag, add version tag for CPU
-          if [[ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]]; then
-            docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:cpu-${{ github.ref_name }} \
-              ghcr.io/${{ github.repository }}:cpu-amd64 \
-              ghcr.io/${{ github.repository }}:cpu-arm64
+              ghcr.io/${{ github.repository }}:${AMD64_TAG} \
+              ghcr.io/${{ github.repository }}:${ARM64_TAG}
           fi
 
       - name: Create and push CUDA manifest
         run: |
-          # Create and push multi-architecture manifest for CUDA variant
-          docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:cuda \
-            ghcr.io/${{ github.repository }}:cuda-amd64 \
-            ghcr.io/${{ github.repository }}:cuda-arm64
-
-          # If this is a tag, add version tag for CUDA
-          if [[ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]]; then
-            docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:cuda-${{ github.ref_name }} \
-              ghcr.io/${{ github.repository }}:cuda-amd64 \
-              ghcr.io/${{ github.repository }}:cuda-arm64
+          # Determine the correct tag suffixes based on the event type
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # PR build - use the commit SHA for more predictable references
+            AMD64_TAG="cuda-amd64-sha-${{ github.sha }}"
+            ARM64_TAG="cuda-arm64-sha-${{ github.sha }}"
+            TARGET_TAG="cuda-sha-${{ github.sha }}"
+          elif [[ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]]; then
+            # Tag build - use tag version in the name
+            AMD64_TAG="cuda-amd64-${{ github.ref_name }}"
+            ARM64_TAG="cuda-arm64-${{ github.ref_name }}"
+            TARGET_TAG="cuda-${{ github.ref_name }}"
+          else
+            # Main branch build - use simple arch tags
+            AMD64_TAG="cuda-amd64"
+            ARM64_TAG="cuda-arm64"
+            TARGET_TAG="cuda"
           fi
+
+          # Create the manifest with the correct tag names
+          echo "Creating CUDA manifest using $AMD64_TAG and $ARM64_TAG"
+          docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:${TARGET_TAG} \
+            ghcr.io/${{ github.repository }}:${AMD64_TAG} \
+            ghcr.io/${{ github.repository }}:${ARM64_TAG}
