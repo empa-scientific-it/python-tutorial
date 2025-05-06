@@ -78,6 +78,16 @@ jobs:
     permissions:
       packages: write
     steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -86,28 +96,36 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create and push CPU manifest
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: builder
-          platforms: linux/amd64,linux/arm64
-          push: true
-          provenance: false
-          tags: |
-            ghcr.io/${{ github.repository }}:cpu
-            ${{ startsWith(github.ref, 'refs/tags/') && format('ghcr.io/{0}:cpu-{1}', github.repository, github.ref_name) || '' }}
-            ${{ github.ref == 'refs/heads/main' && format('ghcr.io/{0}:latest', github.repository) || '' }}
-          outputs: type=image,name=ghcr.io/${{ github.repository }},annotation-index.org.opencontainers.image.title=Python Tutorial,annotation-index.org.opencontainers.image.description=A containerized Python tutorial environment with Jupyter Lab.
+        run: |
+          # Create and push multi-architecture manifest for CPU variant
+          docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:cpu \
+            ghcr.io/${{ github.repository }}:cpu-amd64 \
+            ghcr.io/${{ github.repository }}:cpu-arm64
+
+          # If on main branch, also tag as latest
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:latest \
+              ghcr.io/${{ github.repository }}:cpu-amd64 \
+              ghcr.io/${{ github.repository }}:cpu-arm64
+          fi
+
+          # If this is a tag, add version tag for CPU
+          if [[ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]]; then
+            docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:cpu-${{ github.ref_name }} \
+              ghcr.io/${{ github.repository }}:cpu-amd64 \
+              ghcr.io/${{ github.repository }}:cpu-arm64
+          fi
 
       - name: Create and push CUDA manifest
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: builder
-          platforms: linux/amd64,linux/arm64
-          push: true
-          provenance: false
-          tags: |
-            ghcr.io/${{ github.repository }}:cuda
-            ${{ startsWith(github.ref, 'refs/tags/') && format('ghcr.io/{0}:cuda-{1}', github.repository, github.ref_name) || '' }}
-          outputs: type=image,name=ghcr.io/${{ github.repository }},annotation-index.org.opencontainers.image.title=Python Tutorial,annotation-index.org.opencontainers.image.description=A containerized Python tutorial environment with Jupyter Lab.
+        run: |
+          # Create and push multi-architecture manifest for CUDA variant
+          docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:cuda \
+            ghcr.io/${{ github.repository }}:cuda-amd64 \
+            ghcr.io/${{ github.repository }}:cuda-arm64
+
+          # If this is a tag, add version tag for CUDA
+          if [[ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]]; then
+            docker buildx imagetools create --tag ghcr.io/${{ github.repository }}:cuda-${{ github.ref_name }} \
+              ghcr.io/${{ github.repository }}:cuda-amd64 \
+              ghcr.io/${{ github.repository }}:cuda-arm64
+          fi
