@@ -84,17 +84,29 @@ jupyter lab
 
 3. Open PowerShell: Once Docker Desktop is installed, open PowerShell on your Windows machine. You can do this by pressing the "Windows" key and typing "PowerShell" in the search bar.
 
-4. Pull the Docker image: In PowerShell, run the following command to pull the "empascientificit/python-tutorial" Docker image:
+4. Pull the Docker image: In PowerShell, run the following command to pull the Docker image:
 
 ```console
 docker pull ghcr.io/empa-scientific-it/python-tutorial:latest
 ```
+
+> **Note:**
+>
+> The `latest` tag points to the CPU-only variant of the image, which is optimized for size and compatibility. If you have a CUDA-compatible GPU and want to use GPU acceleration for PyTorch operations, you can use the CUDA-enabled variant by replacing `latest` with `cuda`:
+>
+> ```console
+> docker pull ghcr.io/empa-scientific-it/python-tutorial:cuda
+> ```
 
 5. Run the Docker container: Once the image is downloaded, run the following command to start a Docker container from the image:
 
 ```console
 docker run -p 8888:8888 --name python_tutorial -v /path/to/python-tutorial:/home/jovyan/python-tutorial ghcr.io/empa-scientific-it/python-tutorial:latest jupyter lab --ip 0.0.0.0 --no-browser
 ```
+
+> **Note**
+>
+> If you pulled the CUDA variant, replace `:latest` with `:cuda` in the command above.
 
 Replace `/path/to/python-tutorial` with the path to the folder you created in step 2, for example `C:/Users/yourusername/Desktop/python-tutorial`.
 
