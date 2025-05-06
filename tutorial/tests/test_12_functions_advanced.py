@@ -1,4 +1,5 @@
 import pathlib
+import random
 import re
 import time
 import typing as t
@@ -8,6 +9,27 @@ from string import ascii_uppercase as uppercase  # noqa: F401
 from string import digits, punctuation  # noqa: F401
 
 import pytest
+
+
+#
+# Example: Randomize list
+#
+def reference_randomize_list(my_list: list[int]) -> list[int]:
+    return sorted(my_list, key=lambda x: random.random())
+
+
+@pytest.mark.parametrize(
+    "my_list",
+    [
+        ([1, 2, 3, 4]),
+        (list(range(100))),
+    ],
+)
+def test_randomize_list(
+    function_to_test: t.Callable,
+    my_list: list[int],
+):
+    assert function_to_test(my_list) == reference_randomize_list(my_list)
 
 
 #
