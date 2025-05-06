@@ -48,7 +48,7 @@ You should now create a new environment with `conda`:
 conda env create -f binder/environment.yml
 ```
 
-> **Warning**
+> [!WARNING]
 >
 > If you are on Windows and using Command Prompt or the PowerShell, please make sure to adjust the paths in the commands above accordingly.
 
@@ -74,7 +74,7 @@ jupyter lab
 
 ### 2. With Docker
 
-> **Note**
+> [!NOTE]
 >
 > The following instructions are for Windows. With minor changes, the steps work on macOS or Linux as well.
 
@@ -90,7 +90,7 @@ jupyter lab
 docker pull ghcr.io/empa-scientific-it/python-tutorial:latest
 ```
 
-> **Note:**
+> [!NOTE]
 >
 > The `latest` tag points to the CPU-only variant of the image, which is optimized for size and compatibility. If you have a CUDA-compatible GPU and want to use GPU acceleration for PyTorch operations, you can use the CUDA-enabled variant by replacing `latest` with `cuda`:
 >
@@ -98,26 +98,30 @@ docker pull ghcr.io/empa-scientific-it/python-tutorial:latest
 > docker pull ghcr.io/empa-scientific-it/python-tutorial:cuda
 > ```
 
+> [!IMPORTANT]
+>
+> Using the CUDA variant requires a NVIDIA GPU with compatible drivers properly installed and configured for Docker. See [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) for setup instructions.
+
 5. Run the Docker container: Once the image is downloaded, run the following command to start a Docker container from the image:
 
 ```console
 docker run -p 8888:8888 --name python_tutorial -v /path/to/python-tutorial:/home/jovyan/python-tutorial ghcr.io/empa-scientific-it/python-tutorial:latest jupyter lab --ip 0.0.0.0 --no-browser
 ```
 
-> **Note**
+> [!NOTE]
 >
 > If you pulled the CUDA variant, replace `:latest` with `:cuda` in the command above.
 
 Replace `/path/to/python-tutorial` with the path to the folder you created in step 2, for example `C:/Users/yourusername/Desktop/python-tutorial`.
 
-> **Note**
+> [!NOTE]
 >
-> The above command will **mirror** the content of your local folder (e.g., `C:/Users/yourusername/Desktop/python-tutorial`) to the `work/` folder **inside the container**. In this way, every file or folder you copy or create into `work/` will be saved on your machine, and will remain there **even if you stop Docker**.
+> The above command will **mirror** the content of your local folder (e.g., `C:/Users/yourusername/Desktop/python-tutorial`) to the `~/python-tutorial` folder **inside the container**. In this way, every file or folder you copy or create into `~/python-tutorial` will be saved on your machine, and will remain there **even if you stop Docker**.
 
 6. Access the Jupyter Notebook: Open a web browser and navigate to `http://localhost:8888/lab`. You should see the Jupyter Notebook interface. Enter the token provided in the PowerShell console to access the notebook. Alternatively, you can directly click on the link that appears in the PowerShell after the container has started.
 
 You can now use the Jupyter in the Docker container to run the python-tutorial. When you're done, you can stop the container by pressing `Ctrl+C` in the PowerShell console.
 
-> **Note**
+> [!NOTE]
 >
 > If you want to restart the container, you can simply run the command `docker container start python_tutorial`.
