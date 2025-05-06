@@ -67,11 +67,9 @@ jobs:
           platforms: linux/${{ matrix.arch }}
           push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
           provenance: false
           build-args: |
             PYTORCH_VARIANT=${{ matrix.variant }}
-          outputs: type=image,name=ghcr.io/${{ github.repository }},annotation-index.org.opencontainers.image.title=Python Tutorial,annotation-index.org.opencontainers.image.description=A containerized Python tutorial environment with Jupyter Lab.
 
   create-manifests:
     needs: build-and-push
@@ -99,6 +97,7 @@ jobs:
             ghcr.io/${{ github.repository }}:cpu
             ${{ startsWith(github.ref, 'refs/tags/') && format('ghcr.io/{0}:cpu-{1}', github.repository, github.ref_name) || '' }}
             ${{ github.ref == 'refs/heads/main' && format('ghcr.io/{0}:latest', github.repository) || '' }}
+          outputs: type=image,name=ghcr.io/${{ github.repository }},annotation-index.org.opencontainers.image.title=Python Tutorial,annotation-index.org.opencontainers.image.description=A containerized Python tutorial environment with Jupyter Lab.
 
       - name: Create and push CUDA manifest
         uses: docker/build-push-action@v6
@@ -111,3 +110,4 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:cuda
             ${{ startsWith(github.ref, 'refs/tags/') && format('ghcr.io/{0}:cuda-{1}', github.repository, github.ref_name) || '' }}
+          outputs: type=image,name=ghcr.io/${{ github.repository }},annotation-index.org.opencontainers.image.title=Python Tutorial,annotation-index.org.opencontainers.image.description=A containerized Python tutorial environment with Jupyter Lab.
