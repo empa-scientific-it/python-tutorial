@@ -29,6 +29,7 @@ jobs:
     strategy:
       matrix:
         arch: [amd64, arm64]
+        variant: [cpu, cuda]
       fail-fast: false
     steps:
       - name: Checkout code
@@ -54,10 +55,10 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=ref,event=pr
-            type=ref,event=tag
-            type=sha,format=short
+            type=raw,value=${{ matrix.variant }}-${{ matrix.arch }},enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ matrix.variant }}-${{ matrix.arch }}-pr-${{ github.event.pull_request.number }},enable=${{ github.event_name == 'pull_request' }}
+            type=raw,value=${{ matrix.variant }}-${{ matrix.arch }}-${{ github.ref_name }},enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=raw,value=${{ matrix.variant }}-${{ matrix.arch }}-sha-${{ github.sha }},prefix=
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -67,3 +68,47 @@ jobs:
           push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          build-args: |
+            PYTORCH_VARIANT=${{ matrix.variant }}
+          outputs: |
+            type=image,name=ghcr.io/${{ github.repository }},push-by-digest=false,name-canonical=false,push=true,annotation-index.org.opencontainers.image.description=A containerized Python tutorial environment with Jupyter Lab (${{ matrix.variant }} variant, ${{ matrix.arch }} architecture).,annotation-index.org.opencontainers.image.source=https://github.com/${{ github.repository }},annotation-index.org.opencontainers.image.authors=Empa Scientific IT <scientificit@empa.ch>,annotation-index.org.opencontainers.image.licenses=MIT,annotation-index.org.opencontainers.image.variant=pytorch-${{ matrix.variant }}-${{ matrix.arch }}
+
+  create-manifests:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      packages: write
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push CPU manifest
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: builder
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: |
+            ghcr.io/${{ github.repository }}:cpu
+            ${{ startsWith(github.ref, 'refs/tags/') && format('ghcr.io/{0}:cpu-{1}', github.repository, github.ref_name) || '' }}
+            ${{ github.ref == 'refs/heads/main' && format('ghcr.io/{0}:latest', github.repository) || '' }}
+
+      - name: Create and push CUDA manifest
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: builder
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: |
+            ghcr.io/${{ github.repository }}:cuda
+            ${{ startsWith(github.ref, 'refs/tags/') && format('ghcr.io/{0}:cuda-{1}', github.repository, github.ref_name) || '' }}
