@@ -1,5 +1,5 @@
 # Stage 1: Build environment
-FROM quay.io/jupyter/minimal-notebook:latest as builder
+FROM quay.io/jupyter/minimal-notebook:latest AS builder
 
 # Define build argument for PyTorch variant (cpu or cuda)
 ARG PYTORCH_VARIANT=cpu
@@ -22,13 +22,15 @@ USER ${NB_UID}
 # Set up the Conda environment
 COPY docker/environment.yml /tmp/environment.yml
 RUN mamba env update -n base -f /tmp/environment.yml && \
+    # Force remove any existing PyTorch installations first
+    pip uninstall -y torch torchvision && \
     # Install PyTorch packages without cache - conditionally based on variant
     if [ "$PYTORCH_VARIANT" = "cpu" ]; then \
         echo "Installing CPU-only PyTorch" && \
-        pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu; \
+        pip install --no-cache-dir --force-reinstall torch torchvision --index-url https://download.pytorch.org/whl/cpu; \
     else \
         echo "Installing CUDA-enabled PyTorch" && \
-        pip install --no-cache-dir torch torchvision; \
+        pip install --no-cache-dir --force-reinstall torch torchvision; \
     fi && \
     # Clean up all package caches to reduce image size
     mamba clean --all -f -y && \
