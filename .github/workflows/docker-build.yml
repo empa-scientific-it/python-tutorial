@@ -71,7 +71,7 @@ jobs:
           provenance: false
           build-args: |
             PYTORCH_VARIANT=${{ matrix.variant }}
-          outputs: type=image,name=ghcr.io/${{ github.repository }},annotation-index.org.opencontainers.image.description="Python Tutorial (${{ matrix.variant }} variant, ${{ matrix.arch }} architecture)"
+          outputs: type=image,name=ghcr.io/${{ github.repository }},annotation-index.org.opencontainers.image.description=Python Tutorial (${{ matrix.variant }} variant, ${{ matrix.arch }} architecture)
 
   create-manifests:
     needs: build-and-push
