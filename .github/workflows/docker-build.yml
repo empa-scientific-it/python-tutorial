@@ -71,8 +71,7 @@ jobs:
           provenance: false
           build-args: |
             PYTORCH_VARIANT=${{ matrix.variant }}
-          outputs: |
-            type=image,name=ghcr.io/${{ github.repository }},push-by-digest=false,name-canonical=false,push=true,annotation-index.org.opencontainers.image.description=A containerized Python tutorial environment with Jupyter Lab (${{ matrix.variant }} variant, ${{ matrix.arch }} architecture).,annotation-index.org.opencontainers.image.source=https://github.com/${{ github.repository }},annotation-index.org.opencontainers.image.authors=Empa Scientific IT <scientificit@empa.ch>,annotation-index.org.opencontainers.image.licenses=MIT,annotation-index.org.opencontainers.image.variant=pytorch-${{ matrix.variant }}-${{ matrix.arch }}
+          outputs: type=image,name=ghcr.io/${{ github.repository }},annotation-index.org.opencontainers.image.description="Python Tutorial (${{ matrix.variant }} variant, ${{ matrix.arch }} architecture)"
 
   create-manifests:
     needs: build-and-push
