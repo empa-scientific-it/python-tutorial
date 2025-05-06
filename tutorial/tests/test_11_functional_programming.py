@@ -16,8 +16,7 @@ from numpy.typing import NDArray
 
 
 def reference_pure_function(array, new_element):
-    array.append(new_element)
-    return array
+    return array + [new_element]
 
 
 @pytest.mark.parametrize(
@@ -28,9 +27,9 @@ def reference_pure_function(array, new_element):
     ],
 )
 def test_pure_function(array, new_element, function_to_test):
-    assert function_to_test(array, new_element) == reference_pure_function(
-        array, new_element
-    )
+    output_array = function_to_test(array, new_element)
+    assert id(output_array) != id(array), "The arrays must be different objects."
+    assert output_array == reference_pure_function(array, new_element)
 
 
 #
