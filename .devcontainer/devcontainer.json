@@ -3,13 +3,13 @@
 {
 	"name": "Python Tutorial",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "ghcr.io/empa-scientific-it/python-tutorial:cpu-arm64",
+	"image": "ghcr.io/empa-scientific-it/python-tutorial:latest",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [8888],
+	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "pip3 install --user -r requirements.txt",
@@ -25,12 +25,5 @@
 				"ms-vsliveshare.vsliveshare"
 			]
 		}
-	},
-
-	"remoteUser": "jovyan",
-	"containerUser": "jovyan",
-	"containerEnv": {
-		"UID": "1000",
-		"GID": "100"
 	}
 }
