@@ -64,8 +64,14 @@ class OpenAIWrapper:
     """A simple API wrapper adapted for IPython environments"""
 
     # These are the models we can use: they must support structured responses
-    GPT_STABLE_MODELS = ("gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4o-mini")
-    GPT_ALL_MODELS = GPT_STABLE_MODELS
+    GPT_MODELS = (
+        "gpt-4o",
+        "gpt-4o-mini",
+        "gpt-4.1",
+        "gpt-4.1-mini",
+        "gpt-4.1-nano",
+        "o4-mini",
+    )
 
     DEFAULT_MODEL = "gpt-4o-mini"
     DEFAULT_LANGUAGE = "English"
@@ -134,11 +140,11 @@ class OpenAIWrapper:
     def validate_model(self, model: t.Optional[str]) -> ValidationResult:
         """Validate the model selection"""
         try:
-            if model not in self.GPT_ALL_MODELS:
+            if model not in self.GPT_MODELS:
                 return ValidationResult(
                     is_valid=False,
                     error=InvalidModelError(),
-                    message=f"Invalid model: {model}. Available models: {' '.join(self.GPT_ALL_MODELS)}",
+                    message=f"Invalid model: {model}. Available models: {' '.join(self.GPT_MODELS)}",
                 )
         except Exception as e:
             return ValidationResult(
