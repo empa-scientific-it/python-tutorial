@@ -153,8 +153,8 @@ def test_multiples_of_n(
 #
 
 
-def reference_exercise1(x: List[List[int]]) -> List[List[int]]:
-    return [list(i) for i in zip(*x)]
+def reference_exercise1(matrix: List[List[int]]) -> List[List[int]]:
+    return [list(i) for i in zip(*matrix)]
 
 
 @pytest.mark.parametrize(
@@ -205,10 +205,12 @@ def get_data_exercise3() -> List[str]:
     return words.splitlines()
 
 
-def reference_exercise3(w: List[str]) -> List[Tuple[str, int]]:
+def reference_exercise3(words: List[str]) -> List[Tuple[str, int]]:
     return [
         (k, len(list(v)))
-        for k, v in itertools.groupby(sorted(w, key=lambda x: x[0]), key=lambda x: x[0])
+        for k, v in itertools.groupby(
+            sorted(words, key=lambda x: x[0]), key=lambda x: x[0]
+        )
     ]
 
 
@@ -239,8 +241,8 @@ def test_exercise4(
 #
 
 
-def reference_exercise5(my_list: List[str]) -> List[str]:
-    return list(filter(lambda x: x == x[::-1] and len(x) > 1, my_list))
+def reference_exercise5(words: List[str]) -> List[str]:
+    return list(filter(lambda x: x == x[::-1] and len(x) > 1, words))
 
 
 def test_exercise5(function_to_test: Callable[[List[str]], List[str]]):
