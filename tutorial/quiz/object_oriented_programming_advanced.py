@@ -30,7 +30,7 @@ class OopAdvancedInheritance(Quiz):
             question="What is the purpose of the `super()` function in Python?",
             options={
                 "To call a method from the parent class": "Correct! `super()` is used to call a method from the parent class.",
-                "To create a derived class": "Incorrect. TODO",
+                "To create a derived class": "Incorrect. `super()` is not used for creating derived classes.",
                 "To initialize an object": "Incorrect. Object initialization is done using the `__init__` method.",
             },
             correct_answer="To call a method from the parent class",
@@ -43,8 +43,7 @@ class OopAdvancedInheritance(Quiz):
             options={
                 "A way to build complex objects by combining simpler ones": "Correct! Composition involves including instances of other classes as attributes.",
                 "A way to inherit methods from a base class": "Incorrect. This describes inheritance, not composition.",
-                "A way to define abstract methods": "Incorrect. Abstract methods are unrelated to composition.",
-                "A way to restrict access to class attributes": "Incorrect. This describes encapsulation, not composition.",
+                "A way to inherit methods from more than one class": "Incorrect. This describes multiple inheritance, not composition.",
             },
             correct_answer="A way to build complex objects by combining simpler ones",
             hint="Think about combining objects rather than inheriting from them.",

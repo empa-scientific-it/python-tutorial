@@ -5,6 +5,12 @@ from datetime import datetime
 import pytest
 from numpy import average
 
+
+class SubAssertionError(AssertionError):
+    def __init__(self):
+        super().__init__("Solution must be a proper class instance with attributes.")
+
+
 #
 # Exercise 1: Child Eye Color
 #
@@ -30,8 +36,34 @@ def reference_child_eye_color(mother_eye_color: str, father_eye_color: str) -> s
                 return self.eye_color_mother
             return "brown"
 
-    child = Child(mother_eye_color, father_eye_color)
-    return child.eye_color
+    return Child(mother_eye_color, father_eye_color)
+
+
+def validate_child_eye_color(solution_result):
+    assert not isinstance(
+        solution_result, (str, int, float, bool, list, dict, tuple, set)
+    ), "Solution must return a class instance, not a datatype."
+    assert type(solution_result).__module__ != "builtins", (
+        "Solution must return an instance of a custom class, not a built-in type."
+    )
+    assert type(solution_result).__name__ == "Child", (
+        "The class should be named 'Child'."
+    )
+    # Check inheritance by base class names
+    base_class_names = [base.__name__ for base in type(solution_result).__bases__]
+    assert "Mother" in base_class_names, (
+        "The 'Child' class must inherit from a class named 'Mother'."
+    )
+    assert "Father" in base_class_names, (
+        "The 'Child' class must inherit from a class named 'Father'."
+    )
+    # Check the class attributes
+    try:
+        attrs = list(vars(solution_result))
+    except TypeError:
+        raise SubAssertionError from None
+    assert len(attrs) == 1, "The class should have 1 attribute."
+    assert "eye_color" in attrs, "The class attribute should be 'eye_color'."
 
 
 @pytest.mark.parametrize(
@@ -44,13 +76,106 @@ def reference_child_eye_color(mother_eye_color: str, father_eye_color: str) -> s
     ],
 )
 def test_child_eye_color(mother_eye_color, father_eye_color, function_to_test):
-    assert function_to_test(
-        mother_eye_color, father_eye_color
-    ) == reference_child_eye_color(mother_eye_color, father_eye_color)
+    solution_result = function_to_test(mother_eye_color, father_eye_color)
+    reference_result = reference_child_eye_color(mother_eye_color, father_eye_color)
+
+    validate_child_eye_color(solution_result)
+    assert solution_result.eye_color == reference_result.eye_color
 
 
 #
-# Exercise 2: Store Inventory
+# Exercise 2: Banking System
+#
+
+
+def reference_banking_system(
+    tax_rate: float,
+    interest_rate: float,
+    gross_salary: int,
+    savings_precentage: float,
+    years_passed: int,
+) -> float:
+    class Account(ABC):
+        def __init__(self, account_number):
+            self.account_number = account_number
+            self.balance = 0
+
+        @abstractmethod
+        def credit(self, amount):
+            pass
+
+        @abstractmethod
+        def get_balance(self):
+            pass
+
+        def debit(self, amount):
+            if self.balance >= amount:
+                self.balance -= amount
+            else:
+                print("Insufficient funds.")
+
+    class SalaryAccount(Account):
+        def __init__(self, account_number, tax_rate):
+            super().__init__(account_number)
+            self.tax_rate = tax_rate
+
+        def credit(self, amount):
+            self.balance += amount - amount * self.tax_rate
+
+        def get_balance(self):
+            return self.balance
+
+    class SavingsAccount(Account):
+        def __init__(self, account_number, interest_rate):
+            super().__init__(account_number)
+            self.interest_rate = interest_rate
+            self.creation_year = datetime.now().year
+
+        def credit(self, amount):
+            self.balance += amount
+
+        def get_balance(self, years_passed):
+            interest = self.balance * self.interest_rate * years_passed
+            return self.balance + interest
+
+    salary_account = SalaryAccount("SAL-001", tax_rate)
+    savings_account = SavingsAccount("SAV-001", interest_rate)
+
+    salary_account.credit(gross_salary)
+
+    amount_to_transfer = salary_account.get_balance() * savings_precentage
+
+    salary_account.debit(amount_to_transfer)
+    savings_account.credit(amount_to_transfer)
+
+    return savings_account.get_balance(years_passed)
+
+
+@pytest.mark.parametrize(
+    "tax_rate, interest_rate, gross_salary, savings_precentage, years_passed",
+    [
+        (0.20, 0.05, 10000, 0.3, 2),
+        (0.18, 0.04, 9300, 0.15, 3),
+        (0.13, 0.07, 8500, 0.18, 4),
+    ],
+)
+def test_banking_system(
+    tax_rate,
+    interest_rate,
+    gross_salary,
+    savings_precentage,
+    years_passed,
+    function_to_test,
+):
+    assert function_to_test(
+        tax_rate, interest_rate, gross_salary, savings_precentage, years_passed
+    ) == reference_banking_system(
+        tax_rate, interest_rate, gross_salary, savings_precentage, years_passed
+    )
+
+
+#
+# Exercise 3: Store Inventory
 #
 
 
@@ -242,97 +367,6 @@ def test_music_streaming_service(function_to_test):
     assert (
         solution_songs == reference_songs
     )  # both playlists should have the same keys and values
-
-
-#
-# Exercise 4: Banking System
-#
-
-
-def reference_banking_system(
-    tax_rate: float,
-    interest_rate: float,
-    gross_salary: int,
-    savings_precentage: float,
-    years_passed: int,
-) -> float:
-    class Account(ABC):
-        def __init__(self, account_number):
-            self.account_number = account_number
-            self.balance = 0
-
-        @abstractmethod
-        def credit(self, amount):
-            pass
-
-        @abstractmethod
-        def get_balance(self):
-            pass
-
-        def debit(self, amount):
-            if self.balance >= amount:
-                self.balance -= amount
-            else:
-                print("Insufficient funds.")
-
-    class SalaryAccount(Account):
-        def __init__(self, account_number, tax_rate):
-            super().__init__(account_number)
-            self.tax_rate = tax_rate
-
-        def credit(self, amount):
-            self.balance += amount - amount * self.tax_rate
-
-        def get_balance(self):
-            return self.balance
-
-    class SavingsAccount(Account):
-        def __init__(self, account_number, interest_rate):
-            super().__init__(account_number)
-            self.interest_rate = interest_rate
-            self.creation_year = datetime.now().year
-
-        def credit(self, amount):
-            self.balance += amount
-
-        def get_balance(self, years_passed):
-            interest = self.balance * self.interest_rate * years_passed
-            return self.balance + interest
-
-    salary_account = SalaryAccount("SAL-001", tax_rate)
-    savings_account = SavingsAccount("SAV-001", interest_rate)
-
-    salary_account.credit(gross_salary)
-
-    amount_to_transfer = salary_account.get_balance() * savings_precentage
-
-    salary_account.debit(amount_to_transfer)
-    savings_account.credit(amount_to_transfer)
-
-    return savings_account.get_balance(years_passed)
-
-
-@pytest.mark.parametrize(
-    "tax_rate, interest_rate, gross_salary, savings_precentage, years_passed",
-    [
-        (0.20, 0.05, 10000, 0.3, 2),
-        (0.18, 0.04, 9300, 0.15, 3),
-        (0.13, 0.07, 8500, 0.18, 4),
-    ],
-)
-def test_banking_system(
-    tax_rate,
-    interest_rate,
-    gross_salary,
-    savings_precentage,
-    years_passed,
-    function_to_test,
-):
-    assert function_to_test(
-        tax_rate, interest_rate, gross_salary, savings_precentage, years_passed
-    ) == reference_banking_system(
-        tax_rate, interest_rate, gross_salary, savings_precentage, years_passed
-    )
 
 
 #
