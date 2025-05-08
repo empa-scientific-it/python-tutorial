@@ -15,7 +15,7 @@ class SubAssertionError(AssertionError):
 #
 
 
-def reference_child_eye_color(mother_eye_color: str, father_eye_color: str) -> list:
+def reference_child_eye_color(mother_eye_color: str, father_eye_color: str):
     class Mother:
         def __init__(self, eye_color: str):
             self.eye_color_mother = eye_color

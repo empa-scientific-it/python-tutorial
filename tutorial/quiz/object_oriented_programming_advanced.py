@@ -148,19 +148,6 @@ class OopAdvancedDecorators(Quiz):
         )
 
         q5 = Question(
-            question="Which decorator is used to define a method that belongs to the class rather than an instance?",
-            options={
-                "@staticmethod": "Incorrect. A static method does not belong to the class or instance.",
-                "@classmethod": "Correct! A class method belongs to the class and takes `cls` as its first parameter.",
-                "@property": "Incorrect. The `@property` decorator is used to define getter methods.",
-                "@abstractmethod": "Incorrect. The `@abstractmethod` decorator is used in abstract classes.",
-            },
-            correct_answer="@classmethod",
-            hint="This method takes `cls` as its first parameter.",
-            shuffle=True,
-        )
-
-        q6 = Question(
             question="What is the purpose of the `@classmethod` decorator?",
             options={
                 "To define a method that belongs to the class rather than an instance": "Correct! A class method belongs to the class and takes `cls` as its first parameter.",
@@ -173,7 +160,7 @@ class OopAdvancedDecorators(Quiz):
             shuffle=True,
         )
 
-        q7 = Question(
+        q6 = Question(
             question="What is the difference between `@staticmethod` and `@classmethod`?",
             options={
                 "`@staticmethod` does not access the class or instance, while `@classmethod` takes `cls` as its first parameter": "Correct! This is the key difference between the two decorators.",
@@ -186,7 +173,7 @@ class OopAdvancedDecorators(Quiz):
             shuffle=True,
         )
 
-        super().__init__(questions=[q1, q2, q3, q4, q5, q6, q7])
+        super().__init__(questions=[q1, q2, q3, q4, q5, q6])
 
 
 class OopAdvancedEncapsulation(Quiz):
