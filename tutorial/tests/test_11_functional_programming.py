@@ -90,12 +90,12 @@ def reference_filter_even(my_list: List[int]) -> List[int]:
 def test_filter_even(function_to_test: Callable, my_list: List[int]):
     res = function_to_test(my_list)
     assert isinstance(res, list), "The function you wrote does not return a list"
-    assert not check_for_loop_in_body(function_to_test), (
-        "You are not allowed to use a for loop in this exercise"
-    )
-    assert res == reference_filter_even(my_list), (
-        "The list you return is not equal to the expected solution"
-    )
+    assert not check_for_loop_in_body(
+        function_to_test
+    ), "You are not allowed to use a for loop in this exercise"
+    assert res == reference_filter_even(
+        my_list
+    ), "The list you return is not equal to the expected solution"
 
 
 #
@@ -116,12 +116,12 @@ def reference_add_one(my_list: List[int]) -> List[int]:
     ],
 )
 def test_add_one(function_to_test: Callable, my_list: List[int]):
-    assert function_to_test(my_list) == reference_add_one(my_list), (
-        "The list you return is not equal to the expected solution"
-    )
-    assert not check_for_loop_in_body(function_to_test), (
-        "You are not allowed to use a for loop in this exercise"
-    )
+    assert function_to_test(my_list) == reference_add_one(
+        my_list
+    ), "The list you return is not equal to the expected solution"
+    assert not check_for_loop_in_body(
+        function_to_test
+    ), "You are not allowed to use a for loop in this exercise"
 
 
 #
@@ -162,7 +162,8 @@ def reference_exercise1(matrix: List[List[int]]) -> List[List[int]]:
     [(np.eye(3)), (np.random.randint(0, 100, size=(4, 4)))],
 )
 def test_exercise1(
-    function_to_test: Callable[[List[List[int]]], List[List[int]]], my_input: NDArray
+    function_to_test: Callable[[List[List[int]]], List[List[int]]],
+    my_input: NDArray,
 ):
     res = function_to_test(my_input.tolist())
     assert (
@@ -209,12 +210,14 @@ def reference_exercise3(words: List[str]) -> List[Tuple[str, int]]:
     return [
         (k, len(list(v)))
         for k, v in itertools.groupby(
-            sorted(words, key=lambda x: x[0]), key=lambda x: x[0]
+            sorted(words, key=lambda x: x.lower()[0]), key=lambda x: x.lower()[0]
         )
     ]
 
 
-def test_exercise3(function_to_test: Callable[[List[str]], List[Tuple[str, int]]]):
+def test_exercise3(
+    function_to_test: Callable[[List[str]], List[Tuple[str, int]]],
+):
     data = get_data_exercise3()
     assert function_to_test(data) == reference_exercise3(data)
 
@@ -224,7 +227,9 @@ def test_exercise3(function_to_test: Callable[[List[str]], List[Tuple[str, int]]
 #
 
 
-def reference_exercise4(my_list: List[Tuple[str, int]]) -> List[Tuple[str, float]]:
+def reference_exercise4(
+    my_list: List[Tuple[str, int]],
+) -> List[Tuple[str, float]]:
     total = sum(map(lambda x: x[1], my_list))  # noqa: C417
     return [(letter, freq / total) for letter, freq in my_list]
 
