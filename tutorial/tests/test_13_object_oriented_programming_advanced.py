@@ -61,8 +61,16 @@ def validate_child_eye_color(solution_result):
         attrs = list(vars(solution_result))
     except TypeError:
         raise SubAssertionError from None
-    assert len(attrs) == 1, "The class should have 1 attribute."
-    assert "eye_color" in attrs, "The class attribute should be 'eye_color'."
+    assert len(attrs) == 3, "The class should have 3 attributes."
+    assert "eye_color" in attrs, (
+        "The class should have an attribute called 'eye_color'."
+    )
+    assert "eye_color_mother" in attrs, (
+        "The class should have an attribute called 'eye_color_mother'."
+    )
+    assert "eye_color_father" in attrs, (
+        "The class should have an attribute called 'eye_color_father'."
+    )
 
 
 @pytest.mark.parametrize(
