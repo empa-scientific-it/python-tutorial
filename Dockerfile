@@ -64,15 +64,15 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # System-wide Jupyter Server config
-COPY docker/jupyter_server_config.py /etc/jupyter/
+COPY docker/jupyter_server_config.py /opt/conda/etc/jupyter/
 
 # Jupyter Lab settings
 RUN mkdir -p /opt/conda/share/jupyter/lab/settings
 COPY docker/overrides.json /opt/conda/share/jupyter/lab/settings/
 
 # System-wide IPython profile config
-RUN mkdir -p /etc/ipython/profile_default
-COPY docker/ipython_config.py /etc/ipython/profile_default/
+RUN mkdir -p /opt/conda/etc/ipython
+COPY docker/ipython_config.py /opt/conda/etc/ipython/
 
 # Switch back to the default notebook user
 USER ${NB_UID}
