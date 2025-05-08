@@ -1,4 +1,5 @@
 import pathlib
+import random
 import re
 import time
 import typing as t
@@ -8,6 +9,27 @@ from string import ascii_uppercase as uppercase  # noqa: F401
 from string import digits, punctuation  # noqa: F401
 
 import pytest
+
+
+#
+# Example: Randomize list
+#
+def reference_randomize_list(my_list: list[int]) -> list[int]:
+    return sorted(my_list, key=lambda x: random.random())
+
+
+@pytest.mark.parametrize(
+    "my_list",
+    [
+        ([1, 2, 3, 4]),
+        (list(range(100))),
+    ],
+)
+def test_randomize_list(
+    function_to_test: t.Callable,
+    my_list: list[int],
+):
+    assert function_to_test(my_list) == reference_randomize_list(my_list)
 
 
 #
@@ -209,6 +231,21 @@ def test_once_waiting_not_enough_time(function_to_test: t.Callable) -> None:
 
     wait_time = re.search(r"[\d.]+", err.value.args[0])
     assert wait_time and isclose(float(wait_time.group()), 1.0, abs_tol=1e-2)
+
+
+def test_once_waiting_enough_time(function_to_test: t.Callable) -> None:
+    # Test that waiting the allowed time lets the function run again
+    allowed_time = 2
+    _hello = function_to_test(allowed_time)(hello)
+
+    # First call should work
+    assert _hello("world") == "Hello world!"
+
+    # Wait for the full allowed time
+    time.sleep(allowed_time + 0.1)  # Add small buffer to avoid timing issues
+
+    # Second call should work
+    assert _hello("world 2") == "Hello world 2!"
 
 
 #
