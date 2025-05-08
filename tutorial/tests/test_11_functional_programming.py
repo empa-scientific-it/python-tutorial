@@ -242,7 +242,7 @@ def test_exercise4(
 
 
 def reference_exercise5(words: List[str]) -> List[str]:
-    return list(filter(lambda x: x == x[::-1] and len(x) > 1, words))
+    return list(filter(lambda x: len(x) > 1 and x == x[::-1], words))
 
 
 def test_exercise5(function_to_test: Callable[[List[str]], List[str]]):
