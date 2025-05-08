@@ -15,7 +15,7 @@ class SubAssertionError(AssertionError):
 #
 
 
-def reference_child_eye_color(mother_eye_color: str, father_eye_color: str) -> str:
+def reference_child_eye_color(mother_eye_color: str, father_eye_color: str) -> list:
     class Mother:
         def __init__(self, eye_color: str):
             self.eye_color_mother = eye_color
@@ -87,10 +87,7 @@ def test_child_eye_color(mother_eye_color, father_eye_color, function_to_test):
 #
 
 
-def reference_banking_system(
-    tax_rate: float,
-    interest_rate: float,
-) -> float:
+def reference_banking_system(tax_rate: float, interest_rate: float) -> list:
     class Account(ABC):
         def __init__(self, account_number):
             self.account_number = account_number
@@ -150,10 +147,10 @@ def validate_banking_system(solution_result):
         for item in solution_result
     ), "Both elements in the list must inherit from a class named 'Account'."
     assert type(solution_result[0]).__name__ == "SalaryAccount", (
-        "The 1st class should be an instance of 'SalaryAccount'."
+        "The 1st element in the list should be an instance of 'SalaryAccount'."
     )
     assert type(solution_result[1]).__name__ == "SavingsAccount", (
-        "The 2nd class should be an instance of 'SavingsAccount'."
+        "The 2nd element in the list should be an instance of 'SavingsAccount'."
     )
     # Check the class attributes: SalaryAccount
     try:
@@ -203,11 +200,7 @@ def validate_banking_system(solution_result):
         (0.18, 0.04),
     ],
 )
-def test_banking_system(
-    tax_rate,
-    interest_rate,
-    function_to_test,
-):
+def test_banking_system(tax_rate, interest_rate, function_to_test):
     solution_result = function_to_test(tax_rate, interest_rate)
     reference_result = reference_banking_system(tax_rate, interest_rate)
 
@@ -229,7 +222,7 @@ def test_banking_system(
 #
 
 
-def reference_store_inventory(computers: list[dict]) -> list[str]:
+def reference_store_inventory(pc: dict, laptop: dict) -> list:
     class Computer:
         """A class representing a computer sold by the online store"""
 
@@ -237,7 +230,6 @@ def reference_store_inventory(computers: list[dict]) -> list[str]:
             self.name = name
             self.price = price
             self.quantity = quantity
-            self.type = None
 
         def __str__(self):
             return f"Computer with name '{self.name}', price {self.price} CHF and quantity {self.quantity}."
@@ -248,7 +240,6 @@ def reference_store_inventory(computers: list[dict]) -> list[str]:
         def __init__(self, name: str, price: int, quantity: int, expansion_slots: int):
             super().__init__(name, price, quantity)
             self.expansion_slots = expansion_slots
-            self.type = "PC"
 
         def __str__(self):
             return (
@@ -262,7 +253,6 @@ def reference_store_inventory(computers: list[dict]) -> list[str]:
         def __init__(self, name: str, price: int, quantity: int, battery_life: int):
             super().__init__(name, price, quantity)
             self.battery_life = battery_life
-            self.type = "Laptop"
 
         def __str__(self):
             return (
@@ -270,38 +260,88 @@ def reference_store_inventory(computers: list[dict]) -> list[str]:
                 + f" This laptop has a battery life of {self.battery_life} hours."
             )
 
-    inventory = []
-    for computer in computers:
-        computer_type = PC if computer["type"] == "PC" else Laptop
-        computer.pop("type")
-        inventory.append(computer_type(**computer))
-
-    result = []
-    for item in inventory:
-        result.append(str(item))
-
-    return result
-
-
-def test_store_inventory(function_to_test):
-    computers = [
-        {
-            "type": "PC",
-            "name": "pc_1",
-            "price": 1500,
-            "quantity": 1,
-            "expansion_slots": 2,
-        },
-        {
-            "type": "Laptop",
-            "name": "laptop_1",
-            "price": 1200,
-            "quantity": 4,
-            "battery_life": 6,
-        },
+    return [
+        PC(**pc),
+        Laptop(**laptop),
     ]
 
-    assert function_to_test(computers) == reference_store_inventory(computers)
+
+def validate_store_inventory(solution_result):
+    assert isinstance(solution_result, list), "Solution must return a list."
+    assert len(solution_result) == 2, "The list must contain exactly two elements."
+    assert all(
+        isinstance(item, object) and type(item).__module__ != "builtins"
+        for item in solution_result
+    ), "Both elements in the list must be instances of custom classes."
+    assert all(
+        "Computer" in [base.__name__ for base in type(item).__bases__]
+        for item in solution_result
+    ), "Both elements in the list must inherit from a class named 'Computer'."
+    assert type(solution_result[0]).__name__ == "PC", (
+        "The 1st element in the list should be an instance of 'PC'."
+    )
+    assert type(solution_result[1]).__name__ == "Laptop", (
+        "The 2nd element in the list should be an instance of 'Laptop'."
+    )
+    # Check the class attributes: PC
+    try:
+        attrs = list(vars(solution_result[0]))
+    except TypeError:
+        raise SubAssertionError from None
+    assert len(attrs) == 4, "The class 'PC' should have 4 attributes."
+    assert "name" in attrs, "The class 'PC' should have an attribute called 'name'."
+    assert "price" in attrs, "The class 'PC' should have an attribute called 'price'."
+    assert "quantity" in attrs, (
+        "The class 'PC' should have an attribute called 'quantity'."
+    )
+    assert "expansion_slots" in attrs, (
+        "The class 'PC' should have an attribute called 'expansion_slots'."
+    )
+    # Check the class attributes: Laptop
+    try:
+        attrs = list(vars(solution_result[1]))
+    except TypeError:
+        raise SubAssertionError from None
+    assert len(attrs) == 4, "The class 'Laptop' should have 4 attributes."
+    assert "name" in attrs, "The class 'Laptop' should have an attribute called 'name'."
+    assert "price" in attrs, (
+        "The class 'Laptop' should have an attribute called 'price'."
+    )
+    assert "quantity" in attrs, (
+        "The class 'Laptop' should have an attribute called 'quantity'."
+    )
+    assert "battery_life" in attrs, (
+        "The class 'Laptop' should have an attribute called 'battery_life'."
+    )
+
+
+@pytest.mark.parametrize(
+    "pc, laptop",
+    [
+        (
+            {
+                "name": "pc_1",
+                "price": 1500,
+                "quantity": 1,
+                "expansion_slots": 2,
+            },
+            {
+                "name": "laptop_1",
+                "price": 1200,
+                "quantity": 4,
+                "battery_life": 6,
+            },
+        ),
+    ],
+)
+def test_store_inventory(pc, laptop, function_to_test):
+    solution_result = function_to_test(pc, laptop)
+    reference_result = reference_store_inventory(pc, laptop)
+
+    validate_store_inventory(solution_result)
+
+    assert str(solution_result[0]) == str(reference_result[0])
+    assert str(solution_result[1]) == str(reference_result[1])
 
 
 #
@@ -309,7 +349,9 @@ def test_store_inventory(function_to_test):
 #
 
 
-def reference_music_streaming_service(song_info: list[dict]):
+def reference_music_streaming_service(
+    song_info: list[dict], username: str, playlist_name: str
+):
     class Song:
         def __init__(self, title: str, artist: str, album_title: str):
             self.title = title
@@ -355,39 +397,49 @@ def reference_music_streaming_service(song_info: list[dict]):
                 return f"Playlist '{playlist_name}' not found."
             return self.playlists[playlist_name].display_songs()
 
-    user = User("Bob")
-    user.create_playlist("Favorites from Queen")
+    user = User(username)
+    user.create_playlist(playlist_name)
 
     for info in song_info:
         user.add_song_to_playlist(
-            "Favorites from Queen",
+            playlist_name,
             Song(info["title"], info["artist"], info["album_title"]),
         )
 
     return user
 
 
-def test_music_streaming_service(function_to_test):
-    song_info = [
-        {
-            "title": "Bohemian Rhapsody",
-            "artist": "Queen",
-            "album_title": "A Night at the Opera",
-        },
-        {
-            "title": "We Will Rock You",
-            "artist": "Queen",
-            "album_title": "News of the World",
-        },
-        {
-            "title": "I Want to Break Free",
-            "artist": "Queen",
-            "album_title": "The Works",
-        },
-    ]
-
-    solution_user = function_to_test(song_info)
-    reference_user = reference_music_streaming_service(song_info)
+@pytest.mark.parametrize(
+    "song_info, username, playlist_name",
+    [
+        (
+            [
+                {
+                    "title": "Bohemian Rhapsody",
+                    "artist": "Queen",
+                    "album_title": "A Night at the Opera",
+                },
+                {
+                    "title": "We Will Rock You",
+                    "artist": "Queen",
+                    "album_title": "News of the World",
+                },
+                {
+                    "title": "I Want to Break Free",
+                    "artist": "Queen",
+                    "album_title": "The Works",
+                },
+            ],
+            "Bob",
+            "Favorites from Queen",
+        ),
+    ],
+)
+def test_music_streaming_service(song_info, username, playlist_name, function_to_test):
+    solution_user = function_to_test(song_info, username, playlist_name)
+    reference_user = reference_music_streaming_service(
+        song_info, username, playlist_name
+    )
 
     assert (
         vars(solution_user).keys() == vars(reference_user).keys()
