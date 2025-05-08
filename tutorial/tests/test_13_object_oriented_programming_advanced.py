@@ -1,6 +1,5 @@
 import pathlib
 from abc import ABC, abstractmethod
-from datetime import datetime
 
 import pytest
 from numpy import average
@@ -91,9 +90,6 @@ def test_child_eye_color(mother_eye_color, father_eye_color, function_to_test):
 def reference_banking_system(
     tax_rate: float,
     interest_rate: float,
-    gross_salary: int,
-    savings_precentage: float,
-    years_passed: int,
 ) -> float:
     class Account(ABC):
         def __init__(self, account_number):
@@ -129,49 +125,103 @@ def reference_banking_system(
         def __init__(self, account_number, interest_rate):
             super().__init__(account_number)
             self.interest_rate = interest_rate
-            self.creation_year = datetime.now().year
 
         def credit(self, amount):
             self.balance += amount
 
-        def get_balance(self, years_passed):
-            interest = self.balance * self.interest_rate * years_passed
-            return self.balance + interest
+        def get_balance(self):
+            return self.balance + self.balance * self.interest_rate
 
-    salary_account = SalaryAccount("SAL-001", tax_rate)
-    savings_account = SavingsAccount("SAV-001", interest_rate)
+    return [
+        SalaryAccount("SAL-001", tax_rate),
+        SavingsAccount("SAV-001", interest_rate),
+    ]
 
-    salary_account.credit(gross_salary)
 
-    amount_to_transfer = salary_account.get_balance() * savings_precentage
-
-    salary_account.debit(amount_to_transfer)
-    savings_account.credit(amount_to_transfer)
-
-    return savings_account.get_balance(years_passed)
+def validate_banking_system(solution_result):
+    assert isinstance(solution_result, list), "Solution must return a list."
+    assert len(solution_result) == 2, "The list must contain exactly two elements."
+    assert all(
+        isinstance(item, object) and type(item).__module__ != "builtins"
+        for item in solution_result
+    ), "Both elements in the list must be instances of custom classes."
+    assert all(
+        "Account" in [base.__name__ for base in type(item).__bases__]
+        for item in solution_result
+    ), "Both elements in the list must inherit from a class named 'Account'."
+    assert type(solution_result[0]).__name__ == "SalaryAccount", (
+        "The 1st class should be an instance of 'SalaryAccount'."
+    )
+    assert type(solution_result[1]).__name__ == "SavingsAccount", (
+        "The 2nd class should be an instance of 'SavingsAccount'."
+    )
+    # Check the class attributes: SalaryAccount
+    try:
+        attrs = list(vars(solution_result[0]))
+    except TypeError:
+        raise SubAssertionError from None
+    assert len(attrs) == 3, "The class 'SalaryAccount' should have 3 attributes."
+    assert "account_number" in attrs, (
+        "The class 'SalaryAccount' should have an attribute called 'account_number'."
+    )
+    assert "balance" in attrs, (
+        "The class 'SalaryAccount' should have an attribute called 'balance'."
+    )
+    assert "tax_rate" in attrs, (
+        "The class 'SalaryAccount' should have an attribute called 'tax_rate'."
+    )
+    # Check the class attributes: SavingsAccount
+    try:
+        attrs = list(vars(solution_result[1]))
+    except TypeError:
+        raise SubAssertionError from None
+    assert len(attrs) == 3, "The class 'SavingsAccount' should have 3 attributes."
+    assert "account_number" in attrs, (
+        "The class 'SavingsAccount' should have an attribute called 'account_number'."
+    )
+    assert "balance" in attrs, (
+        "The class 'SavingsAccount' should have an attribute called 'balance'."
+    )
+    assert "interest_rate" in attrs, (
+        "The class 'SavingsAccount' should have an attribute called 'interest_rate'."
+    )
+    # Check that each class has the required methods
+    required_methods = {"credit", "get_balance"}
+    for item in solution_result:
+        class_methods = {
+            method for method in dir(item) if callable(getattr(item, method))
+        }
+        assert required_methods.issubset(class_methods), (
+            f"The class '{type(item).__name__}' must have the methods: {', '.join(required_methods)}."
+        )
 
 
 @pytest.mark.parametrize(
-    "tax_rate, interest_rate, gross_salary, savings_precentage, years_passed",
+    "tax_rate, interest_rate",
     [
-        (0.20, 0.05, 10000, 0.3, 2),
-        (0.18, 0.04, 9300, 0.15, 3),
-        (0.13, 0.07, 8500, 0.18, 4),
+        (0.20, 0.05),
+        (0.18, 0.04),
     ],
 )
 def test_banking_system(
     tax_rate,
     interest_rate,
-    gross_salary,
-    savings_precentage,
-    years_passed,
     function_to_test,
 ):
-    assert function_to_test(
-        tax_rate, interest_rate, gross_salary, savings_precentage, years_passed
-    ) == reference_banking_system(
-        tax_rate, interest_rate, gross_salary, savings_precentage, years_passed
-    )
+    solution_result = function_to_test(tax_rate, interest_rate)
+    reference_result = reference_banking_system(tax_rate, interest_rate)
+
+    validate_banking_system(solution_result)
+
+    amount = 10000
+    # test SalaryAccount functions
+    solution_result[0].credit(amount)
+    reference_result[0].credit(amount)
+    assert solution_result[0].get_balance() == reference_result[0].get_balance()
+    # test SavingsAccount functions
+    solution_result[1].credit(amount)
+    reference_result[1].credit(amount)
+    assert solution_result[1].get_balance() == reference_result[1].get_balance()
 
 
 #
@@ -255,7 +305,7 @@ def test_store_inventory(function_to_test):
 
 
 #
-# Exercise 3: Music Streaming Service
+# Exercise 4: Music Streaming Service
 #
 
 
