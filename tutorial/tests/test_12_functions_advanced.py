@@ -233,6 +233,21 @@ def test_once_waiting_not_enough_time(function_to_test: t.Callable) -> None:
     assert wait_time and isclose(float(wait_time.group()), 1.0, abs_tol=1e-2)
 
 
+def test_once_waiting_enough_time(function_to_test: t.Callable) -> None:
+    # Test that waiting the allowed time lets the function run again
+    allowed_time = 2
+    _hello = function_to_test(allowed_time)(hello)
+
+    # First call should work
+    assert _hello("world") == "Hello world!"
+
+    # Wait for the full allowed time
+    time.sleep(allowed_time + 0.1)  # Add small buffer to avoid timing issues
+
+    # Second call should work
+    assert _hello("world 2") == "Hello world 2!"
+
+
 #
 # Exercise: String range
 #
