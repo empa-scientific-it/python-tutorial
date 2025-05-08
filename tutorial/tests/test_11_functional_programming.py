@@ -141,7 +141,7 @@ def reference_multiples_of_n(my_list: List[int], k: int) -> List[int]:
     ],
 )
 def test_multiples_of_n(
-    function_to_test: Callable[[List[int]], int],
+    function_to_test: Callable[[List[int], int], int],
     my_list: List[int],
     k: int,
 ):
