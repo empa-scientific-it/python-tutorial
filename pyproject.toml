@@ -41,12 +41,16 @@ select = [
 [tool.ruff.lint.per-file-ignores]
 # Trailing whitespace in comment
 "binder/ipython_config.py" = ["E266"]
+
 # suppress `raise ... from err`
 # Why we ignore B904 from the object-oriented tests?
 # We do want to raise an assertion error if the check on the solution function attributes fails,
 # but Python by default will raise a TypeError via vars(solution_result)
 # if the result is not a class and therefore doesn't have a __dict__ attribute.
 "tutorial/tests/test_object_oriented_programming.py" = ["B904"]
+
+# Ignore invalid names like `import torch.nn.functional as F`
+"25_library_pytorch_language_modeling.ipynb" = ["N812"]
 
 # Ruff formatting
 [tool.ruff.format]
