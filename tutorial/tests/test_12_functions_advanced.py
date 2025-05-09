@@ -29,10 +29,6 @@ def test_randomize_list(
     function_to_test: t.Callable,
     my_list: list[int],
 ):
-    # We need to verify:
-    # 1. Content is preserved (same elements)
-    # 2. Randomization occurs (not sorted, not original order)
-
     # Skip randomization tests for trivial lists
     if len(my_list) <= 1:
         return
@@ -51,8 +47,10 @@ def test_randomize_list(
 
         results.append(result)
 
-    # 3. Check that we get different orderings (randomization)
     # For lists with enough elements, very unlikely to get the same result twice
+    # 1. Convert each of the results to tuples
+    # 2. {tuple(r) for r in results} create a set that deduplicates identical orderings
+    # 3. len(...) > 1 checks that we've seen at least two different orderings
     if len(my_list) > 2:
         # Check there's at least some variation in results
         assert len({tuple(r) for r in results}) > 1, (
