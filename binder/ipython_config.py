@@ -34,7 +34,9 @@ c = get_config()  # noqa # type: ignore
 
 ## lines of code to run at IPython startup.
 #  Default: []
-# c.InteractiveShellApp.exec_lines = []
+c.InteractiveShellApp.exec_lines = [
+    "from typing import Any, Callable, Dict, List, Optional, Tuple, Union"
+]
 
 ## A list of dotted module names of IPython extensions to load.
 #  Default: []
