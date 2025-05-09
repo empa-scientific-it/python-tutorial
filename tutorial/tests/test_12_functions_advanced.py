@@ -56,18 +56,7 @@ def test_randomize_list(
     if len(my_list) > 2:
         # Check there's at least some variation in results
         assert len({tuple(r) for r in results}) > 1, (
-            "Function doesn't appear to randomize"
-        )
-
-        # Ensure it's not just returning sorted lists
-        sorted_list = sorted(my_list)
-        assert not all(r == sorted_list for r in results), (
-            "Function appears to just sort the list"
-        )
-
-        # Ensure it's not just returning the original list
-        assert not all(r == my_list for r in results), (
-            "Function appears to return the original list"
+            "Function doesn't appear to randomize. You should not use random.seed()."
         )
 
 
