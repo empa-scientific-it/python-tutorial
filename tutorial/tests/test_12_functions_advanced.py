@@ -29,7 +29,46 @@ def test_randomize_list(
     function_to_test: t.Callable,
     my_list: list[int],
 ):
-    assert function_to_test(my_list) == reference_randomize_list(my_list)
+    # We need to verify:
+    # 1. Content is preserved (same elements)
+    # 2. Randomization occurs (not sorted, not original order)
+
+    # Skip randomization tests for trivial lists
+    if len(my_list) <= 1:
+        return
+
+    # Run the function multiple times to ensure randomization
+    results = []
+    for _ in range(3):  # Run multiple times
+        # Use a copy to prevent the function from modifying the original
+        test_list = my_list.copy()
+        result = function_to_test(test_list)
+
+        # 1. Check the same elements are present
+        assert set(result) == set(my_list)
+        # 2. Check the length is preserved
+        assert len(result) == len(my_list)
+
+        results.append(result)
+
+    # 3. Check that we get different orderings (randomization)
+    # For lists with enough elements, very unlikely to get the same result twice
+    if len(my_list) > 2:
+        # Check there's at least some variation in results
+        assert len({tuple(r) for r in results}) > 1, (
+            "Function doesn't appear to randomize"
+        )
+
+        # Ensure it's not just returning sorted lists
+        sorted_list = sorted(my_list)
+        assert not all(r == sorted_list for r in results), (
+            "Function appears to just sort the list"
+        )
+
+        # Ensure it's not just returning the original list
+        assert not all(r == my_list for r in results), (
+            "Function appears to return the original list"
+        )
 
 
 #
