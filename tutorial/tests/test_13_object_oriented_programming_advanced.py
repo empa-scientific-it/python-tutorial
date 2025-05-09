@@ -1,16 +1,21 @@
 import pathlib
 from abc import ABC, abstractmethod
-from datetime import datetime
 
 import pytest
 from numpy import average
+
+
+class SubAssertionError(AssertionError):
+    def __init__(self):
+        super().__init__("Solution must be a proper class instance with attributes.")
+
 
 #
 # Exercise 1: Child Eye Color
 #
 
 
-def reference_child_eye_color(mother_eye_color: str, father_eye_color: str) -> str:
+def reference_child_eye_color(mother_eye_color: str, father_eye_color: str):
     class Mother:
         def __init__(self, eye_color: str):
             self.eye_color_mother = eye_color
@@ -30,8 +35,42 @@ def reference_child_eye_color(mother_eye_color: str, father_eye_color: str) -> s
                 return self.eye_color_mother
             return "brown"
 
-    child = Child(mother_eye_color, father_eye_color)
-    return child.eye_color
+    return Child(mother_eye_color, father_eye_color)
+
+
+def validate_child_eye_color(solution_result):
+    assert not isinstance(
+        solution_result, (str, int, float, bool, list, dict, tuple, set)
+    ), "Solution must return a class instance, not a datatype."
+    assert type(solution_result).__module__ != "builtins", (
+        "Solution must return an instance of a custom class, not a built-in type."
+    )
+    assert type(solution_result).__name__ == "Child", (
+        "The class should be named 'Child'."
+    )
+    # Check inheritance by base class names
+    base_class_names = [base.__name__ for base in type(solution_result).__bases__]
+    assert "Mother" in base_class_names, (
+        "The 'Child' class must inherit from a class named 'Mother'."
+    )
+    assert "Father" in base_class_names, (
+        "The 'Child' class must inherit from a class named 'Father'."
+    )
+    # Check the class attributes
+    try:
+        attrs = list(vars(solution_result))
+    except TypeError:
+        raise SubAssertionError from None
+    assert len(attrs) == 3, "The class should have 3 attributes."
+    assert "eye_color" in attrs, (
+        "The class should have an attribute called 'eye_color'."
+    )
+    assert "eye_color_mother" in attrs, (
+        "The class should have an attribute called 'eye_color_mother'."
+    )
+    assert "eye_color_father" in attrs, (
+        "The class should have an attribute called 'eye_color_father'."
+    )
 
 
 @pytest.mark.parametrize(
@@ -44,17 +83,154 @@ def reference_child_eye_color(mother_eye_color: str, father_eye_color: str) -> s
     ],
 )
 def test_child_eye_color(mother_eye_color, father_eye_color, function_to_test):
-    assert function_to_test(
-        mother_eye_color, father_eye_color
-    ) == reference_child_eye_color(mother_eye_color, father_eye_color)
+    solution_result = function_to_test(mother_eye_color, father_eye_color)
+    reference_result = reference_child_eye_color(mother_eye_color, father_eye_color)
+
+    validate_child_eye_color(solution_result)
+    assert solution_result.eye_color == reference_result.eye_color
 
 
 #
-# Exercise 2: Store Inventory
+# Exercise 2: Banking System
 #
 
 
-def reference_store_inventory(computers: list[dict]) -> list[str]:
+def reference_banking_system(tax_rate: float, interest_rate: float) -> list:
+    class Account(ABC):
+        def __init__(self, account_number):
+            self.account_number = account_number
+            self.balance = 0
+
+        @abstractmethod
+        def credit(self, amount):
+            pass
+
+        @abstractmethod
+        def get_balance(self):
+            pass
+
+        def debit(self, amount):
+            if self.balance >= amount:
+                self.balance -= amount
+            else:
+                print("Insufficient funds.")
+
+    class SalaryAccount(Account):
+        def __init__(self, account_number, tax_rate):
+            super().__init__(account_number)
+            self.tax_rate = tax_rate
+
+        def credit(self, amount):
+            self.balance += amount - amount * self.tax_rate
+
+        def get_balance(self):
+            return self.balance
+
+    class SavingsAccount(Account):
+        def __init__(self, account_number, interest_rate):
+            super().__init__(account_number)
+            self.interest_rate = interest_rate
+
+        def credit(self, amount):
+            self.balance += amount
+
+        def get_balance(self):
+            return self.balance + self.balance * self.interest_rate
+
+    return [
+        SalaryAccount("SAL-001", tax_rate),
+        SavingsAccount("SAV-001", interest_rate),
+    ]
+
+
+def validate_banking_system(solution_result):
+    assert isinstance(solution_result, list), "Solution must return a list."
+    assert len(solution_result) == 2, "The list must contain exactly two elements."
+    assert all(
+        isinstance(item, object) and type(item).__module__ != "builtins"
+        for item in solution_result
+    ), "Both elements in the list must be instances of custom classes."
+    assert all(
+        "Account" in [base.__name__ for base in type(item).__bases__]
+        for item in solution_result
+    ), "Both elements in the list must inherit from a class named 'Account'."
+    assert type(solution_result[0]).__name__ == "SalaryAccount", (
+        "The 1st element in the list should be an instance of 'SalaryAccount'."
+    )
+    assert type(solution_result[1]).__name__ == "SavingsAccount", (
+        "The 2nd element in the list should be an instance of 'SavingsAccount'."
+    )
+    # Check the class attributes: SalaryAccount
+    try:
+        attrs = list(vars(solution_result[0]))
+    except TypeError:
+        raise SubAssertionError from None
+    assert len(attrs) == 3, "The class 'SalaryAccount' should have 3 attributes."
+    assert "account_number" in attrs, (
+        "The class 'SalaryAccount' should have an attribute called 'account_number'."
+    )
+    assert "balance" in attrs, (
+        "The class 'SalaryAccount' should have an attribute called 'balance'."
+    )
+    assert "tax_rate" in attrs, (
+        "The class 'SalaryAccount' should have an attribute called 'tax_rate'."
+    )
+    # Check the class attributes: SavingsAccount
+    try:
+        attrs = list(vars(solution_result[1]))
+    except TypeError:
+        raise SubAssertionError from None
+    assert len(attrs) == 3, "The class 'SavingsAccount' should have 3 attributes."
+    assert "account_number" in attrs, (
+        "The class 'SavingsAccount' should have an attribute called 'account_number'."
+    )
+    assert "balance" in attrs, (
+        "The class 'SavingsAccount' should have an attribute called 'balance'."
+    )
+    assert "interest_rate" in attrs, (
+        "The class 'SavingsAccount' should have an attribute called 'interest_rate'."
+    )
+    # Check that each class has the required methods
+    required_methods = {"credit", "get_balance"}
+    for item in solution_result:
+        class_methods = {
+            method for method in dir(item) if callable(getattr(item, method))
+        }
+        assert required_methods.issubset(class_methods), (
+            f"The class '{type(item).__name__}' must have the methods: {', '.join(required_methods)}."
+        )
+
+
+@pytest.mark.parametrize(
+    "tax_rate, interest_rate",
+    [
+        (0.20, 0.05),
+        (0.18, 0.04),
+    ],
+)
+def test_banking_system(tax_rate, interest_rate, function_to_test):
+    solution_result = function_to_test(tax_rate, interest_rate)
+    reference_result = reference_banking_system(tax_rate, interest_rate)
+
+    validate_banking_system(solution_result)
+
+    amount = 10000
+    # test SalaryAccount functions
+    solution_result[0].credit(amount)
+    reference_result[0].credit(amount)
+    assert solution_result[0].get_balance() == reference_result[0].get_balance()
+    # test SavingsAccount functions
+    solution_result[1].credit(amount)
+    reference_result[1].credit(amount)
+    assert solution_result[1].get_balance() == reference_result[1].get_balance()
+
+
+#
+# Exercise 3: Store Inventory
+#
+
+
+def reference_store_inventory(pc: dict, laptop: dict) -> list:
     class Computer:
         """A class representing a computer sold by the online store"""
 
@@ -62,7 +238,6 @@ def reference_store_inventory(computers: list[dict]) -> list[str]:
             self.name = name
             self.price = price
             self.quantity = quantity
-            self.type = None
 
         def __str__(self):
             return f"Computer with name '{self.name}', price {self.price} CHF and quantity {self.quantity}."
@@ -73,7 +248,6 @@ def reference_store_inventory(computers: list[dict]) -> list[str]:
         def __init__(self, name: str, price: int, quantity: int, expansion_slots: int):
             super().__init__(name, price, quantity)
             self.expansion_slots = expansion_slots
-            self.type = "PC"
 
         def __str__(self):
             return (
@@ -87,7 +261,6 @@ def reference_store_inventory(computers: list[dict]) -> list[str]:
         def __init__(self, name: str, price: int, quantity: int, battery_life: int):
             super().__init__(name, price, quantity)
             self.battery_life = battery_life
-            self.type = "Laptop"
 
         def __str__(self):
             return (
@@ -95,46 +268,98 @@ def reference_store_inventory(computers: list[dict]) -> list[str]:
                 + f" This laptop has a battery life of {self.battery_life} hours."
             )
 
-    inventory = []
-    for computer in computers:
-        computer_type = PC if computer["type"] == "PC" else Laptop
-        computer.pop("type")
-        inventory.append(computer_type(**computer))
-
-    result = []
-    for item in inventory:
-        result.append(str(item))
-
-    return result
-
-
-def test_store_inventory(function_to_test):
-    computers = [
-        {
-            "type": "PC",
-            "name": "pc_1",
-            "price": 1500,
-            "quantity": 1,
-            "expansion_slots": 2,
-        },
-        {
-            "type": "Laptop",
-            "name": "laptop_1",
-            "price": 1200,
-            "quantity": 4,
-            "battery_life": 6,
-        },
+    return [
+        PC(**pc),
+        Laptop(**laptop),
     ]
 
-    assert function_to_test(computers) == reference_store_inventory(computers)
+
+def validate_store_inventory(solution_result):
+    assert isinstance(solution_result, list), "Solution must return a list."
+    assert len(solution_result) == 2, "The list must contain exactly two elements."
+    assert all(
+        isinstance(item, object) and type(item).__module__ != "builtins"
+        for item in solution_result
+    ), "Both elements in the list must be instances of custom classes."
+    assert all(
+        "Computer" in [base.__name__ for base in type(item).__bases__]
+        for item in solution_result
+    ), "Both elements in the list must inherit from a class named 'Computer'."
+    assert type(solution_result[0]).__name__ == "PC", (
+        "The 1st element in the list should be an instance of 'PC'."
+    )
+    assert type(solution_result[1]).__name__ == "Laptop", (
+        "The 2nd element in the list should be an instance of 'Laptop'."
+    )
+    # Check the class attributes: PC
+    try:
+        attrs = list(vars(solution_result[0]))
+    except TypeError:
+        raise SubAssertionError from None
+    assert len(attrs) == 4, "The class 'PC' should have 4 attributes."
+    assert "name" in attrs, "The class 'PC' should have an attribute called 'name'."
+    assert "price" in attrs, "The class 'PC' should have an attribute called 'price'."
+    assert "quantity" in attrs, (
+        "The class 'PC' should have an attribute called 'quantity'."
+    )
+    assert "expansion_slots" in attrs, (
+        "The class 'PC' should have an attribute called 'expansion_slots'."
+    )
+    # Check the class attributes: Laptop
+    try:
+        attrs = list(vars(solution_result[1]))
+    except TypeError:
+        raise SubAssertionError from None
+    assert len(attrs) == 4, "The class 'Laptop' should have 4 attributes."
+    assert "name" in attrs, "The class 'Laptop' should have an attribute called 'name'."
+    assert "price" in attrs, (
+        "The class 'Laptop' should have an attribute called 'price'."
+    )
+    assert "quantity" in attrs, (
+        "The class 'Laptop' should have an attribute called 'quantity'."
+    )
+    assert "battery_life" in attrs, (
+        "The class 'Laptop' should have an attribute called 'battery_life'."
+    )
+
+
+@pytest.mark.parametrize(
+    "pc, laptop",
+    [
+        (
+            {
+                "name": "pc_1",
+                "price": 1500,
+                "quantity": 1,
+                "expansion_slots": 2,
+            },
+            {
+                "name": "laptop_1",
+                "price": 1200,
+                "quantity": 4,
+                "battery_life": 6,
+            },
+        ),
+    ],
+)
+def test_store_inventory(pc, laptop, function_to_test):
+    solution_result = function_to_test(pc, laptop)
+    reference_result = reference_store_inventory(pc, laptop)
+
+    validate_store_inventory(solution_result)
+
+    assert str(solution_result[0]) == str(reference_result[0])
+    assert str(solution_result[1]) == str(reference_result[1])
 
 
 #
-# Exercise 3: Music Streaming Service
+# Exercise 4: Music Streaming Service
 #
 
 
-def reference_music_streaming_service(song_info: list[dict]):
+def reference_music_streaming_service(
+    song_info: list[dict], username: str, playlist_name: str
+):
     class Song:
         def __init__(self, title: str, artist: str, album_title: str):
             self.title = title
@@ -180,39 +405,49 @@ def reference_music_streaming_service(song_info: list[dict]):
                 return f"Playlist '{playlist_name}' not found."
             return self.playlists[playlist_name].display_songs()
 
-    user = User("Bob")
-    user.create_playlist("Favorites from Queen")
+    user = User(username)
+    user.create_playlist(playlist_name)
 
     for info in song_info:
         user.add_song_to_playlist(
-            "Favorites from Queen",
+            playlist_name,
             Song(info["title"], info["artist"], info["album_title"]),
         )
 
     return user
 
 
-def test_music_streaming_service(function_to_test):
-    song_info = [
-        {
-            "title": "Bohemian Rhapsody",
-            "artist": "Queen",
-            "album_title": "A Night at the Opera",
-        },
-        {
-            "title": "We Will Rock You",
-            "artist": "Queen",
-            "album_title": "News of the World",
-        },
-        {
-            "title": "I Want to Break Free",
-            "artist": "Queen",
-            "album_title": "The Works",
-        },
-    ]
-
-    solution_user = function_to_test(song_info)
-    reference_user = reference_music_streaming_service(song_info)
+@pytest.mark.parametrize(
+    "song_info, username, playlist_name",
+    [
+        (
+            [
+                {
+                    "title": "Bohemian Rhapsody",
+                    "artist": "Queen",
+                    "album_title": "A Night at the Opera",
+                },
+                {
+                    "title": "We Will Rock You",
+                    "artist": "Queen",
+                    "album_title": "News of the World",
+                },
+                {
+                    "title": "I Want to Break Free",
+                    "artist": "Queen",
+                    "album_title": "The Works",
+                },
+            ],
+            "Bob",
+            "Favorites from Queen",
+        ),
+    ],
+)
+def test_music_streaming_service(song_info, username, playlist_name, function_to_test):
+    solution_user = function_to_test(song_info, username, playlist_name)
+    reference_user = reference_music_streaming_service(
+        song_info, username, playlist_name
+    )
 
     assert (
         vars(solution_user).keys() == vars(reference_user).keys()
@@ -242,97 +477,6 @@ def test_music_streaming_service(function_to_test):
     assert (
         solution_songs == reference_songs
     )  # both playlists should have the same keys and values
-
-
-#
-# Exercise 4: Banking System
-#
-
-
-def reference_banking_system(
-    tax_rate: float,
-    interest_rate: float,
-    gross_salary: int,
-    savings_precentage: float,
-    years_passed: int,
-) -> float:
-    class Account(ABC):
-        def __init__(self, account_number):
-            self.account_number = account_number
-            self.balance = 0
-
-        @abstractmethod
-        def credit(self, amount):
-            pass
-
-        @abstractmethod
-        def get_balance(self):
-            pass
-
-        def debit(self, amount):
-            if self.balance >= amount:
-                self.balance -= amount
-            else:
-                print("Insufficient funds.")
-
-    class SalaryAccount(Account):
-        def __init__(self, account_number, tax_rate):
-            super().__init__(account_number)
-            self.tax_rate = tax_rate
-
-        def credit(self, amount):
-            self.balance += amount - amount * self.tax_rate
-
-        def get_balance(self):
-            return self.balance
-
-    class SavingsAccount(Account):
-        def __init__(self, account_number, interest_rate):
-            super().__init__(account_number)
-            self.interest_rate = interest_rate
-            self.creation_year = datetime.now().year
-
-        def credit(self, amount):
-            self.balance += amount
-
-        def get_balance(self, years_passed):
-            interest = self.balance * self.interest_rate * years_passed
-            return self.balance + interest
-
-    salary_account = SalaryAccount("SAL-001", tax_rate)
-    savings_account = SavingsAccount("SAV-001", interest_rate)
-
-    salary_account.credit(gross_salary)
-
-    amount_to_transfer = salary_account.get_balance() * savings_precentage
-
-    salary_account.debit(amount_to_transfer)
-    savings_account.credit(amount_to_transfer)
-
-    return savings_account.get_balance(years_passed)
-
-
-@pytest.mark.parametrize(
-    "tax_rate, interest_rate, gross_salary, savings_precentage, years_passed",
-    [
-        (0.20, 0.05, 10000, 0.3, 2),
-        (0.18, 0.04, 9300, 0.15, 3),
-        (0.13, 0.07, 8500, 0.18, 4),
-    ],
-)
-def test_banking_system(
-    tax_rate,
-    interest_rate,
-    gross_salary,
-    savings_precentage,
-    years_passed,
-    function_to_test,
-):
-    assert function_to_test(
-        tax_rate, interest_rate, gross_salary, savings_precentage, years_passed
-    ) == reference_banking_system(
-        tax_rate, interest_rate, gross_salary, savings_precentage, years_passed
-    )
 
 
 #
