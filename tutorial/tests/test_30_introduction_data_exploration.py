@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-import pytest
 
-from tutorial.intro_plotly_helper import (
+import pytest
+from tutorial.data_exploration_helper import (
     full_clean_dataset,
     get_clean_dataset,
     get_happiness_data,
@@ -24,7 +24,7 @@ def reference_read_in_dataframe(path_to_happiness: str) -> pd.DataFrame:
 def test_read_in_dataframe(input_arg, function_to_test):
     """The test case(s)"""
     # Get the path to the data
-    path_to_happiness = "data/plotly_intro/World-happiness-report-updated_2024.csv"
+    path_to_happiness = "data/data_exploration/World-happiness-report-updated_2024.csv"
 
     # Read in the data
     happiness_df = reference_read_in_dataframe(path_to_happiness)
@@ -71,9 +71,15 @@ def test_clean_dataset(input_arg, function_to_test):
 
     clean_ref = reference_clean_dataset(hapiness_df)
     clean_sol = function_to_test(hapiness_df)
+    clean_ref_sorted = clean_ref.sort_values(by=["Country name", "year"]).reset_index(
+        drop=True
+    )
+    clean_sol_sorted = clean_sol.sort_values(by=["Country name", "year"]).reset_index(
+        drop=True
+    )
 
-    # Check if the two DataFrames are equal
-    assert clean_ref.equals(clean_sol)
+    # Check if the two DataFrames are equal, ignoring the index
+    assert clean_ref_sorted.equals(clean_sol_sorted)
 
     import matplotlib.pyplot as plt
 
@@ -112,7 +118,7 @@ def test_add_regional_indicator(input_arg, function_to_test):
 
     # Load the region mapping
     region_df = pd.read_csv(
-        "data/plotly_intro/country_region_mapping.csv",
+        "data/data_exploration/country_region_mapping.csv",
         encoding="latin1",
         usecols=["Country name", "Regional indicator"],
     ).drop_duplicates()

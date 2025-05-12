@@ -7,7 +7,7 @@ from tutorial.my_bubbly import bubbleplot
 def get_happiness_data():
     # Load the dataset
     happiness_df = pd.read_csv(
-        "data/plotly_intro/World-happiness-report-updated_2024.csv",
+        "data/data_exploration/World-happiness-report-updated_2024.csv",
         encoding="latin1",
         usecols=[
             "Freedom to make life choices",
@@ -61,7 +61,7 @@ def get_clean_dataset_with_region(happiness_df: pd.DataFrame) -> pd.DataFrame:
 
     # Load the region mapping
     region_df = pd.read_csv(
-        "data/plotly_intro/country_region_mapping.csv",
+        "data/data_exploration/country_region_mapping.csv",
         encoding="latin1",
         usecols=["Country name", "Regional indicator"],
     ).drop_duplicates()
