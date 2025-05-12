@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from bubbly.bubbly import bubbleplot
+
+from tutorial.my_bubbly import bubbleplot
 
 
 def get_happiness_data():
@@ -468,3 +469,4 @@ def get_scatter_figure_with_years(dataset, x_column, y_column, description_colum
         frame_by_year(dataset, year, x_column, y_column, description_column)
         for year in years
     ]
+    return figure
