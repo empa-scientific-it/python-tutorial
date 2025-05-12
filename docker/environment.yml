@@ -28,3 +28,4 @@ dependencies:
       - opencv-python
       - albumentations
       - grad-cam
+      - plotly
