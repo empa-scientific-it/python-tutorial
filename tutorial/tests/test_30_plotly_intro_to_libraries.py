@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-
 import pytest
+
 from tutorial.intro_plotly_helper import (
     full_clean_dataset,
     get_clean_dataset,
