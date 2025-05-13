@@ -40,7 +40,7 @@ def extract_markdown_cells(notebook: NotebookNode) -> str:
     )
 
 
-def extract_toc(notebook: str) -> list[TocEntry]:
+def extract_toc(notebook: str, toc_header: str) -> list[TocEntry]:
     """Extract the table of contents from a markdown string
 
     Parses markdown headings (lines starting with #) and converts them to TOC entries.
@@ -49,17 +49,19 @@ def extract_toc(notebook: str) -> list[TocEntry]:
 
     Args:
         notebook: String containing markdown content
+        toc_header: Header text for the table of contents
 
     Returns:
         list[TocEntry]: List of table of contents entries
     """
     toc = []
     line_re = re.compile(r"(#+)\s+(.+)")
-    line_num = 0
     is_code_block = False
 
-    for line in notebook.splitlines():
-        line_num += 1
+    for line_num, line in enumerate(notebook.splitlines(), start=1):
+        # Skip line if contains exactly the toc header
+        if line.strip() == toc_header:
+            continue
 
         # Check if we're entering or exiting a code block
         if line.strip().startswith("```"):
@@ -70,7 +72,7 @@ def extract_toc(notebook: str) -> list[TocEntry]:
         if is_code_block:
             continue
 
-        # Process headers only when not in a code block
+        # Process headers
         if groups := re.match(line_re, line):
             try:
                 heading, text, *_ = groups.groups()
@@ -84,6 +86,7 @@ def extract_toc(notebook: str) -> list[TocEntry]:
 
                 toc.append(TocEntry(level, text, anchor))
                 logger.debug("Found heading (level %d): %s", level, text)
+
             except Exception as e:
                 logger.warning("Error processing heading at line %d: %s", line_num, e)
 
@@ -131,7 +134,7 @@ def build_toc(
     md_cells = extract_markdown_cells(nb_obj)
 
     # Build tree
-    toc_tree = extract_toc(md_cells)
+    toc_tree = extract_toc(md_cells, toc_header)
 
     if not toc_tree:
         logger.warning("No headings found in notebook '%s'", nb_path)
