@@ -5,20 +5,24 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - "*.md"
-      - slides/**
-      - images/**
-      - .gitignore
+    paths:
+      - "Dockerfile"
+      - "docker/**"
+      - "binder/**"
+      - "**/environment.yml"
+      - "tutorial/tests/testsuite/**"
+      - ".github/workflows/docker-build.yml"
     tags:
       - "v*.*"
       - "v*.*.*"
   pull_request:
-    paths-ignore:
-      - "*.md"
-      - slides/**
-      - images/**
-      - .gitignore
+    paths:
+      - "Dockerfile"
+      - "docker/**"
+      - "binder/**"
+      - "**/environment.yml"
+      - "tutorial/tests/testsuite/**"
+      - ".github/workflows/docker-build.yml"
   workflow_dispatch:
 
 jobs:
