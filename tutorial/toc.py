@@ -6,7 +6,7 @@ import logging
 import pathlib
 import re
 import sys
-from collections import namedtuple
+from typing import NamedTuple
 
 import nbformat
 from nbformat import NotebookNode
@@ -17,7 +17,13 @@ __version__ = "0.1.2"
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("toc")
 
-TocEntry = namedtuple("TocEntry", ["level", "text", "anchor"])
+
+class TocEntry(NamedTuple):
+    """Table of contents entry"""
+
+    level: int
+    text: str
+    anchor: str
 
 
 def extract_markdown_cells(notebook: NotebookNode) -> str:
@@ -39,6 +45,7 @@ def extract_toc(notebook: str) -> list[TocEntry]:
 
     Parses markdown headings (lines starting with #) and converts them to TOC entries.
     Each entry includes the heading level, text, and an anchor derived from the text.
+    Ignores '#' symbols inside code blocks.
 
     Args:
         notebook: String containing markdown content
@@ -49,9 +56,21 @@ def extract_toc(notebook: str) -> list[TocEntry]:
     toc = []
     line_re = re.compile(r"(#+)\s+(.+)")
     line_num = 0
+    is_code_block = False
 
     for line in notebook.splitlines():
         line_num += 1
+
+        # Check if we're entering or exiting a code block
+        if line.strip().startswith("```"):
+            is_code_block = not is_code_block
+            continue
+
+        # Skip header processing if we're in a code block
+        if is_code_block:
+            continue
+
+        # Process headers only when not in a code block
         if groups := re.match(line_re, line):
             try:
                 heading, text, *_ = groups.groups()
@@ -220,16 +239,21 @@ def main():
             logger.warning("Skipping output - no placeholder found in notebook")
             sys.exit(0)  # Exit with success code since it's not an error
 
-        with output_nb.open("w", encoding="utf-8") as file:
-            nbformat.write(toc_notebook, file)
-        logger.info("TOC written to: %s", output_nb)
+        if not args.force:
+            logger.debug("Ignoring output file: %s", output_nb)
 
-        # Handle force option
-        if args.force:
+            with output_nb.open("w", encoding="utf-8") as file:
+                nbformat.write(toc_notebook, file)
+
+            logger.info("TOC written to: %s", output_nb)
+        else:
             logger.info("Replacing original notebook with TOC version")
-            input_nb.unlink()
-            output_nb.rename(input_nb)
+
+            with input_nb.open("w", encoding="utf-8") as file:
+                nbformat.write(toc_notebook, file)
+
             logger.info("Original notebook replaced with: %s", input_nb)
+
     except Exception:
         logger.exception("Error processing notebook")
         sys.exit(1)
