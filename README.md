@@ -42,6 +42,8 @@ cd /path/to/python-tutorial
 
 ```
 
+> If you have installed Anaconda, then you can use Anaconda Prompt to run the following commands.
+
 You should now create a new environment with `conda`:
 
 ```console
