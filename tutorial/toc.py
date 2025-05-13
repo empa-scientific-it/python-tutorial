@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# ruff: noqa G004
 """CLI script to build a table of contents for an IPython notebook"""
 
 import argparse as ap
@@ -12,7 +11,7 @@ from collections import namedtuple
 import nbformat
 from nbformat import NotebookNode
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -65,9 +64,9 @@ def extract_toc(notebook: str) -> list[TocEntry]:
                 anchor = "-".join(clean_text.lower().split())
 
                 toc.append(TocEntry(level, text, anchor))
-                logger.debug(f"Found heading (level {level}): {text}")
+                logger.debug("Found heading (level %d): %s", level, text)
             except Exception as e:
-                logger.warning(f"Error processing heading at line {line_num}: {e}")
+                logger.warning("Error processing heading at line %d: %s", line_num, e)
 
     return toc
 
@@ -106,8 +105,8 @@ def build_toc(
     # Read the notebook
     try:
         nb_obj: NotebookNode = nbformat.read(nb_path, nbformat.NO_CONVERT)
-    except Exception as e:
-        logger.error(f"Failed to read notebook '{nb_path}': {e}")
+    except Exception:
+        logger.exception("Failed to read notebook '%s'", nb_path)
         raise
 
     md_cells = extract_markdown_cells(nb_obj)
@@ -116,7 +115,7 @@ def build_toc(
     toc_tree = extract_toc(md_cells)
 
     if not toc_tree:
-        logger.warning(f"No headings found in notebook '{nb_path}'")
+        logger.warning("No headings found in notebook '%s'", nb_path)
 
     # Build toc representation
     toc_repr = markdown_toc(toc_tree)
@@ -133,7 +132,9 @@ def build_toc(
 
     if not toc_replaced:
         logger.warning(
-            f"Placeholder '{placeholder}' or heading '{toc_header}' not found in notebook"
+            "Placeholder '%s' or heading '%s' not found in notebook",
+            placeholder,
+            toc_header,
         )
 
     return nb_obj, toc_replaced
@@ -192,13 +193,13 @@ def main():
     try:
         input_nb = pathlib.Path(args.notebook)
         if not input_nb.exists():
-            logger.error(f"Input file not found: {input_nb}")
+            logger.error("Input file not found: %s", input_nb)
             sys.exit(1)
         if not input_nb.is_file():
-            logger.error(f"Input path is not a file: {input_nb}")
+            logger.error("Input path is not a file: %s", input_nb)
             sys.exit(1)
-    except Exception as e:
-        logger.error(f"Error processing input path: {e}")
+    except Exception:
+        logger.exception("Error processing input path")
         sys.exit(1)
 
     # Set output file path
@@ -212,7 +213,7 @@ def main():
 
     try:
         # Generate TOC and write to output file
-        logger.info(f"Processing notebook: {input_nb}")
+        logger.info("Processing notebook: %s", input_nb)
         toc_notebook, toc_replaced = build_toc(input_nb, args.placeholder, args.header)
 
         if not toc_replaced:
@@ -221,16 +222,16 @@ def main():
 
         with output_nb.open("w", encoding="utf-8") as file:
             nbformat.write(toc_notebook, file)
-        logger.info(f"TOC written to: {output_nb}")
+        logger.info("TOC written to: %s", output_nb)
 
         # Handle force option
         if args.force:
-            logger.info(f"Replacing original notebook with TOC version")
+            logger.info("Replacing original notebook with TOC version")
             input_nb.unlink()
             output_nb.rename(input_nb)
-            logger.info(f"Original notebook replaced with: {input_nb}")
-    except Exception as e:
-        logger.error(f"Error processing notebook: {e}")
+            logger.info("Original notebook replaced with: %s", input_nb)
+    except Exception:
+        logger.exception("Error processing notebook")
         sys.exit(1)
 
 
