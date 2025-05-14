@@ -1,10 +1,11 @@
 import html
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar
 
 import ipywidgets
 import pytest
@@ -42,7 +43,7 @@ class DebugOutput:
 
     module_name: str
     module_file: Path
-    results: List["IPytestResult"]
+    results: list["IPytestResult"]
 
     def to_html(self) -> str:
         """Format debug information as HTML"""
@@ -134,8 +135,8 @@ class TestCaseResult:
 
     test_name: str
     outcome: TestOutcome
-    exception: Optional[BaseException] = None
-    traceback: Optional[TracebackType] = None
+    exception: BaseException | None = None
+    traceback: TracebackType | None = None
     formatted_exception: str = ""
     stdout: str = ""
     stderr: str = ""
@@ -358,19 +359,19 @@ class AFunction:
 
     name: str
     implementation: Callable[..., Any]
-    source_code: Optional[str]
+    source_code: str | None
 
 
 @dataclass
 class IPytestResult:
     """Class to store the results of running pytest on a solution function"""
 
-    function: Optional[AFunction] = None
-    status: Optional[IPytestOutcome] = None
-    test_results: Optional[List[TestCaseResult]] = None
-    exceptions: Optional[List[BaseException]] = None
+    function: AFunction | None = None
+    status: IPytestOutcome | None = None
+    test_results: list[TestCaseResult] | None = None
+    exceptions: list[BaseException] | None = None
     test_attempts: int = 0
-    cell_content: Optional[str] = None
+    cell_content: str | None = None
 
 
 @dataclass
@@ -378,9 +379,9 @@ class TestResultOutput:
     """Class to prepare and display test results in a Jupyter notebook"""
 
     ipytest_result: IPytestResult
-    solution: Optional[str] = None
+    solution: str | None = None
     MAX_ATTEMPTS: ClassVar[int] = 3
-    openai_client: Optional[OpenAIWrapper] = None
+    openai_client: OpenAIWrapper | None = None
 
     def display_results(self) -> None:
         """Display the test results in an output widget as a VBox"""
@@ -730,7 +731,7 @@ class ResultCollector:
     """A class that will collect the result of a test. If behaves a bit like a visitor pattern"""
 
     def __init__(self) -> None:
-        self.tests: Dict[str, TestCaseResult] = {}
+        self.tests: dict[str, TestCaseResult] = {}
 
     def pytest_runtest_makereport(self, item: pytest.Item, call: pytest.CallInfo):
         """Called when an individual test item has finished execution."""

@@ -10,7 +10,6 @@ on:
       - "docker/**"
       - "binder/**"
       - "**/environment.yml"
-      - "tutorial/tests/testsuite/**"
       - ".github/workflows/docker-build.yml"
     tags:
       - "v*.*"
@@ -21,7 +20,6 @@ on:
       - "docker/**"
       - "binder/**"
       - "**/environment.yml"
-      - "tutorial/tests/testsuite/**"
       - ".github/workflows/docker-build.yml"
   workflow_dispatch:
 

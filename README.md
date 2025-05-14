@@ -127,3 +127,56 @@ You can now use the Jupyter in the Docker container to run the python-tutorial. 
 > [!NOTE]
 >
 > If you want to restart the container, you can simply run the command `docker container start python_tutorial`.
+
+## Setup a local dev environment
+
+If you prefer not to use Conda and/or Docker, you can set up a *lightweight* development environment using either "uv" (a faster alternative to pip) or traditional "pip". Both methods will install the development dependencies specified in the `pyproject.toml` file.
+
+Both setups assume that you have already cloned the repository with `git clone https://github.com/empa-scientific-it/python-tutorial`. The commands below should be run from inside the tutorial directory.
+
+### Using `uv` (Recommended for speed)
+
+[uv](https://github.com/astral-sh/uv) is a fast, Python package installer and resolver written in Rust.
+
+1. Install uv via `pip` or [any other method](https://docs.astral.sh/uv/getting-started/installation/):
+   ```console
+   pip install uv
+   ```
+
+2. Create a virtual environment and install dev dependencies:
+   ```console
+   # Create and activate a virtual environment
+   uv venv
+   # On Windows
+   .venv\Scripts\activate
+   # On macOS/Linux
+   source .venv/bin/activate
+
+   # Install dev dependencies
+   uv pip install -e ".[dev]"
+   ```
+
+3. Launch JupyterLab:
+   ```console
+   jupyter lab
+   ```
+
+### Using `pip`
+
+1. Create a virtual environment and install dev dependencies:
+   ```console
+   # Create and activate a virtual environment
+   python -m venv .venv
+   # On Windows
+   .venv\Scripts\activate
+   # On macOS/Linux
+   source .venv/bin/activate
+
+   # Install dev dependencies
+   pip install -e ".[dev]"
+   ```
+
+2. Launch JupyterLab:
+   ```console
+   jupyter lab
+   ```

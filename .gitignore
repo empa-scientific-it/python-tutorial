@@ -80,6 +80,9 @@ target/
 # IPython
 profile_default/
 
+# uv
+uv.lock
+
 # pyenv
 .python-version
 

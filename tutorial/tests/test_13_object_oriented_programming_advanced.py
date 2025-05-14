@@ -572,7 +572,9 @@ class Universe:
     @property
     def momentum(self) -> list:
         """Return the momentum of the universe"""
-        return list(map(sum, zip(*[moon.velocities for moon in self.moons])))
+        return list(
+            map(sum, zip(*[moon.velocities for moon in self.moons], strict=False))
+        )
 
     def __repr__(self) -> str:
         return "\n".join(repr(moon) for moon in self.moons)

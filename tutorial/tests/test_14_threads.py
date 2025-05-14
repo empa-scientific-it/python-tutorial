@@ -4,8 +4,8 @@ import pathlib
 import random
 import string
 from collections import Counter
+from collections.abc import Awaitable, Callable
 from concurrent.futures import ProcessPoolExecutor
-from typing import Awaitable, Callable
 
 import pytest
 
