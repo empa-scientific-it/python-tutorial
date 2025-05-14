@@ -132,21 +132,19 @@ You can now use the Jupyter in the Docker container to run the python-tutorial. 
 
 If you prefer not to use Conda and/or Docker, you can set up a *lightweight* development environment using either "uv" (a faster alternative to pip) or traditional "pip". Both methods will install the development dependencies specified in the `pyproject.toml` file.
 
+Both setups assume that you have already cloned the repository with `git clone https://github.com/empa-scientific-it/python-tutorial`. The commands below should be run from inside the tutorial directory.
+
 ### Using `uv` (Recommended for speed)
 
 [uv](https://github.com/astral-sh/uv) is a fast, Python package installer and resolver written in Rust.
 
-1. Install uv via `pip` or any other method:
+1. Install uv via `pip` or [any other method](https://docs.astral.sh/uv/getting-started/installation/):
    ```console
    pip install uv
    ```
 
 2. Create a virtual environment and install dev dependencies:
    ```console
-   # Clone the repository if you haven't already
-   git clone https://github.com/empa-scientific-it/python-tutorial
-   cd python-tutorial
-
    # Create and activate a virtual environment
    uv venv
    # On Windows
@@ -167,10 +165,6 @@ If you prefer not to use Conda and/or Docker, you can set up a *lightweight* dev
 
 1. Create a virtual environment and install dev dependencies:
    ```console
-   # Clone the repository if you haven't already
-   git clone https://github.com/empa-scientific-it/python-tutorial
-   cd python-tutorial
-
    # Create and activate a virtual environment
    python -m venv .venv
    # On Windows
