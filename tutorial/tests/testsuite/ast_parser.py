@@ -1,6 +1,5 @@
 import ast
 import pathlib
-from typing import Dict, Set
 
 
 class AstParser:
@@ -39,8 +38,8 @@ class AstParser:
                 )
 
     def retrieve_functions(
-        self, all_functions: Dict, node: object, called_functions: Set[object]
-    ) -> Set[object]:
+        self, all_functions: dict, node: object, called_functions: set[object]
+    ) -> set[object]:
         """
         Recursively walk the AST tree to retrieve all function definitions in a file
         """
