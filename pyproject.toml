@@ -49,6 +49,7 @@ target-version = "py310"
 ignore = [
   "E501",  # Line too long
   "E203",  # Whitespace before ':'
+  "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)` is deprecated and results in slower code
   # "TRY301", # Raise within try block (this is actually a good practice)
   # "W503"  # Line break before binary operator (not PEP8 enforced, so not implemented in Ruff)
 ]
