@@ -141,7 +141,7 @@ def reference_multiples_of_n(my_list: List[int], k: int) -> List[int]:
     ],
 )
 def test_multiples_of_n(
-    function_to_test: Callable[[List[int]], int],
+    function_to_test: Callable[[List[int], int], int],
     my_list: List[int],
     k: int,
 ):
@@ -242,7 +242,7 @@ def test_exercise4(
 
 
 def reference_exercise5(words: List[str]) -> List[str]:
-    return list(filter(lambda x: x == x[::-1] and len(x) > 1, words))
+    return list(filter(lambda x: len(x) > 1 and x == x[::-1], words))
 
 
 def test_exercise5(function_to_test: Callable[[List[str]], List[str]]):
