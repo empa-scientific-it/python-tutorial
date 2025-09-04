@@ -3,7 +3,6 @@ import csv
 import pathlib as pl
 import string
 from io import StringIO
-from typing import Dict, List, Tuple
 
 import pytest
 
@@ -34,7 +33,7 @@ def test_print_odd(function_to_test, n: int):
     assert solution_text == reference_text
 
 
-def reference_check_for_file(current_path: pl.Path, file_name: str) -> List[pl.Path]:
+def reference_check_for_file(current_path: pl.Path, file_name: str) -> list[pl.Path]:
     for file_path in list(current_path.iterdir()):
         if file_name == file_path.name:
             return True
@@ -54,7 +53,7 @@ def test_check_for_file(function_to_test, input_path: pl.Path, file_name: str):
     )
 
 
-def reference_find_all_files(current_path: pl.Path) -> List[pl.Path]:
+def reference_find_all_files(current_path: pl.Path) -> list[pl.Path]:
     return list(current_path.iterdir())
 
 
@@ -72,7 +71,7 @@ def test_count_dirs(function_to_test):
     assert function_to_test(path) == reference_count_dirs(path)
 
 
-def reference_read_file(input_file: pl.Path) -> List[str]:
+def reference_read_file(input_file: pl.Path) -> list[str]:
     text = input_file.open("r")
     lines = text.readlines()
     text.close()
@@ -148,7 +147,7 @@ def test_read_write_file(function_to_test, tmp_path: pl.Path):
         input_file.write_text(original_content)
 
 
-def reference_exercise1(input_file: pl.Path) -> Dict[str, List[str]]:
+def reference_exercise1(input_file: pl.Path) -> dict[str, list[str]]:
     my_dict = {}
     with open(input_file) as csv_file:
         reader = csv.reader(csv_file)
@@ -191,7 +190,7 @@ def test_exercise2(function_to_test, file: str):
         f.write_text(original_content)
 
 
-def reference_exercise3(input_file: pl.Path) -> Dict[str, int]:
+def reference_exercise3(input_file: pl.Path) -> dict[str, int]:
     my_dict = {}
     my_dict = dict.fromkeys(string.ascii_lowercase, 0)
     with open(input_file) as file_ob:
@@ -217,7 +216,7 @@ def test_exercise3(function_to_test):
         f.write_text(original_content)
 
 
-def reference_exercise4(english: pl.Path, dictionary: pl.Path) -> List[Tuple[str, str]]:
+def reference_exercise4(english: pl.Path, dictionary: pl.Path) -> list[tuple[str, str]]:
     english_words = english.read_text().splitlines()
 
     with dictionary.open("r") as dict_file:

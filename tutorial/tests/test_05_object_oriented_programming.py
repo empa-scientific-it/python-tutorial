@@ -38,7 +38,7 @@ def reference_oop_person(first_name: str, last_name: str):
 
 def validate_oop_person(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
     assert type(solution_result).__module__ != "builtins", (
         "Solution must return an instance of a custom class, not a built-in type."
@@ -214,7 +214,7 @@ def reference_oop_compare_persons(first_name: str, last_name: str, age: int):
 
 def validate_oop_compare_persons(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
     assert type(solution_result).__module__ != "builtins", (
         "Solution must return an instance of a custom class, not a built-in type."
@@ -280,7 +280,7 @@ def reference_ice_cream_scoop(flavors: tuple[str]) -> list:
 
 def validate_ice_cream_scoop(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "The returned list must contain class instances, not datatypes."
     assert type(solution_result).__module__ != "builtins", (
         "The returned list must contain instances of a custom class, not a built-in type."
@@ -369,7 +369,7 @@ def reference_ice_cream_bowl(flavors: tuple[str]):
 
 def validate_ice_cream_bowl(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
     assert type(solution_result).__module__ != "builtins", (
         "Solution must return an instance of a custom class, not a built-in type."
@@ -396,13 +396,13 @@ def validate_ice_cream_bowl(solution_result):
         raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
     assert "scoops" in attrs, "The class attribute should be 'scoops'."
-    assert isinstance(solution_result.scoops, (list, set, tuple)), (
+    assert isinstance(solution_result.scoops, list | set | tuple), (
         "The class attribute 'scoops' should be a datatype that acts as a container."
     )
     for scoop in solution_result.scoops:
-        assert not isinstance(scoop, (str, int, float, bool, list, dict, tuple, set)), (
-            "The 'scoops' container must contain class instances, not datatypes."
-        )
+        assert not isinstance(
+            scoop, str | int | float | bool | list | dict | tuple | set
+        ), "The 'scoops' container must contain class instances, not datatypes."
         assert type(scoop).__module__ != "builtins", (
             "The 'scoops' container must contain instances of a custom class, not a built-in type."
         )
@@ -467,7 +467,7 @@ def reference_ice_cream_shop(flavors: list[str]):
 
 def validate_ice_cream_shop(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
     assert type(solution_result).__module__ != "builtins", (
         "Solution must return an instance of a custom class, not a built-in type."
@@ -490,7 +490,7 @@ def validate_ice_cream_shop(solution_result):
         raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
     assert "flavors" in attrs, "The class attribute should be 'flavors'."
-    assert isinstance(solution_result.flavors, (list, set, tuple)), (
+    assert isinstance(solution_result.flavors, list | set | tuple), (
         "The class attribute 'flavors' should be a datatype that acts as a container."
     )
 
