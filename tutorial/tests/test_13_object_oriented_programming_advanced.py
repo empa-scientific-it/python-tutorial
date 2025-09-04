@@ -40,7 +40,7 @@ def reference_child_eye_color(mother_eye_color: str, father_eye_color: str):
 
 def validate_child_eye_color(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
     assert type(solution_result).__module__ != "builtins", (
         "Solution must return an instance of a custom class, not a built-in type."

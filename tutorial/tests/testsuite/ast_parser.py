@@ -19,9 +19,9 @@ class AstParser:
         tree = ast.parse(self.module_file.read_text(encoding="utf-8"))
 
         for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 self.function_defs[node.name] = node
-            elif isinstance(node, (ast.Import, ast.ImportFrom)) and hasattr(
+            elif isinstance(node, ast.Import | ast.ImportFrom) and hasattr(
                 node, "module"
             ):
                 for n in node.names:
@@ -83,7 +83,7 @@ class AstParser:
                     )
                     for node in function_file_tree.body:
                         if (
-                            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                            isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
                             and node.name == f
                         ):
                             solution_code += ast.unparse(node) + "\n\n"
