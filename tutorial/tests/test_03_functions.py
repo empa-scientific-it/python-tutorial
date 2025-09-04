@@ -2,7 +2,7 @@ import inspect
 import pathlib
 from collections import Counter
 from string import ascii_lowercase, ascii_uppercase
-from typing import Any, List
+from typing import Any
 
 import pytest
 
@@ -270,7 +270,7 @@ def test_combine_anything(args: Any, function_to_test) -> None:
 #
 
 
-def reference_longest_sequence(nums: List[int]) -> int:
+def reference_longest_sequence(nums: list[int]) -> int:
     """
     Find the longest consecutive sequence of integers
 
@@ -301,7 +301,7 @@ def reference_longest_sequence(nums: List[int]) -> int:
         [0, 2, 14, 12, 4, 18, 16, 8, 10, 6],
     ],
 )
-def test_longest_sequence(input_nums: List[int], function_to_test) -> None:
+def test_longest_sequence(input_nums: list[int], function_to_test) -> None:
     assert function_to_test(input_nums) == reference_longest_sequence(input_nums)
 
 
@@ -312,7 +312,7 @@ def test_longest_sequence(input_nums: List[int], function_to_test) -> None:
         [int(x) for x in read_data("longest_10000.txt").read_text().splitlines()],
     ],
 )
-def test_longest_sequence_best(input_nums: List[int], function_to_test) -> None:
+def test_longest_sequence_best(input_nums: list[int], function_to_test) -> None:
     assert function_to_test(input_nums) == reference_longest_sequence(input_nums)
 
 
