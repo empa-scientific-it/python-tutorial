@@ -1,6 +1,37 @@
 [project]
 name = "python-tutorial"
+version = "v2025.05"
+description = "Jupyter-based Python programming tutorial"
 requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+  "numpy",
+  "matplotlib",
+  "pandas",
+  "ipywidgets",
+  "ipynbname",
+  "jupyterlab",
+  "pytest",
+  "pytest-timeout",
+  "markdown",
+  "pre-commit",
+  "geostatspy",
+  "gstools",
+  "scikit-learn",
+  "attrs",
+  "multiprocess",
+  "openai",
+  "tenacity",
+  "markdown2",
+  "python-dotenv",
+  "pillow",
+  "opencv-python",
+  "albumentations",
+  "grad-cam",
+  "plotly",
+  "torch==2.7.0",  # pinned to last stable version as of 2025-05-14
+]
 
 # pytest
 [tool.pytest.ini_options]
@@ -58,3 +89,7 @@ select = [
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+# Setuptools: suppress package discovery
+[tool.setuptools]
+packages = []
