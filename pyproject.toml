@@ -2,7 +2,7 @@
 name = "python-tutorial"
 version = "v2025.05"
 description = "Jupyter-based Python programming tutorial"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 
 [project.optional-dependencies]
 dev = [
@@ -21,16 +21,13 @@ dev = [
   "scikit-learn",
   "attrs",
   "multiprocess",
-  "openai",
-  "tenacity",
-  "markdown2",
-  "python-dotenv",
   "pillow",
   "opencv-python",
   "albumentations",
   "grad-cam",
   "plotly",
-  "torch==2.7.0",  # pinned to last stable version as of 2025-05-14
+  "torch>=2.0.0",  # PyTorch 2.x series
+  "ipytestsuite[ai]>=0.1.0",
 ]
 
 # pytest
@@ -93,3 +90,11 @@ indent-style = "space"
 # Setuptools: suppress package discovery
 [tool.setuptools]
 packages = []
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+explicit = true
+
+[tool.uv.sources]
+ipytestsuite = { index = "testpypi" }
