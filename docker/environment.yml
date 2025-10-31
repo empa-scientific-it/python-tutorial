@@ -1,10 +1,8 @@
 ---
-name: python-tutorial
+name: base
 channels:
   - conda-forge
-  - pytorch
 dependencies:
-  - python=3.10
   - pip
   - pip:
       - numpy
@@ -28,9 +26,6 @@ dependencies:
       - python-dotenv
       - pillow
       - opencv-python
-      - torch
-      - torchaudio
-      - torchvision
       - albumentations
       - grad-cam
       - plotly

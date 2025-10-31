@@ -10,7 +10,6 @@ from collections import defaultdict
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from queue import Queue
 from threading import Thread
-from typing import Dict, List, Optional
 
 import ipynbname
 import pytest
@@ -119,19 +118,19 @@ def _name_from_line(line: str = ""):
 
 def _name_from_ipynbname() -> str | None:
     try:
-        return ipynbname.name()
+        return str(ipynbname.name())
     except FileNotFoundError:
         return None
 
 
-def _name_from_globals(globals_dict: Dict) -> str | None:
+def _name_from_globals(globals_dict: dict) -> str | None:
     """Find the name of the test module from the globals dictionary if working in VSCode"""
 
     module_path = globals_dict.get("__vsc_ipynb_file__") if globals_dict else None
     return pathlib.Path(module_path).stem if module_path else None
 
 
-def get_module_name(line: str, globals_dict: Dict) -> str | None:
+def get_module_name(line: str, globals_dict: dict) -> str | None:
     """Fetch the test module name"""
 
     module_name = (
@@ -151,21 +150,20 @@ class TestMagic(Magics):
         super().__init__(shell)
         self.shell: InteractiveShell = shell
         self.cell: str = ""
-        self.debug: bool = False
-        self.module_file: Optional[pathlib.Path] = None
-        self.module_name: Optional[str] = None
-        self.threaded: Optional[bool] = None
-        self.test_queue: Optional[Queue[IPytestResult]] = None
-        self.cell_execution_count: Dict[str, Dict[str, int]] = defaultdict(
+        self.module_file: pathlib.Path | None = None
+        self.module_name: str | None = None
+        self.threaded: bool | None = None
+        self.test_queue: Queue[IPytestResult] | None = None
+        self.cell_execution_count: dict[str, dict[str, int]] = defaultdict(
             lambda: defaultdict(int)
         )
         self._orig_traceback = self.shell._showtraceback  # type: ignore
         # This is monkey-patching suppress printing any exception or traceback
 
-    def extract_functions_to_test(self) -> List[AFunction]:
+    def extract_functions_to_test(self) -> list[AFunction]:
         """Retrieve the functions names and implementations defined in the current cell"""
         # Only functions with names starting with `solution_` will be candidates for tests
-        functions: Dict[str, str] = {}
+        functions: dict[str, str] = {}
         tree = ast.parse(self.cell)
 
         for node in ast.walk(tree):
@@ -217,7 +215,7 @@ class TestMagic(Magics):
             case _:
                 return result
 
-    def run_cell(self) -> List[IPytestResult]:
+    def run_cell(self) -> list[IPytestResult]:
         """Evaluates the cell via IPython and runs tests for the functions"""
         try:
             result = self.shell.run_cell(self.cell, silent=True)  # type: ignore
@@ -271,9 +269,9 @@ class TestMagic(Magics):
         line_contents = set(line.split())
 
         # Debug mode?
-        if "debug" in line_contents:
+        debug = "debug" in line_contents
+        if debug:
             line_contents.remove("debug")
-            self.debug = True
 
         # Check if we need to run the tests on a separate thread
         if "async" in line_contents:
@@ -281,7 +279,7 @@ class TestMagic(Magics):
             self.threaded = True
             self.test_queue = Queue()
 
-        with self.traceback_handling(self.debug):
+        with self.traceback_handling(debug):
             # Get the module containing the test(s)
             if (
                 module_name := get_module_name(
@@ -306,7 +304,7 @@ class TestMagic(Magics):
             results = self.run_cell()
 
             # If in debug mode, display debug information first
-            if self.debug:
+            if debug:
                 debug_output = DebugOutput(
                     module_name=self.module_name,
                     module_file=self.module_file,

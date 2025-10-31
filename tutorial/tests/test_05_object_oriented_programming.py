@@ -38,23 +38,23 @@ def reference_oop_person(first_name: str, last_name: str):
 
 def validate_oop_person(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
-    assert (
-        type(solution_result).__module__ != "builtins"
-    ), "Solution must return an instance of a custom class, not a built-in type."
-    assert (
-        type(solution_result).__name__ == "Person"
-    ), "The class should be named 'Person'."
+    assert type(solution_result).__module__ != "builtins", (
+        "Solution must return an instance of a custom class, not a built-in type."
+    )
+    assert type(solution_result).__name__ == "Person", (
+        "The class should be named 'Person'."
+    )
     # Check the class attributes
     try:
         attrs = list(vars(solution_result))
     except TypeError:
-        raise SubAssertionError
+        raise SubAssertionError from None
     assert len(attrs) == 2, "The class should have 2 attributes."
-    assert (
-        "first_name" in attrs and "last_name" in attrs
-    ), "The class attributes should be 'first_name' and 'last_name'."
+    assert "first_name" in attrs and "last_name" in attrs, (
+        "The class attributes should be 'first_name' and 'last_name'."
+    )
 
 
 @pytest.mark.parametrize(
@@ -101,9 +101,9 @@ def validate_oop_fullname(solution_result):
     ]
     assert len(methods) == 1, "The class should have 1 method."
     assert "full_name" in methods, "The class method should be called 'full_name'."
-    assert (
-        solution_result.full_name.__closure__ is None
-    ), "The full_name() method should be using the class attributes."
+    assert solution_result.full_name.__closure__ is None, (
+        "The full_name() method should be using the class attributes."
+    )
 
 
 @pytest.mark.parametrize(
@@ -118,9 +118,9 @@ def test_oop_fullname(first_name, last_name, function_to_test):
 
     validate_oop_person(solution_result)
     validate_oop_fullname(solution_result)
-    assert (
-        solution_result.full_name() == reference_result.full_name()
-    ), "The full_name() result does not match the template 'My name is {first_name} {last_name}'."
+    assert solution_result.full_name() == reference_result.full_name(), (
+        "The full_name() result does not match the template 'My name is {first_name} {last_name}'."
+    )
 
 
 #
@@ -146,21 +146,21 @@ def reference_oop_str_and_repr(first_name: str, last_name: str):
 
 
 def validate_oop_str_method(solution_result):
-    assert hasattr(
-        solution_result.__str__, "__closure__"
-    ), "Make sure that the class is properly implementing the __str__() method."
-    assert (
-        solution_result.__str__.__closure__ is None
-    ), "The __str__() method should be using the class attributes."
+    assert hasattr(solution_result.__str__, "__closure__"), (
+        "Make sure that the class is properly implementing the __str__() method."
+    )
+    assert solution_result.__str__.__closure__ is None, (
+        "The __str__() method should be using the class attributes."
+    )
 
 
 def validate_oop_repr_method(solution_result):
-    assert hasattr(
-        solution_result.__repr__, "__closure__"
-    ), "Make sure that the class is properly implementing the __repr__() method."
-    assert (
-        solution_result.__repr__.__closure__ is None
-    ), "The __repr__() method should be using the class attributes."
+    assert hasattr(solution_result.__repr__, "__closure__"), (
+        "Make sure that the class is properly implementing the __repr__() method."
+    )
+    assert solution_result.__repr__.__closure__ is None, (
+        "The __repr__() method should be using the class attributes."
+    )
 
 
 @pytest.mark.parametrize(
@@ -177,12 +177,12 @@ def test_oop_str_and_repr(first_name, last_name, function_to_test):
     validate_oop_str_method(solution_result)
     validate_oop_repr_method(solution_result)
 
-    assert (
-        str(solution_result) == str(reference_result)
-    ), "The __str__() result does not match the template 'My name is {first_name} {last_name}'."
-    assert (
-        solution_result.__repr__() == reference_result.__repr__()
-    ), "The __repr__() result does not match the template 'Person({first_name}, {last_name})'."
+    assert str(solution_result) == str(reference_result), (
+        "The __str__() result does not match the template 'My name is {first_name} {last_name}'."
+    )
+    assert solution_result.__repr__() == reference_result.__repr__(), (
+        "The __repr__() result does not match the template 'Person({first_name}, {last_name})'."
+    )
 
 
 #
@@ -214,26 +214,26 @@ def reference_oop_compare_persons(first_name: str, last_name: str, age: int):
 
 def validate_oop_compare_persons(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
-    assert (
-        type(solution_result).__module__ != "builtins"
-    ), "Solution must return an instance of a custom class, not a built-in type."
-    assert (
-        type(solution_result).__name__ == "Person"
-    ), "The class should be named 'Person'."
-    assert hasattr(
-        solution_result.__eq__, "__closure__"
-    ), "Make sure that the class is properly implementing the __eq__() method."
+    assert type(solution_result).__module__ != "builtins", (
+        "Solution must return an instance of a custom class, not a built-in type."
+    )
+    assert type(solution_result).__name__ == "Person", (
+        "The class should be named 'Person'."
+    )
+    assert hasattr(solution_result.__eq__, "__closure__"), (
+        "Make sure that the class is properly implementing the __eq__() method."
+    )
     # Check the class attributes
     try:
         attrs = list(vars(solution_result))
     except TypeError:
-        raise SubAssertionError
+        raise SubAssertionError from None
     assert len(attrs) == 3, "The class should have 3 attributes."
-    assert (
-        "first_name" in attrs and "last_name" in attrs and "age" in attrs
-    ), "The class attributes should be 'first_name', 'last_name' and 'age'."
+    assert "first_name" in attrs and "last_name" in attrs and "age" in attrs, (
+        "The class attributes should be 'first_name', 'last_name' and 'age'."
+    )
 
 
 @pytest.mark.parametrize(
@@ -280,32 +280,32 @@ def reference_ice_cream_scoop(flavors: tuple[str]) -> list:
 
 def validate_ice_cream_scoop(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "The returned list must contain class instances, not datatypes."
-    assert (
-        type(solution_result).__module__ != "builtins"
-    ), "The returned list must contain instances of a custom class, not a built-in type."
-    assert (
-        type(solution_result).__name__ == "Scoop"
-    ), "The class should be named 'Scoop'."
+    assert type(solution_result).__module__ != "builtins", (
+        "The returned list must contain instances of a custom class, not a built-in type."
+    )
+    assert type(solution_result).__name__ == "Scoop", (
+        "The class should be named 'Scoop'."
+    )
     # Check the class attributes
     try:
         attrs = list(vars(solution_result))
     except TypeError:
-        raise SubAssertionError
+        raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
     assert "flavor" in attrs, "The class attribute should be 'flavor'."
-    assert hasattr(
-        solution_result.__str__, "__closure__"
-    ), "Make sure that the class is properly implementing the __str__() method."
-    assert (
-        solution_result.__str__.__closure__ is None
-    ), "The __str__() method should be using the class attributes."
+    assert hasattr(solution_result.__str__, "__closure__"), (
+        "Make sure that the class is properly implementing the __str__() method."
+    )
+    assert solution_result.__str__.__closure__ is None, (
+        "The __str__() method should be using the class attributes."
+    )
     # check the __str__ result
     pattern = r"^Ice cream scoop with flavor '(.+)'$"
-    assert re.match(
-        pattern, str(solution_result)
-    ), "The __str__() result does not match the template: Ice cream scoop with flavor '{flavor}'"
+    assert re.match(pattern, str(solution_result)), (
+        "The __str__() result does not match the template: Ice cream scoop with flavor '{flavor}'"
+    )
 
 
 @pytest.mark.parametrize(
@@ -319,9 +319,9 @@ def test_ice_cream_scoop(flavors, function_to_test) -> None:
     reference_result = reference_ice_cream_scoop(flavors)
 
     assert isinstance(solution_result, list), "Solution must return a list."
-    assert len(solution_result) == len(
-        flavors
-    ), "The returned list must contain as many scoops as the provided flavors."
+    assert len(solution_result) == len(flavors), (
+        "The returned list must contain as many scoops as the provided flavors."
+    )
 
     for res in solution_result:
         validate_ice_cream_scoop(res)
@@ -369,19 +369,19 @@ def reference_ice_cream_bowl(flavors: tuple[str]):
 
 def validate_ice_cream_bowl(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
-    assert (
-        type(solution_result).__module__ != "builtins"
-    ), "Solution must return an instance of a custom class, not a built-in type."
+    assert type(solution_result).__module__ != "builtins", (
+        "Solution must return an instance of a custom class, not a built-in type."
+    )
     assert type(solution_result).__name__ == "Bowl", "The class should be named 'Bowl'."
     # Check the class methods
-    assert hasattr(
-        solution_result.__str__, "__closure__"
-    ), "Make sure that the Bowl class is properly implementing the __str__() method."
-    assert (
-        solution_result.__str__.__closure__ is None
-    ), "The __str__() method should be using the class attributes."
+    assert hasattr(solution_result.__str__, "__closure__"), (
+        "Make sure that the Bowl class is properly implementing the __str__() method."
+    )
+    assert solution_result.__str__.__closure__ is None, (
+        "The __str__() method should be using the class attributes."
+    )
     methods = [
         attr
         for attr in dir(solution_result)
@@ -393,27 +393,27 @@ def validate_ice_cream_bowl(solution_result):
     try:
         attrs = list(vars(solution_result))
     except TypeError:
-        raise SubAssertionError
+        raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
     assert "scoops" in attrs, "The class attribute should be 'scoops'."
-    assert isinstance(
-        solution_result.scoops, (list, set, tuple)
-    ), "The class attribute 'scoops' should be a datatype that acts as a container."
+    assert isinstance(solution_result.scoops, list | set | tuple), (
+        "The class attribute 'scoops' should be a datatype that acts as a container."
+    )
     for scoop in solution_result.scoops:
         assert not isinstance(
-            scoop, (str, int, float, bool, list, dict, tuple, set)
+            scoop, str | int | float | bool | list | dict | tuple | set
         ), "The 'scoops' container must contain class instances, not datatypes."
-        assert (
-            type(scoop).__module__ != "builtins"
-        ), "The 'scoops' container must contain instances of a custom class, not a built-in type."
-        assert (
-            type(scoop).__name__ == "Scoop"
-        ), "The 'scoops' container must contain instances of 'Scoop'."
+        assert type(scoop).__module__ != "builtins", (
+            "The 'scoops' container must contain instances of a custom class, not a built-in type."
+        )
+        assert type(scoop).__name__ == "Scoop", (
+            "The 'scoops' container must contain instances of 'Scoop'."
+        )
     # check the __str__ result
     pattern = r"^Ice cream bowl with ([a-zA-Z\s]+)(?:, ([a-zA-Z\s]+))* scoops$"
-    assert re.match(
-        pattern, str(solution_result)
-    ), "The __str__() result does not match the template: Ice cream bowl with ... scoops"
+    assert re.match(pattern, str(solution_result)), (
+        "The __str__() result does not match the template: Ice cream bowl with ... scoops"
+    )
 
 
 @pytest.mark.parametrize(
@@ -467,32 +467,32 @@ def reference_ice_cream_shop(flavors: list[str]):
 
 def validate_ice_cream_shop(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
-    assert (
-        type(solution_result).__module__ != "builtins"
-    ), "Solution must return an instance of a custom class, not a built-in type."
+    assert type(solution_result).__module__ != "builtins", (
+        "Solution must return an instance of a custom class, not a built-in type."
+    )
     assert type(solution_result).__name__ == "Shop", "The class should be named 'Shop'."
     # Check the class methods
-    assert hasattr(
-        solution_result.__eq__, "__closure__"
-    ), "Make sure that the class is properly implementing the __eq__() method."
-    assert hasattr(
-        solution_result.__lt__, "__closure__"
-    ), "Make sure that the class is properly implementing the __lt__() method."
-    assert hasattr(
-        solution_result.__le__, "__closure__"
-    ), "Make sure that the class is properly implementing the __le__() method."
+    assert hasattr(solution_result.__eq__, "__closure__"), (
+        "Make sure that the class is properly implementing the __eq__() method."
+    )
+    assert hasattr(solution_result.__lt__, "__closure__"), (
+        "Make sure that the class is properly implementing the __lt__() method."
+    )
+    assert hasattr(solution_result.__le__, "__closure__"), (
+        "Make sure that the class is properly implementing the __le__() method."
+    )
     # Check the class attributes
     try:
         attrs = list(vars(solution_result))
     except TypeError:
-        raise SubAssertionError
+        raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
     assert "flavors" in attrs, "The class attribute should be 'flavors'."
-    assert isinstance(
-        solution_result.flavors, (list, set, tuple)
-    ), "The class attribute 'flavors' should be a datatype that acts as a container."
+    assert isinstance(solution_result.flavors, list | set | tuple), (
+        "The class attribute 'flavors' should be a datatype that acts as a container."
+    )
 
 
 @pytest.mark.parametrize(

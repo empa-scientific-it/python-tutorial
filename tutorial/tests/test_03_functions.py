@@ -2,7 +2,7 @@ import inspect
 import pathlib
 from collections import Counter
 from string import ascii_lowercase, ascii_uppercase
-from typing import Any, List
+from typing import Any
 
 import pytest
 
@@ -43,19 +43,19 @@ def test_greet(
 
     # Check number and names of parameters
     assert len(params) == 2, "The function should take two arguments."
-    assert (
-        "name" in params and "age" in params
-    ), "The function's parameters should be 'name' and 'age'."
+    assert "name" in params and "age" in params, (
+        "The function's parameters should be 'name' and 'age'."
+    )
 
     # Check type hints for parameters
-    assert all(
-        p.annotation != inspect.Parameter.empty for p in params.values()
-    ), "The function's parameters should have type hints."
+    assert all(p.annotation != inspect.Parameter.empty for p in params.values()), (
+        "The function's parameters should have type hints."
+    )
 
     # Check return type hint
-    assert (
-        return_annotation != inspect.Signature.empty
-    ), "The function's return value is missing the type hint."
+    assert return_annotation != inspect.Signature.empty, (
+        "The function's return value is missing the type hint."
+    )
 
     # Test the return value
     assert function_to_test(name, age) == reference_greet(name, age)
@@ -80,15 +80,15 @@ def validate_basic_area_signature(function_to_test) -> None:
     return_annotation = signature.return_annotation
 
     assert function_to_test.__doc__ is not None, "The function is missing a docstring."
-    assert (
-        len(params) == 2
-    ), "The function should take exactly two arguments (length and width)."
-    assert all(
-        p in params.keys() for p in ["length", "width"]
-    ), "The function's parameters should be 'length' and 'width'."
-    assert all(
-        p.annotation is float for p in params.values()
-    ), "Both parameters should be annotated as float."
+    assert len(params) == 2, (
+        "The function should take exactly two arguments (length and width)."
+    )
+    assert all(p in params.keys() for p in ["length", "width"]), (
+        "The function's parameters should be 'length' and 'width'."
+    )
+    assert all(p.annotation is float for p in params.values()), (
+        "Both parameters should be annotated as float."
+    )
     assert return_annotation is str, "The return type should be annotated as str."
 
 
@@ -134,24 +134,24 @@ def validate_metric_area_signature(function_to_test) -> None:
     return_annotation = signature.return_annotation
 
     assert function_to_test.__doc__ is not None, "The function is missing a docstring."
-    assert (
-        len(params) == 3
-    ), "The function should take three arguments (length, width, and unit)."
-    assert all(
-        p in params.keys() for p in ["length", "width", "unit"]
-    ), "The function's parameters should be 'length', 'width' and 'unit'."
-    assert (
-        params["length"].annotation is float
-    ), "Parameter 'length' should be annotated as float."
-    assert (
-        params["width"].annotation is float
-    ), "Parameter 'width' should be annotated as float."
-    assert (
-        params["unit"].annotation is str
-    ), "Parameter 'unit' should be annotated as str."
-    assert (
-        params["unit"].default == "cm"
-    ), "Parameter 'unit' should have a default value of 'cm'."
+    assert len(params) == 3, (
+        "The function should take three arguments (length, width, and unit)."
+    )
+    assert all(p in params.keys() for p in ["length", "width", "unit"]), (
+        "The function's parameters should be 'length', 'width' and 'unit'."
+    )
+    assert params["length"].annotation is float, (
+        "Parameter 'length' should be annotated as float."
+    )
+    assert params["width"].annotation is float, (
+        "Parameter 'width' should be annotated as float."
+    )
+    assert params["unit"].annotation is str, (
+        "Parameter 'unit' should be annotated as str."
+    )
+    assert params["unit"].default == "cm", (
+        "Parameter 'unit' should have a default value of 'cm'."
+    )
     assert return_annotation is str, "The return type should be annotated as str."
 
 
@@ -195,24 +195,24 @@ def validate_area_signature(function_to_test) -> None:
     return_annotation = signature.return_annotation
 
     assert function_to_test.__doc__ is not None, "The function is missing a docstring."
-    assert (
-        len(params) == 3
-    ), "The function should take three arguments (length, width, and unit)."
-    assert all(
-        p in params.keys() for p in ["length", "width", "unit"]
-    ), "The function's parameters should be 'length', 'width' and 'unit'."
-    assert (
-        params["length"].annotation is float
-    ), "Parameter 'length' should be annotated as float."
-    assert (
-        params["width"].annotation is float
-    ), "Parameter 'width' should be annotated as float."
-    assert (
-        params["unit"].annotation is str
-    ), "Parameter 'unit' should be annotated as str."
-    assert (
-        params["unit"].default == "cm"
-    ), "Parameter 'unit' should have a default value of 'cm'."
+    assert len(params) == 3, (
+        "The function should take three arguments (length, width, and unit)."
+    )
+    assert all(p in params.keys() for p in ["length", "width", "unit"]), (
+        "The function's parameters should be 'length', 'width' and 'unit'."
+    )
+    assert params["length"].annotation is float, (
+        "Parameter 'length' should be annotated as float."
+    )
+    assert params["width"].annotation is float, (
+        "Parameter 'width' should be annotated as float."
+    )
+    assert params["unit"].annotation is str, (
+        "Parameter 'unit' should be annotated as str."
+    )
+    assert params["unit"].default == "cm", (
+        "Parameter 'unit' should have a default value of 'cm'."
+    )
     assert return_annotation is str, "The return type should be annotated as str."
 
 
@@ -292,7 +292,7 @@ def test_combine_anything(args: Any, function_to_test) -> None:
 #
 
 
-def reference_longest_sequence(nums: List[int]) -> int:
+def reference_longest_sequence(nums: list[int]) -> int:
     """
     Find the longest consecutive sequence of integers
 
@@ -323,7 +323,7 @@ def reference_longest_sequence(nums: List[int]) -> int:
         [0, 2, 14, 12, 4, 18, 16, 8, 10, 6],
     ],
 )
-def test_longest_sequence(input_nums: List[int], function_to_test) -> None:
+def test_longest_sequence(input_nums: list[int], function_to_test) -> None:
     assert function_to_test(input_nums) == reference_longest_sequence(input_nums)
 
 
@@ -334,7 +334,7 @@ def test_longest_sequence(input_nums: List[int], function_to_test) -> None:
         [int(x) for x in read_data("longest_10000.txt").read_text().splitlines()],
     ],
 )
-def test_longest_sequence_best(input_nums: List[int], function_to_test) -> None:
+def test_longest_sequence_best(input_nums: list[int], function_to_test) -> None:
     assert function_to_test(input_nums) == reference_longest_sequence(input_nums)
 
 

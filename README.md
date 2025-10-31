@@ -1,7 +1,9 @@
 # python-tutorial
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/empa-scientific-it/python-tutorial.git/main?labpath=index.ipynb)
-[![Build Docker container](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/build-docker-image.yml/badge.svg)](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/build-docker-image.yml)
+[![Renku](https://renkulab.io/renku-badge.svg)](https://renkulab.io/v2/projects/empa-scientific-it/empa-it-python-tutorial/sessions/01JRT57GABCS15JB5NGNTQVTRB/start)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/empa-scientific-it/python-tutorial.git/main?labpath=00_index.ipynb)
+
+[![Build Docker container](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/docker-build.yml/badge.svg)](https://github.com/empa-scientific-it/python-tutorial/actions/workflows/docker-build.yml)
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=593234387)
 
@@ -40,13 +42,15 @@ cd /path/to/python-tutorial
 
 ```
 
+> If you have installed Anaconda, then you can use Anaconda Prompt to run the following commands.
+
 You should now create a new environment with `conda`:
 
 ```console
 conda env create -f binder/environment.yml
 ```
 
-> **Warning**
+> [!WARNING]
 >
 > If you are on Windows and using Command Prompt or the PowerShell, please make sure to adjust the paths in the commands above accordingly.
 
@@ -72,7 +76,7 @@ jupyter lab
 
 ### 2. With Docker
 
-> **Note**
+> [!NOTE]
 >
 > The following instructions are for Windows. With minor changes, the steps work on macOS or Linux as well.
 
@@ -82,28 +86,97 @@ jupyter lab
 
 3. Open PowerShell: Once Docker Desktop is installed, open PowerShell on your Windows machine. You can do this by pressing the "Windows" key and typing "PowerShell" in the search bar.
 
-4. Pull the Docker image: In PowerShell, run the following command to pull the "empascientificit/python-tutorial" Docker image:
+4. Pull the Docker image: In PowerShell, run the following command to pull the Docker image:
 
 ```console
 docker pull ghcr.io/empa-scientific-it/python-tutorial:latest
 ```
 
+> [!NOTE]
+>
+> The `latest` tag points to the CPU-only variant of the image, which is optimized for size and compatibility. If you have a CUDA-compatible GPU and want to use GPU acceleration for PyTorch operations, you can use the CUDA-enabled variant by replacing `latest` with `cuda`:
+>
+> ```console
+> docker pull ghcr.io/empa-scientific-it/python-tutorial:cuda
+> ```
+
+> [!IMPORTANT]
+>
+> Using the CUDA variant requires a NVIDIA GPU with compatible drivers properly installed and configured for Docker. See [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) for setup instructions.
+
 5. Run the Docker container: Once the image is downloaded, run the following command to start a Docker container from the image:
 
 ```console
-docker run -p  8888:8888  --name python_tutorial -v /path/to/python-tutorial:/home/jovyan/work ghcr.io/empa-scientific-it/python-tutorial:latest jupyter lab --ip 0.0.0.0 --no-browser
+docker run -p 8888:8888 --name python_tutorial -v /path/to/python-tutorial:/home/jovyan/python-tutorial ghcr.io/empa-scientific-it/python-tutorial:latest jupyter lab --ip 0.0.0.0 --no-browser
 ```
+
+> [!NOTE]
+>
+> If you pulled the CUDA variant, replace `:latest` with `:cuda` in the command above.
 
 Replace `/path/to/python-tutorial` with the path to the folder you created in step 2, for example `C:/Users/yourusername/Desktop/python-tutorial`.
 
-> **Note**
+> [!NOTE]
 >
-> The above command will **mirror** the content of your local folder (e.g., `C:/Users/yourusername/Desktop/python-tutorial`) to the `work/` folder **inside the container**. In this way, every file or folder you copy or create into `work/` will be saved on your machine, and will remain there **even if you stop Docker**.
+> The above command will **mirror** the content of your local folder (e.g., `C:/Users/yourusername/Desktop/python-tutorial`) to the `~/python-tutorial` folder **inside the container**. In this way, every file or folder you copy or create into `~/python-tutorial` will be saved on your machine, and will remain there **even if you stop Docker**.
 
 6. Access the Jupyter Notebook: Open a web browser and navigate to `http://localhost:8888/lab`. You should see the Jupyter Notebook interface. Enter the token provided in the PowerShell console to access the notebook. Alternatively, you can directly click on the link that appears in the PowerShell after the container has started.
 
 You can now use the Jupyter in the Docker container to run the python-tutorial. When you're done, you can stop the container by pressing `Ctrl+C` in the PowerShell console.
 
-> **Note**
+> [!NOTE]
 >
 > If you want to restart the container, you can simply run the command `docker container start python_tutorial`.
+
+## Setup a local dev environment
+
+If you prefer not to use Conda and/or Docker, you can set up a *lightweight* development environment using either "uv" (a faster alternative to pip) or traditional "pip". Both methods will install the development dependencies specified in the `pyproject.toml` file.
+
+Both setups assume that you have already cloned the repository with `git clone https://github.com/empa-scientific-it/python-tutorial`. The commands below should be run from inside the tutorial directory.
+
+### Using `uv` (Recommended for speed)
+
+[uv](https://github.com/astral-sh/uv) is a fast, Python package installer and resolver written in Rust.
+
+1. Install uv via `pip` or [any other method](https://docs.astral.sh/uv/getting-started/installation/):
+   ```console
+   pip install uv
+   ```
+
+2. Create a virtual environment and install dev dependencies:
+   ```console
+   # Create and activate a virtual environment
+   uv venv
+   # On Windows
+   .venv\Scripts\activate
+   # On macOS/Linux
+   source .venv/bin/activate
+
+   # Install dev dependencies
+   uv pip install -e ".[dev]"
+   ```
+
+3. Launch JupyterLab:
+   ```console
+   jupyter lab
+   ```
+
+### Using `pip`
+
+1. Create a virtual environment and install dev dependencies:
+   ```console
+   # Create and activate a virtual environment
+   python -m venv .venv
+   # On Windows
+   .venv\Scripts\activate
+   # On macOS/Linux
+   source .venv/bin/activate
+
+   # Install dev dependencies
+   pip install -e ".[dev]"
+   ```
+
+2. Launch JupyterLab:
+   ```console
+   jupyter lab
+   ```
