@@ -1,10 +1,8 @@
 import pathlib
 import sys
-from typing import List
 
 import pytest
 from numpy import average
-
 
 FLAVORS = [
     ("chocolate",),
@@ -51,7 +49,7 @@ class Bowl:
     def __init__(self):
         self.scoops = []
 
-    def add_scoops(self, *new_scoops: List["Scoop"]) -> None:
+    def add_scoops(self, *new_scoops: list["Scoop"]) -> None:
         for one_scoop in new_scoops:
             self.scoops.append(one_scoop)
 
@@ -202,7 +200,9 @@ class Universe:
     @property
     def momentum(self) -> list:
         """Return the momentum of the universe"""
-        return list(map(sum, zip(*[moon.velocities for moon in self.moons])))
+        return list(
+            map(sum, zip(*[moon.velocities for moon in self.moons], strict=False))
+        )
 
     def __repr__(self) -> str:
         return "\n".join(repr(moon) for moon in self.moons)
