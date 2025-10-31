@@ -1,0 +1,95 @@
+[project]
+name = "python-tutorial"
+version = "v2025.05"
+description = "Jupyter-based Python programming tutorial"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+  "numpy",
+  "matplotlib",
+  "pandas",
+  "ipywidgets",
+  "ipynbname",
+  "jupyterlab",
+  "pytest",
+  "pytest-timeout",
+  "markdown",
+  "pre-commit",
+  "geostatspy",
+  "gstools",
+  "scikit-learn",
+  "attrs",
+  "multiprocess",
+  "openai",
+  "tenacity",
+  "markdown2",
+  "python-dotenv",
+  "pillow",
+  "opencv-python",
+  "albumentations",
+  "grad-cam",
+  "plotly",
+  "torch==2.7.0",  # pinned to last stable version as of 2025-05-14
+]
+
+# pytest
+[tool.pytest.ini_options]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+# Line length (Black default)
+line-length = 88
+
+# Ignored rules for the entire project
+[tool.ruff.lint]
+ignore = [
+  "E501",  # Line too long
+  "E203",  # Whitespace before ':'
+  # "TRY301", # Raise within try block (this is actually a good practice)
+  # "W503"  # Line break before binary operator (not PEP8 enforced, so not implemented in Ruff)
+]
+# flake8 plugins to enable:
+#   - flake8-bugbear          B
+#   - flake8-builtins         A
+#   - flake8-comprehensions   C4
+#   - flake8-debugger         T10
+#   - flake8-logging-format   G
+#   - pep8-naming             N
+#   - pyflakes                F
+#   - tryceratops             TRY
+select = [
+  "A",  # flake8-builtins
+  "B",  # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "T10",  # flake8-debugger
+  "G",  # flake8-logging-format
+  "N",  # pep8-naming
+  "F",  # pyflakes
+  "TRY",  # tryceratops
+  "I",  # isort
+  "E",  # pycodestyle errors
+  "UP",  # pyupgrade
+]
+
+# Per-file rule ignores
+[tool.ruff.lint.per-file-ignores]
+# Trailing whitespace in comment
+"binder/ipython_config.py" = ["E266"]
+# suppress `raise ... from err`
+# Why we ignore B904 from the object-oriented tests?
+# We do want to raise an assertion error if the check on the solution function attributes fails,
+# but Python by default will raise a TypeError via vars(solution_result)
+# if the result is not a class and therefore doesn't have a __dict__ attribute.
+"tutorial/tests/test_object_oriented_programming.py" = ["B904"]
+# Ignore invalid names like `import torch.nn.functional as F`
+"25_library_pytorch_language_modeling.ipynb" = ["N812"]
+
+# Ruff formatting
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# Setuptools: suppress package discovery
+[tool.setuptools]
+packages = []

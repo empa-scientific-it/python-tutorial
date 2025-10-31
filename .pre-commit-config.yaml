@@ -1,0 +1,34 @@
+---
+ci:
+  autoupdate_schedule: quarterly
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=6000]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.13.3
+    hooks:
+      # Ruff fix
+      - id: ruff
+        types_or: [python, pyi]
+        args: [--fix]
+        name: ruff (fix)
+      - id: ruff-format
+        # Ruff formatter
+        types_or: [python, pyi]
+        name: ruff (format)
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.17.2
+    hooks:
+      - id: yamlfmt
+        name: YAML (format)
+        types: [yaml]
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout

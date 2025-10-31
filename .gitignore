@@ -79,7 +79,9 @@ target/
 
 # IPython
 profile_default/
-ipython_config.py
+
+# uv
+uv.lock
 
 # pyenv
 .python-version
@@ -109,6 +111,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+openai.env
 
 # Spyder project settings
 .spyderproject
@@ -132,3 +135,8 @@ dmypy.json
 .DS_Store
 *_files/
 *.html
+.idea/
+drafts/
+.virtual_documents/
+.zed/
+.ruff_cache/
