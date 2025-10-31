@@ -248,12 +248,12 @@ def test_calculate_area_invalid_units(length, width, unit, function_to_test):
     validate_area_signature(function_to_test)
     result = function_to_test(length, width, unit)
     expected = f"Invalid unit: {unit}"
-    assert isinstance(
-        result, str
-    ), "Result should be a string like 'Invalid unit: <unit>'"
-    assert (
-        result == expected
-    ), f"Expected '{expected}' for invalid unit '{unit}', got '{result}'"
+    assert isinstance(result, str), (
+        "Result should be a string like 'Invalid unit: <unit>'"
+    )
+    assert result == expected, (
+        f"Expected '{expected}' for invalid unit '{unit}', got '{result}'"
+    )
 
 
 #
