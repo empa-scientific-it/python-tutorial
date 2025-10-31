@@ -95,10 +95,10 @@ def validate_basic_area_signature(function_to_test) -> None:
 @pytest.mark.parametrize(
     "length,width",
     [
-        (2.0, 3.0),
+        (2.123, 3.456),
         (5.0, 4.0),
-        (1.5, 2.5),
-        (0.1, 0.1),
+        (1.5, 2.57),
+        (0.109, 0.103),
     ],
 )
 def test_calculate_basic_area(length: float, width: float, function_to_test):
