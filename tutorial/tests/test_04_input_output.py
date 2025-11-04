@@ -254,10 +254,10 @@ def reference_exercise5(secret_file: pl.Path) -> str:
 def test_exercise5(function_to_test):
     message = get_data("secret_message.dat")
     # Save the original content of the input file
-    original_content = message.read_text()
+    original_content = message.read_bytes()
 
     try:
         assert function_to_test(message) == reference_exercise5(message)
     finally:
         # Reset the input file to its original content
-        message.write_text(original_content)
+        message.write_bytes(original_content)
