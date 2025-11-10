@@ -352,7 +352,7 @@ def reference_ice_cream_bowl(flavors: tuple[str]):
         def __init__(self):
             self.scoops = []
 
-        def add_scoops(self, *new_scoops: list["Scoop"]) -> None:
+        def add_scoops(self, *new_scoops: "Scoop") -> None:
             for one_scoop in new_scoops:
                 self.scoops.append(one_scoop)
 
