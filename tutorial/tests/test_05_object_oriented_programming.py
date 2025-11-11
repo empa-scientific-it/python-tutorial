@@ -200,7 +200,10 @@ def reference_oop_compare_persons(person_1: tuple[str], person_2: tuple[str]) ->
 
         def __eq__(self, other):
             if isinstance(other, Person):
-                return (self.first_name, self.last_name) == (other.first_name, other.last_name)
+                return (self.first_name, self.last_name) == (
+                    other.first_name,
+                    other.last_name,
+                )
             else:
                 return False
 
@@ -239,22 +242,18 @@ def validate_oop_compare_persons(solution_result):
         (("John", "Doe"), ("John", "Doe")),
     ],
 )
-def test_oop_compare_persons(
-    person_1, person_2, function_to_test
-):
+def test_oop_compare_persons(person_1, person_2, function_to_test):
     solution_result = function_to_test(person_1, person_2)
     reference_result = reference_oop_compare_persons(person_1, person_2)
 
     assert isinstance(solution_result, list), "Solution must return a list."
-    assert len(solution_result) == 2, (
-        "The returned list must contain two persons."
-    )
+    assert len(solution_result) == 2, "The returned list must contain two persons."
 
     for res in solution_result:
         validate_oop_compare_persons(res)
 
-    solution_comparison = (solution_result[0] == solution_result[1])
-    reference_comparison = (reference_result[0] == reference_result[1])
+    solution_comparison = solution_result[0] == solution_result[1]
+    reference_comparison = reference_result[0] == reference_result[1]
     assert solution_comparison == reference_comparison, "Person comparison failed."
 
 
