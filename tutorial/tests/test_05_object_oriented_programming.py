@@ -432,7 +432,7 @@ def test_ice_cream_bowl(flavors, function_to_test) -> None:
 #
 
 
-def reference_ice_cream_shop(flavors: list[str]):
+def reference_ice_cream_shop(flavors_1: list[str], flavors_2: list[str]) -> list:
     class Shop:
         """A class representing an ice cream shop"""
 
@@ -459,7 +459,7 @@ def reference_ice_cream_shop(flavors: list[str]):
                 return self < other or self == other
             return False
 
-    return Shop(flavors)
+    return [Shop(flavors_1), Shop(flavors_2)]
 
 
 def validate_ice_cream_shop(solution_result):
@@ -493,24 +493,26 @@ def validate_ice_cream_shop(solution_result):
 
 
 @pytest.mark.parametrize(
-    "flavors_a, flavors_b",
+    "flavors_1, flavors_2",
     [
         (["chocolate", "vanilla", "stracciatella"], ["caramel", "strawberry", "mango"]),
         (["vanilla", "stracciatella"], ["chocolate", "vanilla", "mango"]),
         (["vanilla", "mango"], ["chocolate"]),
     ],
 )
-def test_ice_cream_shop(flavors_a, flavors_b, function_to_test) -> None:
-    solution_result_a = function_to_test(flavors_a)
-    reference_result_a = reference_ice_cream_shop(flavors_a)
+def test_ice_cream_shop(flavors_1, flavors_2, function_to_test) -> None:
+    solution_result = function_to_test(flavors_1, flavors_2)
+    reference_result = reference_ice_cream_shop(flavors_1, flavors_2)
 
-    solution_result_b = function_to_test(flavors_b)
-    reference_result_b = reference_ice_cream_shop(flavors_b)
+    assert isinstance(solution_result, list), "Solution must return a list."
+    assert len(solution_result) == 2, "The returned list must contain two ice cream shops."
 
-    validate_ice_cream_shop(solution_result_a)
-    assert (solution_result_a <= solution_result_b) == (
-        reference_result_a <= reference_result_b
-    ), "Comparison failed."
+    for res in solution_result:
+        validate_ice_cream_shop(res)
+
+    solution_comparison = solution_result[0] <= solution_result[1]
+    reference_comparison = reference_result[0] <= reference_result[1]
+    assert solution_comparison == reference_comparison, "Ice cream shop comparison failed."
 
 
 #
