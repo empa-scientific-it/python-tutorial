@@ -379,16 +379,9 @@ def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
         err = "Invalid empty input"
         raise ValueError(err)
 
-    # Same to and from bases
-    if from_base == to_base:
-        return number
-
     # Handle negative numbers
     is_negative = number.strip().startswith("-")
     number = number.strip().removeprefix("-")
-
-    # Remove spaces and convert to uppercase for consistency
-    number = number.replace(" ", "").upper()
 
     # Validate digits
     valid_digits = "0123456789ABCDEF"
@@ -396,6 +389,13 @@ def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
         if digit not in valid_digits[:from_base]:
             err = f"Invalid digit '{digit}' for base {from_base}"
             raise ValueError(err)
+
+    # Same to and from bases
+    if from_base == to_base:
+        return number
+
+    # Remove spaces and convert to uppercase for consistency
+    number = number.replace(" ", "").upper()
 
     # Convert to base 10
     decimal = 0
@@ -407,7 +407,7 @@ def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
         return "0"
 
     if to_base == 10:
-        return str(decimal)
+        return f"-{str(decimal)}" if is_negative else str(decimal)
 
     # Convert to target base
     result = ""
@@ -415,6 +415,9 @@ def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
         digit = decimal % to_base
         result += valid_digits[digit]
         decimal //= to_base
+
+    # We built the number from the rightmost digit to leftmost, so we need to reverse the final string
+    result = result[::-1]
 
     return f"-{result}" if is_negative else result
 
