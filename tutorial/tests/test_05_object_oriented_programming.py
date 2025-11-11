@@ -190,7 +190,7 @@ def test_oop_str_and_repr(first_name, last_name, function_to_test):
 #
 
 
-def reference_oop_compare_persons(person_1: tuple[str], person_2: tuple[str]) -> list:
+def reference_oop_compare_persons(person_1: tuple[str, ...], person_2: tuple[str, ...]) -> list:
     class Person:
         """A class representing a person with first name and last name"""
 
@@ -262,7 +262,7 @@ def test_oop_compare_persons(person_1, person_2, function_to_test):
 #
 
 
-def reference_ice_cream_scoop(flavors: tuple[str]) -> list:
+def reference_ice_cream_scoop(flavors: tuple[str, ...]) -> list:
     class Scoop:
         """A class representing a single scoop of ice cream"""
 
@@ -333,7 +333,7 @@ def test_ice_cream_scoop(flavors, function_to_test) -> None:
 #
 
 
-def reference_ice_cream_bowl(flavors: tuple[str]):
+def reference_ice_cream_bowl(flavors: tuple[str, ...]):
     class Scoop:
         """A class representing a single scoop of ice cream"""
 
@@ -512,10 +512,20 @@ def test_ice_cream_shop(flavors_1, flavors_2, function_to_test) -> None:
     for res in solution_result:
         validate_ice_cream_shop(res)
 
-    solution_comparison = solution_result[0] <= solution_result[1]
-    reference_comparison = reference_result[0] <= reference_result[1]
-    assert solution_comparison == reference_comparison, (
-        "Ice cream shop comparison failed."
+    assert (
+        (solution_result[0] < solution_result[1]) == (reference_result[0] < reference_result[1])
+    ), (
+        "Ice cream shop __lt__ comparison failed."
+    )
+    assert (
+        (solution_result[0] == solution_result[1]) == (reference_result[0] == reference_result[1])
+    ), (
+        "Ice cream shop __eq__ comparison failed."
+    )
+    assert (
+        (solution_result[0] <= solution_result[1]) == (reference_result[0] <= reference_result[1])
+    ), (
+        "Ice cream shop __le__ comparison failed."
     )
 
 
