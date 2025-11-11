@@ -505,14 +505,18 @@ def test_ice_cream_shop(flavors_1, flavors_2, function_to_test) -> None:
     reference_result = reference_ice_cream_shop(flavors_1, flavors_2)
 
     assert isinstance(solution_result, list), "Solution must return a list."
-    assert len(solution_result) == 2, "The returned list must contain two ice cream shops."
+    assert len(solution_result) == 2, (
+        "The returned list must contain two ice cream shops."
+    )
 
     for res in solution_result:
         validate_ice_cream_shop(res)
 
     solution_comparison = solution_result[0] <= solution_result[1]
     reference_comparison = reference_result[0] <= reference_result[1]
-    assert solution_comparison == reference_comparison, "Ice cream shop comparison failed."
+    assert solution_comparison == reference_comparison, (
+        "Ice cream shop comparison failed."
+    )
 
 
 #
