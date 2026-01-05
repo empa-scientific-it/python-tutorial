@@ -11,7 +11,7 @@ repos:
       - id: check-added-large-files
         args: [--maxkb=6000]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.3
+    rev: v0.14.10
     hooks:
       # Ruff fix
       - id: ruff
@@ -23,12 +23,12 @@ repos:
         types_or: [python, pyi]
         name: ruff (format)
   - repo: https://github.com/google/yamlfmt
-    rev: v0.17.2
+    rev: v0.21.0
     hooks:
       - id: yamlfmt
         name: YAML (format)
         types: [yaml]
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.8.1
+    rev: 0.8.2
     hooks:
       - id: nbstripout
