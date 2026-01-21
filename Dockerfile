@@ -32,6 +32,8 @@ RUN mamba env update -n base -f /tmp/environment.yml && \
     echo "Installing CUDA-enabled PyTorch" && \
     pip install --no-cache-dir --force-reinstall torch torchvision; \
     fi && \
+    # Install ipytestsuite from TestPyPI (temporary, will use PyPI once published)
+    pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "ipytestsuite[ai]" && \
     # Clean up all package caches to reduce image size
     mamba clean --all -f -y && \
     # Remove pip cache

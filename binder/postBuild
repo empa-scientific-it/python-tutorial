@@ -3,3 +3,6 @@ set -ex
 
 mkdir -p ${HOME}/.ipython/profile_default
 cp binder/ipython_config.py ${HOME}/.ipython/profile_default/
+
+# Install ipytestsuite from TestPyPI (temporary, will use PyPI once published)
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "ipytestsuite[ai]"
