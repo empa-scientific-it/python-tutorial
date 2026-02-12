@@ -142,7 +142,7 @@ def reference_multiples_of_n(my_list: list[int], k: int) -> list[int]:
     ],
 )
 def test_multiples_of_n(
-    function_to_test: Callable[[list[int]], int],
+    function_to_test: Callable[[list[int], int], int],
     my_list: list[int],
     k: int,
 ):
@@ -163,7 +163,7 @@ def reference_exercise1(matrix: list[list[int]]) -> list[list[int]]:
     [(np.eye(3)), (np.random.randint(0, 100, size=(4, 4)))],
 )
 def test_exercise1(
-    function_to_test: Callable[[List[List[int]]], List[List[int]]],
+    function_to_test: Callable[[list[list[int]]], list[list[int]]],
     my_input: NDArray,
 ):
     res = function_to_test(my_input.tolist())
@@ -217,7 +217,7 @@ def reference_exercise3(words: list[str]) -> list[tuple[str, int]]:
 
 
 def test_exercise3(
-    function_to_test: Callable[[List[str]], List[Tuple[str, int]]],
+    function_to_test: Callable[[list[str]], list[tuple[str, int]]],
 ):
     data = get_data_exercise3()
     assert function_to_test(data) == reference_exercise3(data)
@@ -229,8 +229,8 @@ def test_exercise3(
 
 
 def reference_exercise4(
-    my_list: List[Tuple[str, int]],
-) -> List[Tuple[str, float]]:
+    my_list: list[tuple[str, int]],
+) -> list[tuple[str, float]]:
     total = sum(map(lambda x: x[1], my_list))  # noqa: C417
     return [(letter, freq / total) for letter, freq in my_list]
 
