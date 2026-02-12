@@ -88,10 +88,15 @@ def reference_password_checker_factory(
 
         # Compare with requirements and calculate the differences
         diffs = [
-            sub(*pair) for pair in zip(counts, (min_up, min_low, min_pun, min_dig))
+            sub(*pair)
+            for pair in zip(counts, (min_up, min_low, min_pun, min_dig), strict=False)
         ]
 
-        result = dict(zip(("uppercase", "lowercase", "punctuation", "digits"), diffs))
+        result = dict(
+            zip(
+                ("uppercase", "lowercase", "punctuation", "digits"), diffs, strict=False
+            )
+        )
 
         return all(diff >= 0 for diff in diffs), result
 

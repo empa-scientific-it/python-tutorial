@@ -7,10 +7,10 @@ class ConditionalsQuiz(Quiz):
             question="""What would be the output of the following code?
                 <pre><code class="language-python">
                     if 'blue' in {'red': 1, 'blue': 2, 'green': 3}:
-                        print(1, end=", ")
-                        print(2, end=", ")
+                        print(1)
+                        print(2)
                         if 'd' in 'abc':
-                            print(3, end=", ")
+                            print(3)
                     print(4)
                 </code></pre>
             """,
