@@ -14,6 +14,7 @@ def low_med_high_bins_viz(data, column, ylabel, title, figsize=(15, 3)):
         ["low", "med", "high"],
         ["///", "", "\\\\\\"],
         pd.cut(data[column], bins=3).unique().categories.values,
+        strict=False,
     ):
         plt.axhspan(
             bounds.left,
@@ -45,6 +46,7 @@ def quartile_bins_viz(data, column, ylabel, title, figsize=(15, 8)):
         [r"$Q_1$", r"$Q_2$", r"$Q_3$", r"$Q_4$"],
         ["\\\\\\", "", "///", "||||"],
         pd.qcut(data.volume, q=4).unique().categories.values,
+        strict=False,
     ):
         plt.axhspan(
             bounds.left,
