@@ -3,7 +3,8 @@ import functools
 import inspect
 import itertools
 import random
-from typing import Any, Callable, List, Tuple
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import pytest
@@ -75,7 +76,7 @@ def check_for_loop_in_body(fun: Callable) -> bool:
     return False
 
 
-def reference_filter_even(my_list: List[int]) -> List[int]:
+def reference_filter_even(my_list: list[int]) -> list[int]:
     return list(filter(lambda x: x % 2 == 0, my_list))
 
 
@@ -87,7 +88,7 @@ def reference_filter_even(my_list: List[int]) -> List[int]:
         ([random.randint(0, 10) for i in range(100)]),
     ],
 )
-def test_filter_even(function_to_test: Callable, my_list: List[int]):
+def test_filter_even(function_to_test: Callable, my_list: list[int]):
     res = function_to_test(my_list)
     assert isinstance(res, list), "The function you wrote does not return a list"
     assert not check_for_loop_in_body(function_to_test), (
@@ -103,7 +104,7 @@ def test_filter_even(function_to_test: Callable, my_list: List[int]):
 #
 
 
-def reference_add_one(my_list: List[int]) -> List[int]:
+def reference_add_one(my_list: list[int]) -> list[int]:
     return list(map(lambda x: x + 1, my_list))  # noqa: C417
 
 
@@ -115,7 +116,7 @@ def reference_add_one(my_list: List[int]) -> List[int]:
         ([random.randint(0, 10) for i in range(100)]),
     ],
 )
-def test_add_one(function_to_test: Callable, my_list: List[int]):
+def test_add_one(function_to_test: Callable, my_list: list[int]):
     assert function_to_test(my_list) == reference_add_one(my_list), (
         "The list you return is not equal to the expected solution"
     )
@@ -129,7 +130,7 @@ def test_add_one(function_to_test: Callable, my_list: List[int]):
 #
 
 
-def reference_multiples_of_n(my_list: List[int], k: int) -> List[int]:
+def reference_multiples_of_n(my_list: list[int], k: int) -> list[int]:
     return [i for i in my_list if i % k == 0]
 
 
@@ -141,8 +142,8 @@ def reference_multiples_of_n(my_list: List[int], k: int) -> List[int]:
     ],
 )
 def test_multiples_of_n(
-    function_to_test: Callable[[List[int]], int],
-    my_list: List[int],
+    function_to_test: Callable[[list[int]], int],
+    my_list: list[int],
     k: int,
 ):
     assert function_to_test(my_list, k) == reference_multiples_of_n(my_list, k)
@@ -153,8 +154,8 @@ def test_multiples_of_n(
 #
 
 
-def reference_exercise1(matrix: List[List[int]]) -> List[List[int]]:
-    return [list(i) for i in zip(*matrix)]
+def reference_exercise1(matrix: list[list[int]]) -> list[list[int]]:
+    return [list(i) for i in zip(*matrix, strict=False)]
 
 
 @pytest.mark.parametrize(
@@ -177,7 +178,7 @@ def test_exercise1(
 #
 
 
-def reference_exercise2(my_list: List[List[Any]]) -> List[Any]:
+def reference_exercise2(my_list: list[list[Any]]) -> list[Any]:
     return functools.reduce(lambda x, y: x + y, my_list)
 
 
@@ -189,8 +190,8 @@ def reference_exercise2(my_list: List[List[Any]]) -> List[Any]:
     ],
 )
 def test_exercise2(
-    function_to_test: Callable[[List[List[Any]]], List[Any]],
-    my_input: List[List[Any]],
+    function_to_test: Callable[[list[list[Any]]], list[Any]],
+    my_input: list[list[Any]],
 ):
     assert function_to_test(my_input) == reference_exercise2(my_input)
 
@@ -201,12 +202,12 @@ def test_exercise2(
 
 
 @functools.lru_cache
-def get_data_exercise3() -> List[str]:
+def get_data_exercise3() -> list[str]:
     words = requests.get("https://www.mit.edu/~ecprice/wordlist.10000").text
     return words.splitlines()
 
 
-def reference_exercise3(words: List[str]) -> List[Tuple[str, int]]:
+def reference_exercise3(words: list[str]) -> list[tuple[str, int]]:
     return [
         (k, len(list(v)))
         for k, v in itertools.groupby(
@@ -235,7 +236,7 @@ def reference_exercise4(
 
 
 def test_exercise4(
-    function_to_test: Callable[[List[Tuple[str, int]]], List[Tuple[str, float]]],
+    function_to_test: Callable[[list[tuple[str, int]]], list[tuple[str, float]]],
 ):
     input_data = reference_exercise3(get_data_exercise3())
     assert function_to_test(input_data) == reference_exercise4(input_data)
@@ -246,10 +247,10 @@ def test_exercise4(
 #
 
 
-def reference_exercise5(words: List[str]) -> List[str]:
+def reference_exercise5(words: list[str]) -> list[str]:
     return list(filter(lambda x: x == x[::-1] and len(x) > 1, words))
 
 
-def test_exercise5(function_to_test: Callable[[List[str]], List[str]]):
+def test_exercise5(function_to_test: Callable[[list[str]], list[str]]):
     data = get_data_exercise3()
     assert function_to_test(data) == reference_exercise5(data)

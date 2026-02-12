@@ -1,7 +1,7 @@
 import contextlib
 import pathlib
 from math import isclose, sqrt
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import pytest
 
@@ -16,7 +16,7 @@ def read_data(name: str, data_dir: str = "data") -> pathlib.Path:
 #
 
 
-def reference_indexed_string(string: str) -> List[Tuple[str, int]]:
+def reference_indexed_string(string: str) -> list[tuple[str, int]]:
     """Reference solution warm-up 1"""
     result = []
     for i, char in enumerate(string):
@@ -45,7 +45,7 @@ def test_indexed_string(string: str, function_to_test) -> None:
     assert reference_indexed_string(string) == result
 
 
-def reference_range_of_nums(start: int, end: int) -> List[int]:
+def reference_range_of_nums(start: int, end: int) -> list[int]:
     """Reference solution warm-up 2"""
     step = 1 if start < end else -1
     return list(range(start, end + step, step))
@@ -67,7 +67,7 @@ def test_range_of_nums(start: int, end: int, function_to_test) -> None:
     )
 
 
-def reference_sqrt_of_nums(numbers: List[int]) -> List[float]:
+def reference_sqrt_of_nums(numbers: list[int]) -> list[float]:
     """Reference solution warm-up 3"""
     result = []
     for num in numbers:
@@ -104,7 +104,7 @@ def test_sqrt_of_nums(nums: list[int], function_to_test) -> None:
     assert len(reference) == len(result), (
         "The function should return a list of the same length"
     )
-    assert all(isclose(x, y) for x, y in zip(reference, result)), (
+    assert all(isclose(x, y) for x, y in zip(reference, result, strict=False)), (
         "The function should return the square root of each number"
     )
 
@@ -128,7 +128,7 @@ def test_divide_until(num: int, function_to_test) -> None:
 #
 
 
-def reference_filter_by_position(numbers: List[int]) -> List[int]:
+def reference_filter_by_position(numbers: list[int]) -> list[int]:
     result = set()
     for pos, number in enumerate(numbers, start=1):
         if number > pos:
@@ -149,7 +149,7 @@ def reference_filter_by_position(numbers: List[int]) -> List[int]:
         [10, 20, 1, 2, 3],  # Mixed large and small numbers = {10, 20}
     ],
 )
-def test_filter_by_position(numbers: List[int], function_to_test) -> None:
+def test_filter_by_position(numbers: list[int], function_to_test) -> None:
     """Test filtering numbers by position."""
     assert function_to_test(numbers) == reference_filter_by_position(numbers)
 
@@ -159,7 +159,7 @@ def test_filter_by_position(numbers: List[int], function_to_test) -> None:
 #
 
 
-def reference_find_even_multiple_three(numbers: List[int]) -> Optional[int]:
+def reference_find_even_multiple_three(numbers: list[int]) -> int | None:
     result = None
     for number in numbers:
         if number % 2 == 0 and number % 3 == 0:
@@ -179,7 +179,7 @@ def reference_find_even_multiple_three(numbers: List[int]) -> Optional[int]:
         [1, 3, 5, 7, 12],  # Valid number at the end = 12
     ],
 )
-def test_find_even_multiple_three(numbers: List[int], function_to_test) -> None:
+def test_find_even_multiple_three(numbers: list[int], function_to_test) -> None:
     """Test finding first even multiple of 3."""
     assert function_to_test(numbers) == reference_find_even_multiple_three(numbers)
 
@@ -233,7 +233,7 @@ def test_is_pure_number(text: str, function_to_test) -> None:
 #
 
 
-def reference_find_factors(num: int) -> List[int]:
+def reference_find_factors(num: int) -> list[int]:
     """Reference solution to find the factors of an integer"""
     factors = []
     for m in range(1, num + 1):
@@ -257,21 +257,21 @@ nums_1, nums_2 = (
 )
 
 
-def reference_find_pair(nums: List[int]):
+def reference_find_pair(nums: list[int]):
     """
     Reference solutions:
         - A solution with two nested loops
         - A solution using a dictionary and a single loop
     """
 
-    def find_pair_with_double_loop(nums: List[int]) -> Optional[int]:
+    def find_pair_with_double_loop(nums: list[int]) -> int | None:
         """Two nested loops"""
         for i in nums:
             for j in nums:
                 if i + j == 2020:
                     return i * j
 
-    def find_pair_with_sets(nums: List[int]) -> Optional[int]:
+    def find_pair_with_sets(nums: list[int]) -> int | None:
         """Using a dictionary and a single loop"""
         complements = {}
         for num in nums:
@@ -280,7 +280,7 @@ def reference_find_pair(nums: List[int]):
             complements[2020 - num] = num
 
 
-def __reference_find_pair(nums: List[int]) -> Optional[int]:
+def __reference_find_pair(nums: list[int]) -> int | None:
     """Reference solution (part 1)"""
     complements = {}
     for num in nums:
@@ -290,18 +290,18 @@ def __reference_find_pair(nums: List[int]) -> Optional[int]:
 
 
 @pytest.mark.parametrize("nums", [nums_1, nums_2])
-def test_find_pair(nums: List[int], function_to_test) -> None:
+def test_find_pair(nums: list[int], function_to_test) -> None:
     assert function_to_test(nums) == __reference_find_pair(nums)
 
 
-def reference_find_triplet(nums: List[int]):
+def reference_find_triplet(nums: list[int]):
     """
     Reference solutions:
         - A slow solution with three nested loops
         - A fast solution using only two loops
     """
 
-    def find_triplet_slow(nums: List[int]) -> Optional[int]:
+    def find_triplet_slow(nums: list[int]) -> int | None:
         """Slow solution with a triple loop"""
         n = len(nums)
         for i in range(n - 2):
@@ -310,7 +310,7 @@ def reference_find_triplet(nums: List[int]):
                     if nums[i] + nums[j] + nums[k] == 2020:
                         return nums[i] * nums[j] * nums[k]
 
-    def find_triplet_best(nums: List[int]) -> Optional[int]:
+    def find_triplet_best(nums: list[int]) -> int | None:
         """Fast solution with two loops"""
         n = len(nums)
         for i in range(n - 1):
@@ -323,7 +323,7 @@ def reference_find_triplet(nums: List[int]):
                 s.add(nums[j])
 
 
-def __reference_find_triplet(nums: List[int]) -> Optional[int]:
+def __reference_find_triplet(nums: list[int]) -> int | None:
     """Reference solution (part 2), O(n^2)"""
     n = len(nums)
     for i in range(n - 1):
@@ -337,7 +337,7 @@ def __reference_find_triplet(nums: List[int]) -> Optional[int]:
 
 
 @pytest.mark.parametrize("nums", [nums_1, nums_2])
-def test_find_triplet(nums: List[int], function_to_test) -> None:
+def test_find_triplet(nums: list[int], function_to_test) -> None:
     assert function_to_test(nums) == __reference_find_triplet(nums)
 
 
@@ -379,16 +379,9 @@ def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
         err = "Invalid empty input"
         raise ValueError(err)
 
-    # Same to and from bases
-    if from_base == to_base:
-        return number
-
     # Handle negative numbers
     is_negative = number.strip().startswith("-")
     number = number.strip().removeprefix("-")
-
-    # Remove spaces and convert to uppercase for consistency
-    number = number.replace(" ", "").upper()
 
     # Validate digits
     valid_digits = "0123456789ABCDEF"
@@ -396,6 +389,13 @@ def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
         if digit not in valid_digits[:from_base]:
             err = f"Invalid digit '{digit}' for base {from_base}"
             raise ValueError(err)
+
+    # Same to and from bases
+    if from_base == to_base:
+        return number
+
+    # Remove spaces and convert to uppercase for consistency
+    number = number.replace(" ", "").upper()
 
     # Convert to base 10
     decimal = 0
@@ -407,7 +407,7 @@ def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
         return "0"
 
     if to_base == 10:
-        return str(decimal)
+        return f"-{str(decimal)}" if is_negative else str(decimal)
 
     # Convert to target base
     result = ""
@@ -415,6 +415,9 @@ def reference_base_converter(number: str, from_base: int, to_base: int) -> str:
         digit = decimal % to_base
         result += valid_digits[digit]
         decimal //= to_base
+
+    # We built the number from the rightmost digit to leftmost, so we need to reverse the final string
+    result = result[::-1]
 
     return f"-{result}" if is_negative else result
 

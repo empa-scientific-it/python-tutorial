@@ -38,7 +38,7 @@ def reference_oop_person(first_name: str, last_name: str):
 
 def validate_oop_person(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
     assert type(solution_result).__module__ != "builtins", (
         "Solution must return an instance of a custom class, not a built-in type."
@@ -190,74 +190,73 @@ def test_oop_str_and_repr(first_name, last_name, function_to_test):
 #
 
 
-def reference_oop_compare_persons(first_name: str, last_name: str, age: int):
+def reference_oop_compare_persons(
+    person_1: tuple[str, ...], person_2: tuple[str, ...]
+) -> list:
     class Person:
-        """A class representing a person with first name, last name and age"""
+        """A class representing a person with first name and last name"""
 
-        def __init__(self, first_name: str, last_name: str, age: int):
+        def __init__(self, first_name, last_name):
             self.first_name = first_name
             self.last_name = last_name
-            self.age = age
 
         def __eq__(self, other):
             if isinstance(other, Person):
-                return (self.first_name, self.last_name, self.age) == (
+                return (self.first_name, self.last_name) == (
                     other.first_name,
                     other.last_name,
-                    other.age,
                 )
             else:
                 return False
 
-    return Person(first_name, last_name, age)
+    return [Person(*person_1), Person(*person_2)]
 
 
 def validate_oop_compare_persons(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
-    ), "Solution must return a class instance, not a datatype."
+        solution_result, str | int | float | bool | list | dict | tuple | set
+    ), "The returned list must contain class instances, not datatypes."
     assert type(solution_result).__module__ != "builtins", (
-        "Solution must return an instance of a custom class, not a built-in type."
+        "The returned list must contain instances of a custom class, not a built-in type."
     )
     assert type(solution_result).__name__ == "Person", (
         "The class should be named 'Person'."
-    )
-    assert hasattr(solution_result.__eq__, "__closure__"), (
-        "Make sure that the class is properly implementing the __eq__() method."
     )
     # Check the class attributes
     try:
         attrs = list(vars(solution_result))
     except TypeError:
         raise SubAssertionError from None
-    assert len(attrs) == 3, "The class should have 3 attributes."
-    assert "first_name" in attrs and "last_name" in attrs and "age" in attrs, (
-        "The class attributes should be 'first_name', 'last_name' and 'age'."
+    assert len(attrs) == 2, "The class should have 2 attributes."
+    assert "first_name" in attrs and "last_name" in attrs, (
+        "The class attributes should be 'first_name' and 'last_name'."
+    )
+    assert hasattr(solution_result.__eq__, "__closure__"), (
+        "Make sure that the class is properly implementing the __eq__() method."
     )
 
 
 @pytest.mark.parametrize(
-    "first_name_a, last_name_a, age_a, first_name_b, last_name_b, age_b",
+    "person_1, person_2",
     [
-        ("Jane", "Doe", 30, "John", "Doe", 25),
-        ("John", "Smith", 25, "John", "Doe", 25),
-        ("John", "Doe", 20, "John", "Doe", 25),
-        ("John", "Doe", 25, "John", "Doe", 25),
+        (("Jane", "Doe"), ("John", "Doe")),
+        (("John", "Smith"), ("John", "Doe")),
+        (("John", "Doe"), ("John", "Doe")),
     ],
 )
-def test_oop_compare_persons(
-    first_name_a, last_name_a, age_a, first_name_b, last_name_b, age_b, function_to_test
-):
-    solution_result_a = function_to_test(first_name_a, last_name_a, age_a)
-    reference_result_a = reference_oop_compare_persons(first_name_a, last_name_a, age_a)
+def test_oop_compare_persons(person_1, person_2, function_to_test):
+    solution_result = function_to_test(person_1, person_2)
+    reference_result = reference_oop_compare_persons(person_1, person_2)
 
-    solution_result_b = function_to_test(first_name_b, last_name_b, age_b)
-    reference_result_b = reference_oop_compare_persons(first_name_b, last_name_b, age_b)
+    assert isinstance(solution_result, list), "Solution must return a list."
+    assert len(solution_result) == 2, "The returned list must contain two persons."
 
-    validate_oop_compare_persons(solution_result_a)
-    assert (solution_result_a == solution_result_b) == (
-        reference_result_a == reference_result_b
-    ), "Comparison failed."
+    for res in solution_result:
+        validate_oop_compare_persons(res)
+
+    solution_comparison = solution_result[0] == solution_result[1]
+    reference_comparison = reference_result[0] == reference_result[1]
+    assert solution_comparison == reference_comparison, "Person comparison failed."
 
 
 #
@@ -265,7 +264,7 @@ def test_oop_compare_persons(
 #
 
 
-def reference_ice_cream_scoop(flavors: tuple[str]) -> list:
+def reference_ice_cream_scoop(flavors: tuple[str, ...]) -> list:
     class Scoop:
         """A class representing a single scoop of ice cream"""
 
@@ -280,7 +279,7 @@ def reference_ice_cream_scoop(flavors: tuple[str]) -> list:
 
 def validate_ice_cream_scoop(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "The returned list must contain class instances, not datatypes."
     assert type(solution_result).__module__ != "builtins", (
         "The returned list must contain instances of a custom class, not a built-in type."
@@ -336,7 +335,7 @@ def test_ice_cream_scoop(flavors, function_to_test) -> None:
 #
 
 
-def reference_ice_cream_bowl(flavors: tuple[str]):
+def reference_ice_cream_bowl(flavors: tuple[str, ...]):
     class Scoop:
         """A class representing a single scoop of ice cream"""
 
@@ -369,7 +368,7 @@ def reference_ice_cream_bowl(flavors: tuple[str]):
 
 def validate_ice_cream_bowl(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
     assert type(solution_result).__module__ != "builtins", (
         "Solution must return an instance of a custom class, not a built-in type."
@@ -396,13 +395,13 @@ def validate_ice_cream_bowl(solution_result):
         raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
     assert "scoops" in attrs, "The class attribute should be 'scoops'."
-    assert isinstance(solution_result.scoops, (list, set, tuple)), (
+    assert isinstance(solution_result.scoops, list | set | tuple), (
         "The class attribute 'scoops' should be a datatype that acts as a container."
     )
     for scoop in solution_result.scoops:
-        assert not isinstance(scoop, (str, int, float, bool, list, dict, tuple, set)), (
-            "The 'scoops' container must contain class instances, not datatypes."
-        )
+        assert not isinstance(
+            scoop, str | int | float | bool | list | dict | tuple | set
+        ), "The 'scoops' container must contain class instances, not datatypes."
         assert type(scoop).__module__ != "builtins", (
             "The 'scoops' container must contain instances of a custom class, not a built-in type."
         )
@@ -435,7 +434,7 @@ def test_ice_cream_bowl(flavors, function_to_test) -> None:
 #
 
 
-def reference_ice_cream_shop(flavors: list[str]):
+def reference_ice_cream_shop(flavors_1: list[str], flavors_2: list[str]) -> list:
     class Shop:
         """A class representing an ice cream shop"""
 
@@ -462,12 +461,12 @@ def reference_ice_cream_shop(flavors: list[str]):
                 return self < other or self == other
             return False
 
-    return Shop(flavors)
+    return [Shop(flavors_1), Shop(flavors_2)]
 
 
 def validate_ice_cream_shop(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
     assert type(solution_result).__module__ != "builtins", (
         "Solution must return an instance of a custom class, not a built-in type."
@@ -490,30 +489,40 @@ def validate_ice_cream_shop(solution_result):
         raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
     assert "flavors" in attrs, "The class attribute should be 'flavors'."
-    assert isinstance(solution_result.flavors, (list, set, tuple)), (
+    assert isinstance(solution_result.flavors, list | set | tuple), (
         "The class attribute 'flavors' should be a datatype that acts as a container."
     )
 
 
 @pytest.mark.parametrize(
-    "flavors_a, flavors_b",
+    "flavors_1, flavors_2",
     [
         (["chocolate", "vanilla", "stracciatella"], ["caramel", "strawberry", "mango"]),
         (["vanilla", "stracciatella"], ["chocolate", "vanilla", "mango"]),
         (["vanilla", "mango"], ["chocolate"]),
     ],
 )
-def test_ice_cream_shop(flavors_a, flavors_b, function_to_test) -> None:
-    solution_result_a = function_to_test(flavors_a)
-    reference_result_a = reference_ice_cream_shop(flavors_a)
+def test_ice_cream_shop(flavors_1, flavors_2, function_to_test) -> None:
+    solution_result = function_to_test(flavors_1, flavors_2)
+    reference_result = reference_ice_cream_shop(flavors_1, flavors_2)
 
-    solution_result_b = function_to_test(flavors_b)
-    reference_result_b = reference_ice_cream_shop(flavors_b)
+    assert isinstance(solution_result, list), "Solution must return a list."
+    assert len(solution_result) == 2, (
+        "The returned list must contain two ice cream shops."
+    )
 
-    validate_ice_cream_shop(solution_result_a)
-    assert (solution_result_a <= solution_result_b) == (
-        reference_result_a <= reference_result_b
-    ), "Comparison failed."
+    for res in solution_result:
+        validate_ice_cream_shop(res)
+
+    assert (solution_result[0] < solution_result[1]) == (
+        reference_result[0] < reference_result[1]
+    ), "Ice cream shop __lt__ comparison failed."
+    assert (solution_result[0] == solution_result[1]) == (
+        reference_result[0] == reference_result[1]
+    ), "Ice cream shop __eq__ comparison failed."
+    assert (solution_result[0] <= solution_result[1]) == (
+        reference_result[0] <= reference_result[1]
+    ), "Ice cream shop __le__ comparison failed."
 
 
 #
