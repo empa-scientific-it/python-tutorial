@@ -35,15 +35,13 @@ def test_randomize_list(
 
     # Run the function multiple times to ensure randomization
     results = []
-    for _ in range(3):  # Run multiple times
+    for _ in range(10):  # Run multiple times
         # Use a copy to prevent the function from modifying the original
         test_list = my_list.copy()
         result = function_to_test(test_list)
 
-        # 1. Check the same elements are present
-        assert set(result) == set(my_list)
-        # 2. Check the length is preserved
-        assert len(result) == len(my_list)
+        # Check that the elements are preserved
+        assert sorted(result) == sorted(my_list)
 
         results.append(result)
 
@@ -54,7 +52,7 @@ def test_randomize_list(
     if len(my_list) > 2:
         # Check there's at least some variation in results
         assert len({tuple(r) for r in results}) > 1, (
-            "Function doesn't appear to randomize. You should not use random.seed()."
+            "Your function doesn't appear to randomize. You should not use random.seed()."
         )
 
 
