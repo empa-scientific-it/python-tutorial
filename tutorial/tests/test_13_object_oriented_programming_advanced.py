@@ -71,10 +71,16 @@ def validate_triathlete(solution_result):
         raise SubAssertionError from None
     assert len(attrs) == 5, "Triathlete should have 5 attributes."
     assert "name" in attrs, "The class should have an attribute called 'name'."
-    assert "swim_time" in attrs, "The class should have an attribute called 'swim_time'."
-    assert "bike_time" in attrs, "The class should have an attribute called 'bike_time'."
+    assert "swim_time" in attrs, (
+        "The class should have an attribute called 'swim_time'."
+    )
+    assert "bike_time" in attrs, (
+        "The class should have an attribute called 'bike_time'."
+    )
     assert "run_time" in attrs, "The class should have an attribute called 'run_time'."
-    assert "total_time" in attrs, "The class should have an attribute called 'total_time'."
+    assert "total_time" in attrs, (
+        "The class should have an attribute called 'total_time'."
+    )
 
 
 @pytest.mark.parametrize(
