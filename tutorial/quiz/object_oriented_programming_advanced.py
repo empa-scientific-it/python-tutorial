@@ -6,9 +6,9 @@ class OopAdvancedInheritance(Quiz):
         q1 = Question(
             question="Which special method is used for object initialization in Python?",
             options={
-                "__init__": "Correct! The `__init__` method is called when an object is created and is used to initialize the object.",
-                "__repr__": "The `__repr__` method is used to provide an unambiguous string representation of an object.",
-                "__eq__": "The `__eq__` method is used to define equality comparison between objects.",
+                "__init__": "Correct! The <code>__init__</code> method is called when an object is created and is used to initialize the object.",
+                "__repr__": "The <code>__repr__</code> method is used to provide an unambiguous string representation of an object.",
+                "__eq__": "The <code>__eq__</code> method is used to define equality comparison between objects.",
             },
             correct_answer="__init__",
             hint="This method is automatically called when an object is instantiated.",
@@ -27,11 +27,11 @@ class OopAdvancedInheritance(Quiz):
         )
 
         q3 = Question(
-            question="What is the purpose of the `super()` function in Python?",
+            question="What is the purpose of the <code>super()</code> function in Python?",
             options={
-                "To call a method from the parent class": "Correct! `super()` is used to call a method from the parent class.",
-                "To create a derived class": "Incorrect. `super()` is not used for creating derived classes.",
-                "To initialize an object": "Incorrect. Object initialization is done using the `__init__` method.",
+                "To call a method from the parent class": "Correct! <code>super()</code> is used to call a method from the parent class.",
+                "To create a derived class": "Incorrect. <code>super()</code> is not used for creating derived classes.",
+                "To initialize an object": "Incorrect. Object initialization is done using the <code>__init__</code> method.",
             },
             correct_answer="To call a method from the parent class",
             hint="This function is used to access inherited methods.",
@@ -58,9 +58,9 @@ class OopAdvancedAbstractClasses(Quiz):
         q1 = Question(
             question="Which module in Python is used to create abstract classes?",
             options={
-                "abc": "Correct! The `abc` module provides the infrastructure for defining abstract base classes.",
-                "abstract": "There is no module named `abstract` in Python.",
-                "abstractmodule": "There is no module named `abstractmodule` in Python.",
+                "abc": "Correct! The <code>abc</code> module provides the infrastructure for defining abstract base classes.",
+                "abstract": "There is no module named <code>abstract</code> in Python.",
+                "abstractmodule": "There is no module named <code>abstractmodule</code> in Python.",
             },
             correct_answer="abc",
             hint="This module's name is an abbreviation for 'Abstract Base Classes'.",
@@ -100,22 +100,22 @@ class OopAdvancedDecorators(Quiz):
             question="Which decorator is used to define a method that belongs to the class rather than an instance?",
             options={
                 "@staticmethod": "Incorrect. A static method does not belong to the class or instance.",
-                "@classmethod": "Correct! A class method belongs to the class and takes `cls` as its first parameter.",
-                "@property": "Incorrect. The `@property` decorator is used to define getter methods.",
-                "@abstractmethod": "Incorrect. The `@abstractmethod` decorator is used in abstract classes.",
+                "@classmethod": "Correct! A class method belongs to the class and takes <code>cls</code> as its first parameter.",
+                "@property": "Incorrect. The <code>@property</code> decorator is used to define getter methods.",
+                "@abstractmethod": "Incorrect. The <code>@abstractmethod</code> decorator is used in abstract classes.",
             },
             correct_answer="@classmethod",
-            hint="This method takes `cls` as its first parameter.",
+            hint="This method takes <code>cls</code> as its first parameter.",
             shuffle=True,
         )
 
         q2 = Question(
-            question="What is the purpose of the `@property` decorator?",
+            question="What is the purpose of the <code>@property</code> decorator?",
             options={
-                "To define a computed attribute": "Correct! The `@property` decorator is used to define computed attributes.",
-                "To define a static method": "Incorrect. Static methods are defined using the `@staticmethod` decorator.",
-                "To define a class method": "Incorrect. Class methods are defined using the `@classmethod` decorator.",
-                "To define an abstract method": "Incorrect. Abstract methods are defined using the `@abstractmethod` decorator.",
+                "To define a computed attribute": "Correct! The <code>@property</code> decorator is used to define computed attributes.",
+                "To define a static method": "Incorrect. Static methods are defined using the <code>@staticmethod</code> decorator.",
+                "To define a class method": "Incorrect. Class methods are defined using the <code>@classmethod</code> decorator.",
+                "To define an abstract method": "Incorrect. Abstract methods are defined using the <code>@abstractmethod</code> decorator.",
             },
             correct_answer="To define a computed attribute",
             hint="This decorator allows you to define methods that can be accessed like attributes.",
@@ -126,9 +126,9 @@ class OopAdvancedDecorators(Quiz):
             question="Which decorator is used to define a method that does not access the class or instance?",
             options={
                 "@staticmethod": "Correct! A static method does not access the class or instance.",
-                "@classmethod": "Incorrect. A class method accesses the class using `cls`.",
-                "@property": "Incorrect. The `@property` decorator is used to define getter methods.",
-                "@abstractmethod": "Incorrect. The `@abstractmethod` decorator is used in abstract classes.",
+                "@classmethod": "Incorrect. A class method accesses the class using <code>cls</code>.",
+                "@property": "Incorrect. The <code>@property</code> decorator is used to define getter methods.",
+                "@abstractmethod": "Incorrect. The <code>@abstractmethod</code> decorator is used in abstract classes.",
             },
             correct_answer="@staticmethod",
             hint="This method is often used for utility functions.",
@@ -136,10 +136,10 @@ class OopAdvancedDecorators(Quiz):
         )
 
         q4 = Question(
-            question="A method with which decorator takes `cls` as its first parameter?",
+            question="A method with which decorator takes <code>cls</code> as its first parameter?",
             options={
-                "@classmethod": "Correct! A class method is bound to a class rather than its instances and the parameter `cls` represents the class itself.",
-                "@staticmethod": "A static method does not have access to `cls` or `self` and cannot modify the class state.",
+                "@classmethod": "Correct! A class method is bound to a class rather than its instances and the parameter <code>cls</code> represents the class itself.",
+                "@staticmethod": "A static method does not have access to <code>cls</code> or <code>self</code> and cannot modify the class state.",
                 "@abstractmethod": "This decorator defines a method in an abstract class that **must** be implemented by all its concrete subclasses.",
             },
             correct_answer="@classmethod",
@@ -148,27 +148,27 @@ class OopAdvancedDecorators(Quiz):
         )
 
         q5 = Question(
-            question="What is the purpose of the `@classmethod` decorator?",
+            question="What is the purpose of the <code>@classmethod</code> decorator?",
             options={
-                "To define a method that belongs to the class rather than an instance": "Correct! A class method belongs to the class and takes `cls` as its first parameter.",
+                "To define a method that belongs to the class rather than an instance": "Correct! A class method belongs to the class and takes <code>cls</code> as its first parameter.",
                 "To define a method that does not access the class or instance": "Incorrect. This describes a static method.",
-                "To define a computed attribute": "Incorrect. Computed attributes are defined using the `@property` decorator.",
-                "To define an abstract method": "Incorrect. Abstract methods are defined using the `@abstractmethod` decorator.",
+                "To define a computed attribute": "Incorrect. Computed attributes are defined using the <code>@property</code> decorator.",
+                "To define an abstract method": "Incorrect. Abstract methods are defined using the <code>@abstractmethod</code> decorator.",
             },
             correct_answer="To define a method that belongs to the class rather than an instance",
-            hint="This method takes `cls` as its first parameter.",
+            hint="This method takes <code>cls</code> as its first parameter.",
             shuffle=True,
         )
 
         q6 = Question(
-            question="What is the difference between `@staticmethod` and `@classmethod`?",
+            question="What is the difference between <code>@staticmethod</code> and <code>@classmethod</code>?",
             options={
-                "`@staticmethod` does not access the class or instance, while `@classmethod` takes `cls` as its first parameter": "Correct! This is the key difference between the two decorators.",
-                "`@staticmethod` is used for utility functions, while `@classmethod` is used for abstract methods": "Incorrect. Abstract methods are unrelated to these decorators.",
-                "`@staticmethod` is faster than `@classmethod`": "Incorrect. Performance is not the defining difference.",
-                "`@staticmethod` is used for computed attributes, while `@classmethod` is used for class-level attributes": "Incorrect. Computed attributes are defined using `@property`.",
+                "<code>@staticmethod</code> does not access the class or instance, while <code>@classmethod</code> takes <code>cls</code> as its first parameter": "Correct! This is the key difference between the two decorators.",
+                "<code>@staticmethod</code> is used for utility functions, while <code>@classmethod</code> is used for abstract methods": "Incorrect. Abstract methods are unrelated to these decorators.",
+                "<code>@staticmethod</code> is faster than <code>@classmethod</code>": "Incorrect. Performance is not the defining difference.",
+                "<code>@staticmethod</code> is used for computed attributes, while <code>@classmethod</code> is used for class-level attributes": "Incorrect. Computed attributes are defined using <code>@property</code>.",
             },
-            correct_answer="`@staticmethod` does not access the class or instance, while `@classmethod` takes `cls` as its first parameter",
+            correct_answer="<code>@staticmethod</code> does not access the class or instance, while <code>@classmethod</code> takes <code>cls</code> as its first parameter",
             hint="Think about the parameters each decorator uses.",
             shuffle=True,
         )
@@ -207,9 +207,9 @@ class OopAdvancedEncapsulation(Quiz):
             question="What is the purpose of encapsulation in OOP?",
             options={
                 "To bundle data and methods into a single unit": "Correct! Encapsulation bundles data and methods into a single unit.",
-                "To define abstract methods": "Incorrect. Abstract methods are defined using the `abc` module.",
+                "To define abstract methods": "Incorrect. Abstract methods are defined using the <code>abc</code> module.",
                 "To create a class that cannot be inherited": "Incorrect. Encapsulation does not restrict inheritance.",
-                "To define static methods": "Incorrect. Static methods are defined using the `@staticmethod` decorator.",
+                "To define static methods": "Incorrect. Static methods are defined using the <code>@staticmethod</code> decorator.",
             },
             correct_answer="To bundle data and methods into a single unit",
             hint="Encapsulation is one of the fundamental principles of OOP.",
@@ -233,11 +233,11 @@ class OopAdvancedEncapsulation(Quiz):
 class OopAdvancedAttrsDataclasses(Quiz):
     def __init__(self, title=""):
         q1 = Question(
-            question="What is something that `attrs` provides but `dataclasses` doesn't?",
+            question="What is something that <code>attrs</code> provides but <code>dataclasses</code> doesn't?",
             options={
-                "__init__()": "Both packages automatically generate `__init__()`: `dataclasses` uses the `@dataclass` decorator, while `attrs` uses `@define`.",
-                "__repr__()": "Both packages automatically generate `__repr__()` to help you easily print a class instance.",
-                "validators": "Correct! You need to define the attribute as a `field()` and then use the validator decorator.",
+                "__init__()": "Both packages automatically generate <code>__init__()</code>: <code>dataclasses</code> uses the <code>@dataclass</code> decorator, while <code>attrs</code> uses <code>@define</code>.",
+                "__repr__()": "Both packages automatically generate <code>__repr__()</code> to help you easily print a class instance.",
+                "validators": "Correct! You need to define the attribute as a <code>field()</code> and then use the validator decorator.",
             },
             correct_answer="validators",
             hint="",
