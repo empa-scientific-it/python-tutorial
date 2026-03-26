@@ -35,7 +35,13 @@ def test_randomize_list(
 
     # Run the function multiple times to ensure randomization
     results = []
-    for _ in range(10):  # Run multiple times
+    # Run 10 times the function to collect results
+    # Question: Why not 50 or 100 to make sure we actually get different results?
+    # That's unecessary and will only slow down the code.
+    # With a list of 4 items, we have 24 possible permutations.
+    # Getting more than 5 unique results out of 10 draws is almost guaranteed.
+    # For `range(100)`, all 10 will be unique every time.
+    for _ in range(10):
         # Use a copy to prevent the function from modifying the original
         test_list = my_list.copy()
         result = function_to_test(test_list)
@@ -48,10 +54,11 @@ def test_randomize_list(
     # For lists with enough elements, very unlikely to get the same result twice
     # 1. Convert each of the results to tuples
     # 2. {tuple(r) for r in results} create a set that deduplicates identical orderings
-    # 3. len(...) > 1 checks that we've seen at least two different orderings
+    # 3. len(...) > 4 checks that we've seen enough different orderings
+    # We require > 4 (not just > 1) to reject trivial tricks like randomly
+    # reversing the list, which only produces 2 distinct orderings.
     if len(my_list) > 2:
-        # Check there's at least some variation in results
-        assert len({tuple(r) for r in results}) > 1, (
+        assert len({tuple(r) for r in results}) > 4, (
             "Your function doesn't appear to randomize. You should not use random.seed()."
         )
 
