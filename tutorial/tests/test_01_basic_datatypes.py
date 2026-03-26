@@ -1,6 +1,7 @@
 import copy
 import math
-from typing import Any, Callable, Hashable, Iterable
+from collections.abc import Callable, Hashable, Iterable
+from typing import Any
 
 import pytest
 
@@ -364,7 +365,7 @@ def reference_dict_return_value(my_dict: dict[Hashable, Any], key: Any) -> Any:
 
 
 @pytest.mark.parametrize(
-    "my_dict, key", list(zip(copy.deepcopy(DICTS1), ["b"] * len(DICTS1)))
+    "my_dict, key", list(zip(copy.deepcopy(DICTS1), ["b"] * len(DICTS1), strict=False))
 )
 def test_dict_return_value(my_dict, key, function_to_test):
     my_dict_to_try = my_dict.copy()
@@ -380,7 +381,7 @@ def reference_dict_return_delete_value(my_dict: dict[Hashable, Any], key: Any) -
 
 
 @pytest.mark.parametrize(
-    "my_dict, key", list(zip(copy.deepcopy(DICTS1), ["b"] * len(DICTS1)))
+    "my_dict, key", list(zip(copy.deepcopy(DICTS1), ["b"] * len(DICTS1), strict=False))
 )
 def test_dict_return_delete_value(my_dict, key, function_to_test):
     my_dict_original1 = my_dict.copy()
@@ -400,7 +401,8 @@ def reference_update_one_dict_with_another(
 
 
 @pytest.mark.parametrize(
-    "my_dict1, my_dict2", list(zip(copy.deepcopy(DICTS1), copy.deepcopy(DICTS2)))
+    "my_dict1, my_dict2",
+    list(zip(copy.deepcopy(DICTS1), copy.deepcopy(DICTS2), strict=False)),
 )
 def test_update_one_dict_with_another(my_dict1, my_dict2, function_to_test):
     my_dict1_original1 = my_dict1.copy()

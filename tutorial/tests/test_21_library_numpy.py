@@ -67,7 +67,9 @@ def reference_sum_of_a_row(array, row):
     return np.sum(array[row])
 
 
-@pytest.mark.parametrize("array, row", list(zip(some_2d_arrays, some_indexes)))
+@pytest.mark.parametrize(
+    "array, row", list(zip(some_2d_arrays, some_indexes, strict=False))
+)
 def test_sum_of_a_row(array, row, function_to_test):
     assert reference_sum_of_a_row(array, row) == function_to_test(array, row)
 
@@ -76,7 +78,9 @@ def reference_sum_of_a_column(array, column):
     return np.sum(array[:, column])
 
 
-@pytest.mark.parametrize("array, column", list(zip(some_2d_arrays, some_indexes)))
+@pytest.mark.parametrize(
+    "array, column", list(zip(some_2d_arrays, some_indexes, strict=False))
+)
 def test_sum_of_a_column(array, column, function_to_test):
     assert reference_sum_of_a_column(array, column) == function_to_test(array, column)
 
@@ -89,7 +93,7 @@ row_column_indexes = [(2, 3), (1, 1), (1, 5), (2, 1), (9, 9), (10, 10), (3, 10)]
 
 
 @pytest.mark.parametrize(
-    "array, row_column", list(zip(some_2d_arrays, row_column_indexes))
+    "array, row_column", list(zip(some_2d_arrays, row_column_indexes, strict=False))
 )
 def test_sub_matrix(array, row_column, function_to_test):
     row, column = row_column

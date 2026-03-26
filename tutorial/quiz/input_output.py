@@ -43,7 +43,7 @@ class StringInput(Quiz):
             question="What happens if you call <code>input()</code> in the middle of a function?",
             options={
                 "The function execution stops and it waits for the user to type an input": "Correct! Input is a blocking function which waits for user to enter a string in the console and press enter.",
-                "The function continues its execution": "Wrong!",
+                "The function continues its execution": "Wrong! Input is a blocking function which waits for user input.",
             },
             correct_answer="The function execution stops and it waits for the user to type an input",
             shuffle=True,
@@ -57,7 +57,7 @@ class Paths(Quiz):
         q1 = Question(
             question="What does the operator <code>/</code> do when applied to two <code>Pathlib.Path</code> objects?",
             options={
-                "It removes the second path from the first": "Wrong, try it in the shell.",
+                "It removes the second path from the first": "Wrong, try it in a cell below.",
                 "It concatenates paths": "Correct, it lets you construct a path from different segments",
             },
             correct_answer="It concatenates paths",
@@ -68,7 +68,7 @@ class Paths(Quiz):
             question="If you use Pathlib,  do you need to use different path separators on Windows and Linux to combine path segments?",
             options={
                 "No, you can combine Pathlib.Path objects with /": "Correct! Pathlib will then generate the correct path for your OS.",
-                "Yes": "Wrong! You can always use  <code>/</code>",
+                "Yes": "Wrong! You can always use <code>/</code>",
             },
             correct_answer="No, you can combine Pathlib.Path objects with /",
             shuffle=True,
@@ -78,7 +78,7 @@ class Paths(Quiz):
             question="""The path </code>Pathlib.Path("./")</code> represent a relative path. What location does it refer to?""",
             options={
                 "Relative to the current working directory, the location of the current Python script being run": "Correct!",
-                "Relative to the user's home directory": "Wrong!",
+                "Relative to the user's home directory": "Wrong! It is relative to the current working directory.",
             },
             correct_answer="Relative to the current working directory, the location of the current Python script being run",
             shuffle=True,

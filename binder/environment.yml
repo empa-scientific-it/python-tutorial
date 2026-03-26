@@ -33,3 +33,4 @@ dependencies:
       - torchvision
       - albumentations
       - grad-cam
+      - plotly

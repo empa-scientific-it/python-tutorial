@@ -79,7 +79,9 @@ target/
 
 # IPython
 profile_default/
-ipython_config.py
+
+# uv
+uv.lock
 
 # pyenv
 .python-version
@@ -135,5 +137,6 @@ dmypy.json
 *.html
 .idea/
 drafts/
-.virtual_documents
-.zed
+.virtual_documents/
+.zed/
+.ruff_cache/
