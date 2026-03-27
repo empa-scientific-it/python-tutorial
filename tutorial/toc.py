@@ -52,7 +52,7 @@ If no such cell is found the script exits without writing any output.
 | *(default)* | Writes `<notebook>.toc.ipynb` alongside the original |
 | `-o PATH` | Writes to an explicit output path |
 | `--force` | Overwrites the original notebook in-place |
-| `--split-cells` | Splits multi-heading cells so all TOC links work |
+| `--split-cells` | Splits multi-heading cells to have only one heading per cell |
 
 ## Examples
 
@@ -300,8 +300,7 @@ def main(
         typer.Option(
             "--split-cells",
             "-s",
-            help="Split markdown cells that contain multiple headings into one cell per heading. "
-            "Recommended — required for TOC links to work correctly in Jupyter.",
+            help="Split markdown cells that contain multiple headings into one cell per heading.",
             rich_help_panel="TOC Options",
         ),
     ] = False,
