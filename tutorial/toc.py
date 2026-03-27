@@ -1,25 +1,85 @@
 #!/usr/bin/env python
-"""CLI script to build a table of contents for an IPython notebook"""
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#   "typer",
+#   "rich",
+#   "nbformat"
+# ]
+# ///
+"""CLI script to build a table of contents for a Jupyter notebook."""
 
-import argparse as ap
-import logging
 import pathlib
 import re
-import sys
-from typing import NamedTuple
+from typing import Annotated, NamedTuple
 
 import nbformat
+import typer
 from nbformat import NotebookNode
+from rich.console import Console
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-logger = logging.getLogger("toc")
+console = Console()
+err_console = Console(stderr=True)
+
+APP_HELP = """\
+Generate a Markdown table of contents from a Jupyter notebook's headings and
+insert it into a designated cell.
+
+[bold]How it works[/bold]
+
+Scans all [italic]markdown cells[/italic] in the notebook for ATX headings
+([cyan]#[/cyan], [cyan]##[/cyan], [cyan]###[/cyan] …), skipping headings inside fenced code blocks and
+ignoring the TOC header itself to avoid self-referential entries.
+
+For each heading it produces a linked list item whose anchor is derived from
+the heading text (lowercased, spaces → hyphens, most punctuation stripped).
+
+[bold]Placeholder cell requirement[/bold]
+
+The TOC is inserted into the first cell whose source starts with either:
+
+  • the placeholder string (default: [cyan]\\[TOC\\][/cyan])
+  • an existing [cyan]# Table of Contents[/cyan] heading (allows regeneration)
+
+If no such cell is found the script exits without writing any output.
+
+[bold]Output modes[/bold]
+
+  [green]default[/green]   Writes [cyan]<notebook>.toc.ipynb[/cyan] alongside the original file.
+  [green]-o PATH[/green]   Writes to an explicit output path.
+  [green]--force[/green]   Overwrites the original notebook in-place.
+
+[bold]Examples[/bold]
+
+  [dim]# Generate TOC, write to my_notebook.toc.ipynb[/dim]
+  uv run toc.py my_notebook.ipynb
+
+  [dim]# Update the notebook in-place[/dim]
+  uv run toc.py my_notebook.ipynb --force
+
+  [dim]# Custom placeholder and output path[/dim]
+  uv run toc.py my_notebook.ipynb -p "<!-- toc -->" -o out/notebook.ipynb
+"""
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        console.print(f"toc {__version__}")
+        raise typer.Exit()
+
+
+app = typer.Typer(
+    name="toc",
+    help=APP_HELP,
+    add_completion=False,
+    rich_markup_mode="rich",
+)
 
 
 class TocEntry(NamedTuple):
-    """Table of contents entry"""
+    """Table of contents entry."""
 
     level: int
     text: str
@@ -27,81 +87,54 @@ class TocEntry(NamedTuple):
 
 
 def extract_markdown_cells(notebook: NotebookNode) -> str:
-    """Extract the markdown cells from a notebook
-
-    Args:
-        notebook: A notebook object
-
-    Returns:
-        str: Concatenated content of all markdown cells
-    """
+    """Return concatenated content of all markdown cells in the notebook."""
     return "\n".join(
-        [cell.source for cell in notebook.cells if cell.cell_type == "markdown"]
+        cell.source for cell in notebook.cells if cell.cell_type == "markdown"
     )
 
 
 def extract_toc(notebook: str, toc_header: str) -> list[TocEntry]:
-    """Extract the table of contents from a markdown string
+    """Parse markdown headings from a string and return TOC entries.
 
-    Parses markdown headings (lines starting with #) and converts them to TOC entries.
-    Each entry includes the heading level, text, and an anchor derived from the text.
-    Ignores '#' symbols inside code blocks.
+    Ignores headings inside fenced code blocks and skips the TOC header itself.
 
     Args:
-        notebook: String containing markdown content
-        toc_header: Header text for the table of contents
+        notebook: String containing markdown content.
+        toc_header: Header text for the table of contents (excluded from output).
 
     Returns:
-        list[TocEntry]: List of table of contents entries
+        List of TocEntry objects (level, text, anchor).
     """
     toc = []
     line_re = re.compile(r"(#+)\s+(.+)")
     is_code_block = False
 
-    for line_num, line in enumerate(notebook.splitlines(), start=1):
-        # Skip line if contains exactly the toc header
+    for line in notebook.splitlines():
         if line.strip() == toc_header:
             continue
 
-        # Check if we're entering or exiting a code block
         if line.strip().startswith("```"):
             is_code_block = not is_code_block
             continue
 
-        # Skip header processing if we're in a code block
         if is_code_block:
             continue
 
-        # Process headers
         if groups := re.match(line_re, line):
-            try:
-                heading, text, *_ = groups.groups()
-                level = len(heading)
+            heading, text, *_ = groups.groups()
+            level = len(heading)
 
-                # Clean the text to make a proper anchor
-                clean_text = text.replace("`", "")
-                # Remove any other special characters that might break anchors
-                clean_text = re.sub(r"[^\w\s-]", "", clean_text)
-                anchor = "-".join(clean_text.lower().split())
+            clean_text = text.replace("`", "")
+            clean_text = re.sub(r"[^\w\s-]", "", clean_text)
+            anchor = "-".join(clean_text.lower().split())
 
-                toc.append(TocEntry(level, text, anchor))
-                logger.debug("Found heading (level %d): %s", level, text)
-
-            except Exception as e:
-                logger.warning("Error processing heading at line %d: %s", line_num, e)
+            toc.append(TocEntry(level, text, anchor))
 
     return toc
 
 
 def markdown_toc(toc: list[TocEntry]) -> str:
-    """Build a string representation of the toc as a nested markdown list
-
-    Args:
-        toc: List of TocEntry objects
-
-    Returns:
-        str: Markdown-formatted table of contents with proper indentation
-    """
+    """Return a nested markdown list representation of the TOC entries."""
     lines = []
     for entry in toc:
         line = f"{'  ' * entry.level}- [{entry.text}](#{entry.anchor})"
@@ -113,36 +146,24 @@ def build_toc(
     nb_path: pathlib.Path,
     placeholder: str = "[TOC]",
     toc_header: str = "# Table of Contents",
-) -> tuple[NotebookNode, bool]:
-    """Build a table of contents for a notebook and insert it at the location of a placeholder
+) -> tuple[NotebookNode, bool, bool]:
+    """Read a notebook, generate a TOC, and insert it at the placeholder cell.
 
     Args:
-        nb_path: Path to the notebook file
-        placeholder: The text to replace with the generated TOC (default: "[TOC]")
-        toc_header: The header text to use for the TOC (default: "# Table of Contents")
+        nb_path: Path to the notebook file.
+        placeholder: Text to replace with the generated TOC.
+        toc_header: Header text for the TOC section.
 
     Returns:
-        tuple[NotebookNode, bool]: The notebook with TOC inserted and a boolean indicating if placeholder was found
+        Tuple of (notebook, toc_replaced, has_headings).
     """
-    # Read the notebook
-    try:
-        nb_obj: NotebookNode = nbformat.read(nb_path, nbformat.NO_CONVERT)
-    except Exception:
-        logger.exception("Failed to read notebook '%s'", nb_path)
-        raise
+    nb_obj: NotebookNode = nbformat.read(nb_path, nbformat.NO_CONVERT)
 
     md_cells = extract_markdown_cells(nb_obj)
-
-    # Build tree
     toc_tree = extract_toc(md_cells, toc_header)
+    has_headings = bool(toc_tree)
 
-    if not toc_tree:
-        logger.warning("No headings found in notebook '%s'", nb_path)
-
-    # Build toc representation
     toc_repr = markdown_toc(toc_tree)
-
-    # Insert it at the location of a placeholder
     toc_replaced = False
 
     for cell in nb_obj.cells:
@@ -152,115 +173,115 @@ def build_toc(
             toc_replaced = True
             break
 
-    if not toc_replaced:
-        logger.warning(
-            "Placeholder '%s' or heading '%s' not found in notebook",
-            placeholder,
-            toc_header,
-        )
-
-    return nb_obj, toc_replaced
+    return nb_obj, toc_replaced, has_headings
 
 
-def main():
-    """CLI entry point"""
-    parser = ap.ArgumentParser(
-        description="Build a table of contents for an IPython notebook",
-        epilog="""
-        This script extracts headings from markdown cells in a Jupyter notebook and
-        generates a markdown-formatted table of contents. The TOC is inserted into
-        the notebook at the location of a placeholder (default: '[TOC]') or where
-        a '# Table of Contents' heading exists. Links in the TOC point to notebook
-        anchors created from the heading text.
-        """,
-        formatter_class=ap.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument("notebook", type=str, help="Path to the notebook to process")
-    parser.add_argument(
-        "--output", "-o", type=str, default=None, help="Path to the output notebook"
-    )
-    parser.add_argument(
-        "--force",
-        "-f",
-        action="store_true",
-        default=False,
-        help="Force overwrite of original notebook",
-    )
-    parser.add_argument(
-        "--placeholder",
-        "-p",
-        type=str,
-        default="[TOC]",
-        help="Placeholder text to replace with the TOC (default: '[TOC]')",
-    )
-    parser.add_argument(
-        "--header",
-        type=str,
-        default="# Table of Contents",
-        help="Header text for the TOC (default: '# Table of Contents')",
-    )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose output"
-    )
-    parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {__version__}"
-    )
-    args = parser.parse_args()
-
-    # Set logging level based on verbosity
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-
-    # Validate input file
-    try:
-        input_nb = pathlib.Path(args.notebook)
-        if not input_nb.exists():
-            logger.error("Input file not found: %s", input_nb)
-            sys.exit(1)
-        if not input_nb.is_file():
-            logger.error("Input path is not a file: %s", input_nb)
-            sys.exit(1)
-    except Exception:
-        logger.exception("Error processing input path")
-        sys.exit(1)
-
-    # Set output file path
-    if args.output is None:
-        output_nb = input_nb.with_suffix(".toc.ipynb")
+@app.command(help=APP_HELP)
+def main(
+    notebook: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Path to the Jupyter notebook (.ipynb) to process.",
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ],
+    output: Annotated[
+        pathlib.Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output path for the processed notebook. Defaults to [cyan]<notebook>.toc.ipynb[/cyan].",
+            rich_help_panel="Output",
+        ),
+    ] = None,
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            "-f",
+            help="Overwrite the [bold]original[/bold] notebook in-place instead of writing a new file.",
+            rich_help_panel="Output",
+        ),
+    ] = False,
+    placeholder: Annotated[
+        str,
+        typer.Option(
+            "--placeholder",
+            "-p",
+            help=r"Placeholder text in a cell to replace with the generated TOC.",
+            rich_help_panel="TOC Options",
+        ),
+    ] = "[TOC]",
+    header: Annotated[
+        str,
+        typer.Option(
+            "--header",
+            help="Markdown heading to use as the TOC section header.",
+            rich_help_panel="TOC Options",
+        ),
+    ] = "# Table of Contents",
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Print debug information during processing.",
+            rich_help_panel="Misc",
+        ),
+    ] = False,
+    version: Annotated[  # noqa: ARG001
+        bool,
+        typer.Option(
+            "--version",
+            help="Show the version and exit.",
+            callback=_version_callback,
+            is_eager=True,
+            rich_help_panel="Misc",
+        ),
+    ] = False,
+) -> None:
+    if force:
+        output_nb = notebook
+    elif output is not None:
+        output_nb = output
     else:
-        output_nb = pathlib.Path(args.output)
+        output_nb = notebook.with_suffix(".toc.ipynb")
 
-    # Create output directory if it doesn't exist
     output_nb.parent.mkdir(parents=True, exist_ok=True)
 
+    if verbose:
+        console.print(f"[dim]Processing[/dim] [cyan]{notebook}[/cyan] …")
+
     try:
-        # Generate TOC and write to output file
-        logger.info("Processing notebook: %s", input_nb)
-        toc_notebook, toc_replaced = build_toc(input_nb, args.placeholder, args.header)
-
-        if not toc_replaced:
-            logger.warning("Skipping output - no placeholder found in notebook")
-            sys.exit(0)  # Exit with success code since it's not an error
-
-        if not args.force:
-            logger.debug("Ignoring output file: %s", output_nb)
-
-            with output_nb.open("w", encoding="utf-8") as file:
-                nbformat.write(toc_notebook, file)
-
-            logger.info("TOC written to: %s", output_nb)
-        else:
-            logger.info("Replacing original notebook with TOC version")
-
-            with input_nb.open("w", encoding="utf-8") as file:
-                nbformat.write(toc_notebook, file)
-
-            logger.info("Original notebook replaced with: %s", input_nb)
-
+        toc_notebook, toc_replaced, has_headings = build_toc(
+            notebook, placeholder, header
+        )
     except Exception:
-        logger.exception("Error processing notebook")
-        sys.exit(1)
+        err_console.print_exception()
+        raise typer.Exit(1) from None
+
+    if not has_headings:
+        err_console.print(
+            f"[yellow]Warning:[/yellow] No headings found in [cyan]{notebook}[/cyan]."
+        )
+
+    if not toc_replaced:
+        err_console.print(
+            "[yellow]Warning:[/yellow] No placeholder or TOC cell found — skipping output."
+        )
+        raise typer.Exit(0)
+
+    with output_nb.open("w", encoding="utf-8") as file:
+        nbformat.write(toc_notebook, file)
+
+    if force:
+        console.print(f"[green]Updated in-place:[/green] {notebook}")
+    else:
+        console.print(f"[green]TOC written to:[/green] {output_nb}")
 
 
 if __name__ == "__main__":
-    main()
+    app()
