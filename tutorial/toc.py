@@ -18,7 +18,7 @@ import typer
 from nbformat import NotebookNode
 from rich.console import Console
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 console = Console()
 err_console = Console(stderr=True)
@@ -49,7 +49,8 @@ If no such cell is found the script exits without writing any output.
 
   [green]default[/green]   Writes [cyan]<notebook>.toc.ipynb[/cyan] alongside the original file.
   [green]-o PATH[/green]   Writes to an explicit output path.
-  [green]--force[/green]   Overwrites the original notebook in-place.
+  [green]--force[/green]       Overwrites the original notebook in-place.
+  [green]--split-cells[/green]   Split multi-heading cells so all TOC links work in Jupyter.
 
 [bold]Examples[/bold]
 
@@ -142,22 +143,93 @@ def markdown_toc(toc: list[TocEntry]) -> str:
     return "\n".join(lines)
 
 
+def split_cell(source: str, toc_header: str) -> list[str]:
+    """Split a markdown cell source at each heading boundary.
+
+    Respects fenced code blocks (headings inside them are not split points).
+    The TOC header line itself is never a split point.
+
+    Returns a list with one entry per segment. Returns ``[source]`` unchanged
+    when no split is needed (zero or one heading found).
+    """
+    line_re = re.compile(r"^(#+)\s+.+")
+    is_code_block = False
+    segments: list[str] = []
+    current_lines: list[str] = []
+
+    for line in source.splitlines(keepends=True):
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            is_code_block = not is_code_block
+            current_lines.append(line)
+            continue
+
+        if is_code_block or stripped == toc_header:
+            current_lines.append(line)
+            continue
+
+        if re.match(line_re, line) and current_lines:
+            segments.append("".join(current_lines).strip())
+            current_lines = [line]
+        else:
+            current_lines.append(line)
+
+    if current_lines:
+        segments.append("".join(current_lines).strip())
+
+    return segments if len(segments) > 1 else [source]
+
+
+def split_multi_heading_cells(
+    nb_obj: NotebookNode, toc_header: str
+) -> tuple[NotebookNode, int]:
+    """Replace each markdown cell that contains multiple headings with one cell per heading.
+
+    Returns ``(nb_obj, cells_split_count)``.
+    """
+    new_cells: list[NotebookNode] = []
+    cells_split = 0
+
+    for cell in nb_obj.cells:
+        if cell.cell_type != "markdown":
+            new_cells.append(cell)
+            continue
+
+        segments = split_cell(cell.source, toc_header)
+        if len(segments) == 1:
+            new_cells.append(cell)
+        else:
+            cells_split += 1
+            for seg in segments:
+                new_cells.append(nbformat.v4.new_markdown_cell(seg))
+
+    nb_obj.cells = new_cells
+    return nb_obj, cells_split
+
+
 def build_toc(
     nb_path: pathlib.Path,
     placeholder: str = "[TOC]",
     toc_header: str = "# Table of Contents",
-) -> tuple[NotebookNode, bool, bool]:
+    split_cells: bool = False,
+) -> tuple[NotebookNode, bool, bool, int]:
     """Read a notebook, generate a TOC, and insert it at the placeholder cell.
 
     Args:
         nb_path: Path to the notebook file.
         placeholder: Text to replace with the generated TOC.
         toc_header: Header text for the TOC section.
+        split_cells: If True, split multi-heading cells before generating the TOC.
 
     Returns:
-        Tuple of (notebook, toc_replaced, has_headings).
+        Tuple of (notebook, toc_replaced, has_headings, cells_split).
     """
     nb_obj: NotebookNode = nbformat.read(nb_path, nbformat.NO_CONVERT)
+
+    cells_split = 0
+    if split_cells:
+        nb_obj, cells_split = split_multi_heading_cells(nb_obj, toc_header)
 
     md_cells = extract_markdown_cells(nb_obj)
     toc_tree = extract_toc(md_cells, toc_header)
@@ -173,7 +245,7 @@ def build_toc(
             toc_replaced = True
             break
 
-    return nb_obj, toc_replaced, has_headings
+    return nb_obj, toc_replaced, has_headings, cells_split
 
 
 @app.command(help=APP_HELP)
@@ -223,6 +295,16 @@ def main(
             rich_help_panel="TOC Options",
         ),
     ] = "# Table of Contents",
+    split_cells: Annotated[
+        bool,
+        typer.Option(
+            "--split-cells",
+            "-s",
+            help="Split markdown cells that contain multiple headings into one cell per heading. "
+            "Recommended — required for TOC links to work correctly in Jupyter.",
+            rich_help_panel="TOC Options",
+        ),
+    ] = False,
     verbose: Annotated[
         bool,
         typer.Option(
@@ -256,8 +338,8 @@ def main(
         console.print(f"[dim]Processing[/dim] [cyan]{notebook}[/cyan] …")
 
     try:
-        toc_notebook, toc_replaced, has_headings = build_toc(
-            notebook, placeholder, header
+        toc_notebook, toc_replaced, has_headings, cells_split = build_toc(
+            notebook, placeholder, header, split_cells
         )
     except Exception:
         err_console.print_exception()
@@ -276,6 +358,9 @@ def main(
 
     with output_nb.open("w", encoding="utf-8") as file:
         nbformat.write(toc_notebook, file)
+
+    if split_cells and cells_split:
+        console.print(f"[dim]Split {cells_split} cell(s) with multiple headings.[/dim]")
 
     if force:
         console.print(f"[green]Updated in-place:[/green] {notebook}")
