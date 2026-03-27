@@ -82,7 +82,14 @@ app = typer.Typer(
 
 
 class TocEntry(NamedTuple):
-    """Table of contents entry."""
+    """A single table of contents entry parsed from a notebook heading.
+
+    Attributes:
+        level: Heading depth (1 for h1, 2 for h2, etc.).
+        text: Raw heading text as written in the markdown source.
+        anchor: URL-safe anchor derived from the text (spaces → hyphens,
+            backticks stripped, everything else preserved).
+    """
 
     level: int
     text: str
@@ -90,23 +97,31 @@ class TocEntry(NamedTuple):
 
 
 def extract_markdown_cells(notebook: NotebookNode) -> str:
-    """Return concatenated content of all markdown cells in the notebook."""
+    """Return the concatenated source of all markdown cells in the notebook.
+
+    Args:
+        notebook: A parsed notebook object.
+
+    Returns:
+        A single string with all markdown cell sources joined by newlines.
+    """
     return "\n".join(
         cell.source for cell in notebook.cells if cell.cell_type == "markdown"
     )
 
 
 def extract_toc(notebook: str, toc_header: str) -> list[TocEntry]:
-    """Parse markdown headings from a string and return TOC entries.
+    """Parse ATX headings from a markdown string and return TOC entries.
 
-    Ignores headings inside fenced code blocks and skips the TOC header itself.
+    Headings inside fenced code blocks are ignored. The TOC header line
+    itself is skipped to prevent self-referential entries.
 
     Args:
-        notebook: String containing markdown content.
-        toc_header: Header text for the table of contents (excluded from output).
+        notebook: Concatenated markdown content from notebook cells.
+        toc_header: The TOC section header line to exclude from entries.
 
     Returns:
-        List of TocEntry objects (level, text, anchor).
+        A list of TocEntry objects, one per heading found.
     """
     toc = []
     line_re = re.compile(r"(#+)\s+(.+)")
@@ -135,7 +150,17 @@ def extract_toc(notebook: str, toc_header: str) -> list[TocEntry]:
 
 
 def markdown_toc(toc: list[TocEntry]) -> str:
-    """Return a nested markdown list representation of the TOC entries."""
+    """Format a list of TOC entries as a nested Markdown list.
+
+    Each entry is indented by two spaces per heading level and rendered
+    as a Markdown link pointing to its anchor.
+
+    Args:
+        toc: TOC entries to format.
+
+    Returns:
+        A Markdown string with one linked list item per entry.
+    """
     lines = []
     for entry in toc:
         line = f"{'  ' * entry.level}- [{entry.text}](#{entry.anchor})"
@@ -144,13 +169,18 @@ def markdown_toc(toc: list[TocEntry]) -> str:
 
 
 def split_cell(source: str, toc_header: str) -> list[str]:
-    """Split a markdown cell source at each heading boundary.
+    """Split a markdown cell source into segments at each heading boundary.
 
-    Respects fenced code blocks (headings inside them are not split points).
-    The TOC header line itself is never a split point.
+    Headings inside fenced code blocks are not treated as split points.
+    The TOC header line is also excluded from splitting.
 
-    Returns a list with one entry per segment. Returns ``[source]`` unchanged
-    when no split is needed (zero or one heading found).
+    Args:
+        source: Raw source text of a single markdown cell.
+        toc_header: The TOC section header line; never used as a split point.
+
+    Returns:
+        A list of source segments, one per heading. Returns ``[source]``
+        unchanged when the cell contains zero or one heading.
     """
     line_re = re.compile(r"^(#+)\s+.+")
     is_code_block = False
@@ -184,9 +214,17 @@ def split_cell(source: str, toc_header: str) -> list[str]:
 def split_multi_heading_cells(
     nb_obj: NotebookNode, toc_header: str
 ) -> tuple[NotebookNode, int]:
-    """Replace each markdown cell that contains multiple headings with one cell per heading.
+    """Split every markdown cell that contains multiple headings into one cell per heading.
 
-    Returns ``(nb_obj, cells_split_count)``.
+    Non-markdown cells are passed through unchanged.
+
+    Args:
+        nb_obj: The notebook to process (modified in place).
+        toc_header: The TOC section header line; passed through to ``split_cell``.
+
+    Returns:
+        A tuple of ``(notebook, cells_split)`` where ``cells_split`` is the
+        number of cells that were split.
     """
     new_cells: list[NotebookNode] = []
     cells_split = 0
@@ -218,12 +256,17 @@ def build_toc(
 
     Args:
         nb_path: Path to the notebook file.
-        placeholder: Text to replace with the generated TOC.
-        toc_header: Header text for the TOC section.
-        split_cells: If True, split multi-heading cells before generating the TOC.
+        placeholder: Cell source prefix that marks the TOC insertion point.
+        toc_header: Markdown heading used as the TOC section title.
+        split_cells: When True, split multi-heading cells before generating
+            the TOC so that every heading gets its own cell.
 
     Returns:
-        Tuple of (notebook, toc_replaced, has_headings, cells_split).
+        A tuple of ``(notebook, toc_replaced, has_headings, cells_split)``
+        where ``toc_replaced`` is True if the placeholder was found and
+        replaced, ``has_headings`` is True if any headings were found, and
+        ``cells_split`` is the number of cells split (0 when split_cells
+        is False).
     """
     nb_obj: NotebookNode = nbformat.read(nb_path, nbformat.NO_CONVERT)
 
