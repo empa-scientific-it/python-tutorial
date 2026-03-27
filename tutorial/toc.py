@@ -27,41 +27,43 @@ APP_HELP = """\
 Generate a Markdown table of contents from a Jupyter notebook's headings and
 insert it into a designated cell.
 
-[bold]How it works[/bold]
+## How it works
 
-Scans all [italic]markdown cells[/italic] in the notebook for ATX headings
-([cyan]#[/cyan], [cyan]##[/cyan], [cyan]###[/cyan] …), skipping headings inside fenced code blocks and
-ignoring the TOC header itself to avoid self-referential entries.
+Scans all *markdown cells* in the notebook for ATX headings (`#`, `##`, `###` …),
+skipping headings inside fenced code blocks and ignoring the TOC header itself
+to avoid self-referential entries.
 
-For each heading it produces a linked list item whose anchor is derived from
-the heading text (lowercased, spaces → hyphens, most punctuation stripped).
+For each heading it produces a linked list item whose anchor is derived from the
+heading text (spaces → hyphens, backticks stripped, everything else preserved).
 
-[bold]Placeholder cell requirement[/bold]
+## Placeholder cell requirement
 
 The TOC is inserted into the first cell whose source starts with either:
 
-  • the placeholder string (default: [cyan]\\[TOC\\][/cyan])
-  • an existing [cyan]# Table of Contents[/cyan] heading (allows regeneration)
+- the placeholder string (default: `[TOC]`)
+- an existing `# Table of Contents` heading (allows regeneration)
 
 If no such cell is found the script exits without writing any output.
 
-[bold]Output modes[/bold]
+## Output modes
 
-  [green]default[/green]   Writes [cyan]<notebook>.toc.ipynb[/cyan] alongside the original file.
-  [green]-o PATH[/green]   Writes to an explicit output path.
-  [green]--force[/green]       Overwrites the original notebook in-place.
-  [green]--split-cells[/green]   Split multi-heading cells so all TOC links work in Jupyter.
+| Flag | Behaviour |
+|---|---|
+| *(default)* | Writes `<notebook>.toc.ipynb` alongside the original |
+| `-o PATH` | Writes to an explicit output path |
+| `--force` | Overwrites the original notebook in-place |
+| `--split-cells` | Splits multi-heading cells so all TOC links work |
 
-[bold]Examples[/bold]
+## Examples
 
-  [dim]# Generate TOC, write to my_notebook.toc.ipynb[/dim]
-  uv run toc.py my_notebook.ipynb
+    # Generate TOC, write to my_notebook.toc.ipynb
+    uv run toc.py my_notebook.ipynb
 
-  [dim]# Update the notebook in-place[/dim]
-  uv run toc.py my_notebook.ipynb --force
+    # Update the notebook in-place
+    uv run toc.py my_notebook.ipynb --force
 
-  [dim]# Custom placeholder and output path[/dim]
-  uv run toc.py my_notebook.ipynb -p "<!-- toc -->" -o out/notebook.ipynb
+    # Custom placeholder and output path
+    uv run toc.py my_notebook.ipynb -p "<!-- toc -->" -o out/notebook.ipynb
 """
 
 
@@ -75,7 +77,7 @@ app = typer.Typer(
     name="toc",
     help=APP_HELP,
     add_completion=False,
-    rich_markup_mode="rich",
+    rich_markup_mode="markdown",
 )
 
 
@@ -263,7 +265,7 @@ def main(
         typer.Option(
             "--output",
             "-o",
-            help="Output path for the processed notebook. Defaults to [cyan]<notebook>.toc.ipynb[/cyan].",
+            help="Output path for the processed notebook. Defaults to `<notebook>.toc.ipynb`.",
             rich_help_panel="Output",
         ),
     ] = None,
@@ -272,7 +274,7 @@ def main(
         typer.Option(
             "--force",
             "-f",
-            help="Overwrite the [bold]original[/bold] notebook in-place instead of writing a new file.",
+            help="Overwrite the **original** notebook in-place instead of writing a new file.",
             rich_help_panel="Output",
         ),
     ] = False,
