@@ -125,9 +125,7 @@ def extract_toc(notebook: str, toc_header: str) -> list[TocEntry]:
             heading, text, *_ = groups.groups()
             level = len(heading)
 
-            clean_text = text.replace("`", "")
-            clean_text = re.sub(r"[^\w\s-]", "", clean_text)
-            anchor = "-".join(clean_text.lower().split())
+            anchor = text.replace("`", "").replace(" ", "-")
 
             toc.append(TocEntry(level, text, anchor))
 
@@ -325,9 +323,17 @@ def main(
         ),
     ] = False,
 ) -> None:
+    if force and output is not None:
+        err_console.print(
+            "[red]Error:[/red] --output and --force are mutually exclusive."
+        )
+        raise typer.Exit(1)
+
     if force:
         output_nb = notebook
     elif output is not None:
+        if output.suffix != ".ipynb":
+            output = output.with_suffix(output.suffix + ".ipynb")
         output_nb = output
     else:
         output_nb = notebook.with_suffix(".toc.ipynb")
