@@ -11,83 +11,91 @@ class SubAssertionError(AssertionError):
 
 
 #
-# Exercise 1: Child Eye Color
+# Exercise 1: Triathlete
 #
 
 
-def reference_child_eye_color(mother_eye_color: str, father_eye_color: str):
-    class Mother:
-        def __init__(self, eye_color: str):
-            self.eye_color_mother = eye_color
+def reference_triathlete(
+    name: str, swim_time: float, bike_time: float, run_time: float
+):
+    class Swimmer:
+        def __init__(self, swim_time: float):
+            self.swim_time = swim_time
 
-    class Father:
-        def __init__(self, eye_color: str):
-            self.eye_color_father = eye_color
+    class Cyclist:
+        def __init__(self, bike_time: float):
+            self.bike_time = bike_time
 
-    class Child(Mother, Father):
-        def __init__(self, eye_color_mother: str, eye_color_father: str):
-            Mother.__init__(self, eye_color_mother)
-            Father.__init__(self, eye_color_father)
-            self.eye_color = self.set_eye_color()
+    class Runner:
+        def __init__(self, run_time: float):
+            self.run_time = run_time
 
-        def set_eye_color(self):
-            if self.eye_color_mother == self.eye_color_father:
-                return self.eye_color_mother
-            return "brown"
+    class Triathlete(Swimmer, Cyclist, Runner):
+        def __init__(
+            self, name: str, swim_time: float, bike_time: float, run_time: float
+        ):
+            Swimmer.__init__(self, swim_time)
+            Cyclist.__init__(self, bike_time)
+            Runner.__init__(self, run_time)
+            self.total_time = self.swim_time + self.bike_time + self.run_time
+            self.name = name
 
-    return Child(mother_eye_color, father_eye_color)
+    return Triathlete(name, swim_time, bike_time, run_time)
 
 
-def validate_child_eye_color(solution_result):
+def validate_triathlete(solution_result):
     assert not isinstance(
-        solution_result, (str, int, float, bool, list, dict, tuple, set)
+        solution_result, str | int | float | bool | list | dict | tuple | set
     ), "Solution must return a class instance, not a datatype."
     assert type(solution_result).__module__ != "builtins", (
         "Solution must return an instance of a custom class, not a built-in type."
     )
-    assert type(solution_result).__name__ == "Child", (
-        "The class should be named 'Child'."
+    assert type(solution_result).__name__ == "Triathlete", (
+        "The class should be named 'Triathlete'."
     )
-    # Check inheritance by base class names
+    # Check direct base class names
     base_class_names = [base.__name__ for base in type(solution_result).__bases__]
-    assert "Mother" in base_class_names, (
-        "The 'Child' class must inherit from a class named 'Mother'."
+    assert "Swimmer" in base_class_names, (
+        "The 'Triathlete' class must inherit from a class named 'Swimmer'."
     )
-    assert "Father" in base_class_names, (
-        "The 'Child' class must inherit from a class named 'Father'."
+    assert "Cyclist" in base_class_names, (
+        "The 'Triathlete' class must inherit from a class named 'Cyclist'."
     )
-    # Check the class attributes
+    assert "Runner" in base_class_names, (
+        "The 'Triathlete' class must inherit from a class named 'Runner'."
+    )
+    # Check the instance attributes
     try:
         attrs = list(vars(solution_result))
     except TypeError:
         raise SubAssertionError from None
-    assert len(attrs) == 3, "The class should have 3 attributes."
-    assert "eye_color" in attrs, (
-        "The class should have an attribute called 'eye_color'."
+    assert len(attrs) == 5, "Triathlete should have 5 attributes."
+    assert "name" in attrs, "The class should have an attribute called 'name'."
+    assert "swim_time" in attrs, (
+        "The class should have an attribute called 'swim_time'."
     )
-    assert "eye_color_mother" in attrs, (
-        "The class should have an attribute called 'eye_color_mother'."
+    assert "bike_time" in attrs, (
+        "The class should have an attribute called 'bike_time'."
     )
-    assert "eye_color_father" in attrs, (
-        "The class should have an attribute called 'eye_color_father'."
+    assert "run_time" in attrs, "The class should have an attribute called 'run_time'."
+    assert "total_time" in attrs, (
+        "The class should have an attribute called 'total_time'."
     )
 
 
 @pytest.mark.parametrize(
-    "mother_eye_color, father_eye_color",
+    "name, swim_time, bike_time, run_time",
     [
-        ("blue", "blue"),
-        ("brown", "brown"),
-        ("blue", "brown"),
-        ("brown", "blue"),
+        ("Alice", 1.5, 3.0, 1.0),
+        ("Bob", 2.0, 4.5, 1.5),
     ],
 )
-def test_child_eye_color(mother_eye_color, father_eye_color, function_to_test):
-    solution_result = function_to_test(mother_eye_color, father_eye_color)
-    reference_result = reference_child_eye_color(mother_eye_color, father_eye_color)
+def test_triathlete(name, swim_time, bike_time, run_time, function_to_test):
+    solution_result = function_to_test(name, swim_time, bike_time, run_time)
+    reference_result = reference_triathlete(name, swim_time, bike_time, run_time)
 
-    validate_child_eye_color(solution_result)
-    assert solution_result.eye_color == reference_result.eye_color
+    validate_triathlete(solution_result)
+    assert solution_result.total_time == reference_result.total_time
 
 
 #
@@ -572,7 +580,9 @@ class Universe:
     @property
     def momentum(self) -> list:
         """Return the momentum of the universe"""
-        return list(map(sum, zip(*[moon.velocities for moon in self.moons])))
+        return list(
+            map(sum, zip(*[moon.velocities for moon in self.moons], strict=False))
+        )
 
     def __repr__(self) -> str:
         return "\n".join(repr(moon) for moon in self.moons)

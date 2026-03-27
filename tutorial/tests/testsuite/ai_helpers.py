@@ -40,7 +40,7 @@ logger = logging.getLogger()
 class ExplanationStep(BaseModel):
     """A single step in the explanation"""
 
-    title: t.Optional[str]
+    title: str | None
     content: str
 
 
@@ -48,16 +48,16 @@ class CodeSnippet(BaseModel):
     """A code snippet with optional description"""
 
     code: str
-    description: t.Optional[str]
+    description: str | None
 
 
 class Explanation(BaseModel):
     """A structured explanation with steps, code snippets, and hints"""
 
     summary: str
-    steps: t.List[ExplanationStep]
-    code_snippets: t.List[CodeSnippet]
-    hints: t.List[str]
+    steps: list[ExplanationStep]
+    code_snippets: list[CodeSnippet]
+    hints: list[str]
 
 
 class OpenAIWrapper:
@@ -87,9 +87,9 @@ class OpenAIWrapper:
     def create_validated(
         cls,
         api_key: str,
-        model: t.Optional[str] = None,
-        language: t.Optional[str] = None,
-    ) -> t.Tuple["OpenAIWrapper", ValidationResult]:
+        model: str | None = None,
+        language: str | None = None,
+    ) -> tuple["OpenAIWrapper", ValidationResult]:
         instance = cls.__new__(cls)
 
         # Only initialize if not already
@@ -104,7 +104,7 @@ class OpenAIWrapper:
         return instance, model_validation
 
     @classmethod
-    def validate_api_key(cls, api_key: t.Optional[str]) -> ValidationResult:
+    def validate_api_key(cls, api_key: str | None) -> ValidationResult:
         """Validate the OpenAI API key"""
         if not api_key:
             return ValidationResult(
@@ -137,7 +137,7 @@ class OpenAIWrapper:
         else:
             return ValidationResult(is_valid=True)
 
-    def validate_model(self, model: t.Optional[str]) -> ValidationResult:
+    def validate_model(self, model: str | None) -> ValidationResult:
         """Validate the model selection"""
         try:
             if model not in self.GPT_MODELS:
@@ -157,9 +157,9 @@ class OpenAIWrapper:
 
     def __init__(
         self,
-        api_key: t.Optional[str],
-        model: t.Optional[str] = None,
-        language: t.Optional[str] = None,
+        api_key: str | None,
+        model: str | None = None,
+        language: str | None = None,
     ) -> None:
         """Initialize the wrapper for OpenAI API with logging and checks"""
         # Avoid reinitializing the client
@@ -213,7 +213,7 @@ class OpenAIWrapper:
             "- Any text or string must be written in Markdown."
         )
 
-        messages: t.List[ChatCompletionMessageParam] = [
+        messages: list[ChatCompletionMessageParam] = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": query},
         ]
@@ -338,7 +338,7 @@ class AIExplanation:
         self,
         ipytest_result: "IPytestResult",
         openai_client: "OpenAIWrapper",
-        exception: t.Optional[BaseException] = None,
+        exception: BaseException | None = None,
         wait_time: int = 60,  # Wait time in seconds
     ) -> None:
         """Public constructor for an explanation widget"""
@@ -350,7 +350,7 @@ class AIExplanation:
         self._output = widgets.Output()
 
         # Timer and state
-        self._timer: t.Optional[Timer] = None
+        self._timer: Timer | None = None
         self._is_throttled = False
         self._wait_time = float(wait_time)
         self._remaining_time = float(wait_time)
@@ -592,7 +592,7 @@ class AIExplanation:
 
     def _format_explanation(
         self, chat_response: ParsedChatCompletionMessage | ChatCompletionMessage
-    ) -> t.Optional[t.List[t.Any]]:
+    ) -> list[t.Any] | None:
         """Format the explanation response for display"""
 
         # Initialize the Markdown to HTML converter
