@@ -2,6 +2,7 @@
 name: python-tutorial
 channels:
   - conda-forge
+  - nodefaults
   - pytorch
 dependencies:
   - python=3.10
@@ -34,3 +35,4 @@ dependencies:
       - albumentations
       - grad-cam
       - plotly
+prefix: "/opt/conda"
