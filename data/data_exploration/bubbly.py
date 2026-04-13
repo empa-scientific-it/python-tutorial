@@ -269,20 +269,18 @@ def make_grid(dataset, column_names, time_column, years=None):
                 # Each column name is unique
                 temp = col_name_template.format(year, col_name)
                 if dataset_by_year[col_name].size != 0:
-                    new_grid = []
-                    new_grid.append(
-                        {"value": list(dataset_by_year[col_name]), "key": temp}
+                    grid = grid.append(
+                        {"value": list(dataset_by_year[col_name]), "key": temp},
+                        ignore_index=True,
                     )
-                    new_grid_df = pd.DataFrame(new_grid)
-                    grid = pd.concat([grid, new_grid_df], ignore_index=True)
     else:
         # Check if this can be simplified
         for col_name in column_names:
             # Each column name is unique
-            new_grid = []
-            new_grid.append({"value": list(dataset_by_year[col_name]), "key": temp})
-            new_grid_df = pd.DataFrame(new_grid)
-            grid = pd.concat([grid, new_grid_df], ignore_index=True)
+            grid = grid.append(
+                {"value": list(dataset[col_name]), "key": col_name + "_grid"},
+                ignore_index=True,
+            )
 
     return grid
 
@@ -312,15 +310,13 @@ def make_grid_with_categories(
                     # Each column name is unique
                     temp = col_name_template.format(year, col_name, category)
                     if dataset_by_year_and_cat[col_name].size != 0:
-                        new_grid = []
-                        new_grid.append(
+                        grid = grid.append(
                             {
                                 "value": list(dataset_by_year_and_cat[col_name]),
                                 "key": temp,
-                            }
+                            },
+                            ignore_index=True,
                         )
-                        new_grid_df = pd.DataFrame(new_grid)
-                        grid = pd.concat([grid, new_grid_df], ignore_index=True)
     else:
         col_name_template = "{}+{}_grid"
         for category in categories:
@@ -329,12 +325,10 @@ def make_grid_with_categories(
                 # Each column name is unique
                 temp = col_name_template.format(col_name, category)
                 if dataset_by_cat[col_name].size != 0:
-                    new_grid = []
-                    new_grid.append(
-                        {"value": list(dataset_by_cat[col_name]), "key": temp}
+                    grid = grid.append(
+                        {"value": list(dataset_by_cat[col_name]), "key": temp},
+                        ignore_index=True,
                     )
-                    new_grid_df = pd.DataFrame(new_grid)
-                    grid = pd.concat([grid, new_grid_df], ignore_index=True)
 
     return grid
 
