@@ -380,6 +380,7 @@ def set_layout(
     figure["layout"]["title"] = title
     figure["layout"]["hovermode"] = "closest"
     figure["layout"]["showlegend"] = show_legend
+    figure["layout"]["legend"] = {"itemsizing": "constant"}
     figure["layout"]["margin"] = {"b": 50, "t": 50, "pad": 5}
 
     if width:

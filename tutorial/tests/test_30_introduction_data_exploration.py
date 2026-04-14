@@ -29,8 +29,10 @@ def test_read_in_dataframe(input_arg, function_to_test):
     # Read in the data
     happiness_df = reference_read_in_dataframe(path_to_happiness)
 
+    result = function_to_test(path_to_happiness)
+    assert isinstance(result, pd.DataFrame), "Your function should return a pd.DataFrame, but it returned None. Did you forget the return statement?"
     # Check if the two DataFrames are equal
-    assert happiness_df.equals(function_to_test(path_to_happiness))
+    assert happiness_df.equals(result)
 
 
 def reference_clean_dataset(happiness_df: pd.DataFrame) -> pd.DataFrame:
@@ -71,6 +73,8 @@ def test_clean_dataset(input_arg, function_to_test):
 
     clean_ref = reference_clean_dataset(hapiness_df)
     clean_sol = function_to_test(hapiness_df)
+    assert isinstance(clean_sol, pd.DataFrame), "Your function should return a pd.DataFrame, but it returned None. Did you forget the return statement?"
+    assert "Country name" in clean_sol.columns and "year" in clean_sol.columns, "The output should contain 'Country name' and 'year' columns"
     clean_ref_sorted = clean_ref.sort_values(by=["Country name", "year"]).reset_index(
         drop=True
     )
@@ -126,6 +130,7 @@ def test_add_regional_indicator(input_arg, function_to_test):
     clean_ref = reference_add_regional_indicator(cleaned_happiness_df, region_df)
     clean_sol = function_to_test(cleaned_happiness_df, region_df)
 
+    assert isinstance(clean_sol, pd.DataFrame), "Your function should return a pd.DataFrame, but it returned None. Did you forget the return statement?"
     # Check if the two DataFrames are equal
     assert clean_ref.equals(clean_sol)
 
@@ -237,7 +242,9 @@ def test_frames_with_category(input_arg, function_to_test):
         bubble_size_column,
     )
 
-    # Check if the two DataFrames are equal
+    assert isinstance(clean_sol, dict), "Your function should return a dict, but it returned None. Did you forget the return statement?"
+    assert "data" in clean_sol and "name" in clean_sol, "The returned dict should have 'data' and 'name' keys"
+    # Check if the two are equal
     assert clean_ref == clean_sol
 
     from plotly.offline import iplot
