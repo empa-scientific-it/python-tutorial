@@ -305,7 +305,7 @@ def test_frames_with_category(input_arg, function_to_test):
     assert len(ref_traces) == len(sol_traces), (
         f"Expected {len(ref_traces)} traces, got {len(sol_traces)}"
     )
-    for ref_t, sol_t in zip(ref_traces, sol_traces):
+    for ref_t, sol_t in zip(ref_traces, sol_traces, strict=True):
         assert ref_t["name"] == sol_t["name"], (
             f"Trace name mismatch: expected '{ref_t['name']}', got '{sol_t['name']}'"
         )
