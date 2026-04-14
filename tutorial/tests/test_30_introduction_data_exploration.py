@@ -35,6 +35,35 @@ def test_read_in_dataframe(input_arg, function_to_test):
     assert happiness_df.equals(result)
 
 
+def reference_explore_dataset(happiness_df: pd.DataFrame) -> dict:
+    n_rows, n_columns = happiness_df.shape
+    n_countries = happiness_df["Country name"].nunique()
+    n_duplicates = int(happiness_df.duplicated().sum())
+    column_with_most_nans = happiness_df.isna().sum().idxmax()
+    happiest_2023 = happiness_df[happiness_df["year"] == 2023].nlargest(1, "Life Ladder")["Country name"].iloc[0]
+    return {
+        "n_rows": n_rows,
+        "n_columns": n_columns,
+        "n_countries": n_countries,
+        "n_duplicates": n_duplicates,
+        "column_with_most_nans": column_with_most_nans,
+        "happiest_country_2023": happiest_2023,
+    }
+
+
+@pytest.mark.parametrize("input_arg", input_args)
+def test_explore_dataset(input_arg, function_to_test):
+    happiness_df = reference_read_in_dataframe(
+        "data/data_exploration/World-happiness-report-updated_2024.csv"
+    )
+    ref = reference_explore_dataset(happiness_df)
+    sol = function_to_test(happiness_df)
+    assert isinstance(sol, dict), "Your function should return a dict, but it returned None. Did you forget the return statement?"
+    for key in ref:
+        assert key in sol, f"Missing key '{key}' in the returned dictionary"
+        assert sol[key] == ref[key], f"Value for '{key}' is {sol[key]}, expected {ref[key]}"
+
+
 def reference_clean_dataset(happiness_df: pd.DataFrame) -> pd.DataFrame:
     # Define the range of possible years
     min_year = happiness_df["year"].min()
