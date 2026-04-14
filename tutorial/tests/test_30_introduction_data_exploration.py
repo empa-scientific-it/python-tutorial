@@ -160,8 +160,11 @@ def test_add_regional_indicator(input_arg, function_to_test):
     clean_sol = function_to_test(cleaned_happiness_df, region_df)
 
     assert isinstance(clean_sol, pd.DataFrame), "Your function should return a pd.DataFrame, but it returned None. Did you forget the return statement?"
-    # Check if the two DataFrames are equal
-    assert clean_ref.equals(clean_sol)
+    # Sort both DataFrames to ensure order-independent comparison
+    sort_cols = ["Country name", "year"]
+    clean_ref_sorted = clean_ref.sort_values(by=sort_cols).reset_index(drop=True)
+    clean_sol_sorted = clean_sol.sort_values(by=sort_cols).reset_index(drop=True)
+    assert clean_ref_sorted.equals(clean_sol_sorted)
 
 
 # solution_frames_with_category
@@ -273,8 +276,14 @@ def test_frames_with_category(input_arg, function_to_test):
 
     assert isinstance(clean_sol, dict), "Your function should return a dict, but it returned None. Did you forget the return statement?"
     assert "data" in clean_sol and "name" in clean_sol, "The returned dict should have 'data' and 'name' keys"
-    # Check if the two are equal
-    assert clean_ref == clean_sol
+    assert clean_ref["name"] == clean_sol["name"], f"Frame name mismatch: expected '{clean_ref['name']}', got '{clean_sol['name']}'"
+    # Compare traces regardless of category order
+    ref_traces = sorted(clean_ref["data"], key=lambda t: t["name"])
+    sol_traces = sorted(clean_sol["data"], key=lambda t: t["name"])
+    assert len(ref_traces) == len(sol_traces), f"Expected {len(ref_traces)} traces, got {len(sol_traces)}"
+    for ref_t, sol_t in zip(ref_traces, sol_traces):
+        assert ref_t["name"] == sol_t["name"], f"Trace name mismatch: expected '{ref_t['name']}', got '{sol_t['name']}'"
+        assert ref_t == sol_t, f"Trace data mismatch for category '{ref_t['name']}'"
 
     from plotly.offline import iplot
 
