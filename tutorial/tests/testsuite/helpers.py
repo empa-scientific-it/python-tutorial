@@ -9,6 +9,7 @@ from typing import Any, ClassVar
 
 import ipywidgets
 import pytest
+from _pytest.outcomes import Failed
 from IPython.display import Code
 from IPython.display import display as ipython_display
 from ipywidgets import HTML
@@ -768,6 +769,7 @@ class ResultCollector:
                 TestOutcome.FAIL
                 if exc.errisinstance(AssertionError)
                 or exc.errisinstance(pytest.fail.Exception)
+                or exc.errisinstance(Failed)
                 else TestOutcome.TEST_ERROR
             )
             self.tests[report.nodeid] = TestCaseResult(
