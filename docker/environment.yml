@@ -3,6 +3,7 @@ name: base
 channels:
   - conda-forge
 dependencies:
+  - python=3.12
   - pip
   - pip:
       - numpy
@@ -20,10 +21,6 @@ dependencies:
       - scikit-learn
       - attrs
       - multiprocess
-      - openai
-      - tenacity
-      - markdown2
-      - python-dotenv
       - pillow
       - opencv-python
       - albumentations
