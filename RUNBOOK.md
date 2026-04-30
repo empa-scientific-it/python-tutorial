@@ -19,7 +19,7 @@ A chronological checklist for organizing a Python tutorial at Empa. Use the **T-
 > LeadCampus typically sets their registration deadline 7–10 days before the tutorial starts. Send the announcement 1–2 months before *that* deadline.
 
 > [!IMPORTANT]
-> Email templates are stored in the shared Teams folder – do not publish templates in this repository.
+> Email templates are stored in the shared Teams folder.
 
 - [ ] Send an institution-wide email to announce the upcoming tutorial
 
