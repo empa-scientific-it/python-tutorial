@@ -21,6 +21,7 @@ def test_scale_image(scale_factor, function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image, scale_factor)
     image_reference = reference_scale_image(image, scale_factor)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert image_test.shape == image_reference.shape
 
 
@@ -36,6 +37,7 @@ def test_crop_image(x, y, width, height, function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image, x, y, width, height)
     image_reference = reference_crop_image(image, x, y, width, height)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert image_test.shape == image_reference.shape
 
 
@@ -47,6 +49,7 @@ def test_horizontal_flip_image(function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image)
     image_reference = reference_horizontal_flip_image(image)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert np.allclose(image_test, image_reference)
 
 
@@ -58,6 +61,7 @@ def test_vertical_flip_image(function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image)
     image_reference = reference_vertical_flip_image(image)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert np.allclose(image_test, image_reference)
 
 
@@ -85,6 +89,7 @@ def test_rotate_image(angle, function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image, angle)
     image_reference = reference_rotate_image(image, angle)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert np.allclose(image_test, image_reference)
 
 
@@ -97,6 +102,7 @@ def test_average_filter(kernel_size, function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image, kernel_size)
     image_reference = reference_average_filter(image, kernel_size)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert np.allclose(image_test, image_reference)
 
 
@@ -109,6 +115,7 @@ def test_median_filter(ksize, function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image, ksize)
     image_reference = reference_median_filter(image, ksize)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert np.allclose(image_test, image_reference)
 
 
@@ -123,6 +130,7 @@ def test_gaussian_filter(kernel_size, sigma, function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image, kernel_size, sigma)
     image_reference = reference_gaussian_filter(image, kernel_size, sigma)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert np.allclose(image_test, image_reference)
 
 
@@ -135,6 +143,7 @@ def test_adjust_brightness(brightness_value, function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image, brightness_value)
     image_reference = reference_adjust_brightness(image, brightness_value)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert np.allclose(image_test, image_reference)
 
 
@@ -147,6 +156,7 @@ def test_adjust_contrast(contrast_value, function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image, contrast_value)
     image_reference = reference_adjust_contrast(image, contrast_value)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert np.allclose(image_test, image_reference)
 
 
@@ -172,4 +182,5 @@ def test_adjust_saturation(saturation_factor, function_to_test):
     image = np.ones((32, 32, 3), dtype=np.uint8) * 255
     image_test = function_to_test(image, saturation_factor)
     image_reference = reference_adjust_saturation(image, saturation_factor)
+    assert isinstance(image_test, np.ndarray), "Your function should return an image."
     assert np.allclose(image_test, image_reference)
