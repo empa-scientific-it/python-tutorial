@@ -1,39 +1,166 @@
-#!/usr/bin/env python
-"""CLI script to build a table of contents for an IPython notebook"""
+#!/usr/bin/env -S uv run -s
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#   "typer",
+#   "rich",
+#   "nbformat"
+# ]
+# ///
+"""CLI script to build a table of contents for a Jupyter notebook."""
 
-import argparse as ap
 import pathlib
 import re
-from collections import namedtuple
+from typing import Annotated, NamedTuple
 
 import nbformat
+import typer
 from nbformat import NotebookNode
+from rich.console import Console
 
-TocEntry = namedtuple("TocEntry", ["level", "text", "anchor"])
+__version__ = "0.3.0"
+
+console = Console()
+err_console = Console(stderr=True)
+
+APP_HELP = """\
+Generate a Markdown table of contents from a Jupyter notebook's headings and
+insert it into a designated cell.
+
+## How it works
+
+Scans all *markdown cells* in the notebook for ATX headings (`#`, `##`, `###` …),
+skipping headings inside fenced code blocks and ignoring the TOC header itself
+to avoid self-referential entries.
+
+For each heading it produces a linked list item whose anchor is derived from the
+heading text (spaces → hyphens, backticks stripped, everything else preserved).
+
+## Placeholder cell requirement
+
+The TOC is inserted into the first cell whose source starts with either:
+
+- the placeholder string (default: `[TOC]`)
+- an existing `# Table of Contents` heading (allows regeneration)
+
+If no such cell is found the script exits without writing any output.
+
+## Output modes
+
+| Flag | Behaviour |
+|---|---|
+| *(default)* | Writes `<notebook>.toc.ipynb` alongside the original |
+| `-o PATH` | Writes to an explicit output path |
+| `--force` | Overwrites the original notebook in-place |
+| `--split-cells` | Splits multi-heading cells to have only one heading per cell |
+
+## Examples
+
+    # Generate TOC, write to my_notebook.toc.ipynb
+    uv run toc.py my_notebook.ipynb
+
+    # Update the notebook in-place
+    uv run toc.py my_notebook.ipynb --force
+
+    # Custom placeholder and output path
+    uv run toc.py my_notebook.ipynb -p "<!-- toc -->" -o out/notebook.ipynb
+"""
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        console.print(f"toc {__version__}")
+        raise typer.Exit()
+
+
+app = typer.Typer(
+    name="toc",
+    help=APP_HELP,
+    add_completion=False,
+    rich_markup_mode="markdown",
+)
+
+
+class TocEntry(NamedTuple):
+    """A single table of contents entry parsed from a notebook heading.
+
+    Attributes:
+        level: Heading depth (1 for h1, 2 for h2, etc.).
+        text: Raw heading text as written in the markdown source.
+        anchor: URL-safe anchor derived from the text (spaces → hyphens,
+            backticks stripped, everything else preserved).
+    """
+
+    level: int
+    text: str
+    anchor: str
 
 
 def extract_markdown_cells(notebook: NotebookNode) -> str:
-    """Extract the markdown cells from a notebook"""
+    """Return the concatenated source of all markdown cells in the notebook.
+
+    Args:
+        notebook: A parsed notebook object.
+
+    Returns:
+        A single string with all markdown cell sources joined by newlines.
+    """
     return "\n".join(
-        [cell.source for cell in notebook.cells if cell.cell_type == "markdown"]
+        cell.source for cell in notebook.cells if cell.cell_type == "markdown"
     )
 
 
-def extract_toc(notebook: str) -> list[TocEntry]:
-    """Extract the table of contents from a markdown string"""
+def extract_toc(notebook: str, toc_header: str) -> list[TocEntry]:
+    """Parse ATX headings from a markdown string and return TOC entries.
+
+    Headings inside fenced code blocks are ignored. The TOC header line
+    itself is skipped to prevent self-referential entries.
+
+    Args:
+        notebook: Concatenated markdown content from notebook cells.
+        toc_header: The TOC section header line to exclude from entries.
+
+    Returns:
+        A list of TocEntry objects, one per heading found.
+    """
     toc = []
     line_re = re.compile(r"(#+)\s+(.+)")
+    is_code_block = False
+
     for line in notebook.splitlines():
+        if line.strip() == toc_header:
+            continue
+
+        if line.strip().startswith("```"):
+            is_code_block = not is_code_block
+            continue
+
+        if is_code_block:
+            continue
+
         if groups := re.match(line_re, line):
             heading, text, *_ = groups.groups()
             level = len(heading)
-            anchor = "-".join(text.replace("`", "").split())
+
+            anchor = text.replace("`", "").replace(" ", "-")
+
             toc.append(TocEntry(level, text, anchor))
+
     return toc
 
 
 def markdown_toc(toc: list[TocEntry]) -> str:
-    """Build a string representation of the toc as a nested markdown list"""
+    """Format a list of TOC entries as a nested Markdown list.
+
+    Each entry is indented by two spaces per heading level and rendered
+    as a Markdown link pointing to its anchor.
+
+    Args:
+        toc: TOC entries to format.
+
+    Returns:
+        A Markdown string with one linked list item per entry.
+    """
     lines = []
     for entry in toc:
         line = f"{'  ' * entry.level}- [{entry.text}](#{entry.anchor})"
@@ -41,62 +168,255 @@ def markdown_toc(toc: list[TocEntry]) -> str:
     return "\n".join(lines)
 
 
-def build_toc(nb_path: pathlib.Path, placeholder: str = "[TOC]") -> NotebookNode:
-    """Build a table of contents for a notebook and insert it at the location of a placeholder"""
-    # Read the notebook
+def split_cell(source: str, toc_header: str) -> list[str]:
+    """Split a markdown cell source into segments at each heading boundary.
+
+    Headings inside fenced code blocks are not treated as split points.
+    The TOC header line is also excluded from splitting.
+
+    Args:
+        source: Raw source text of a single markdown cell.
+        toc_header: The TOC section header line; never used as a split point.
+
+    Returns:
+        A list of source segments, one per heading. Returns ``[source]``
+        unchanged when the cell contains zero or one heading.
+    """
+    line_re = re.compile(r"^(#+)\s+.+")
+    is_code_block = False
+    segments: list[str] = []
+    current_lines: list[str] = []
+
+    for line in source.splitlines(keepends=True):
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            is_code_block = not is_code_block
+            current_lines.append(line)
+            continue
+
+        if is_code_block or stripped == toc_header:
+            current_lines.append(line)
+            continue
+
+        if re.match(line_re, line) and current_lines:
+            segments.append("".join(current_lines).strip())
+            current_lines = [line]
+        else:
+            current_lines.append(line)
+
+    if current_lines:
+        segments.append("".join(current_lines).strip())
+
+    return segments if len(segments) > 1 else [source]
+
+
+def split_multi_heading_cells(
+    nb_obj: NotebookNode, toc_header: str
+) -> tuple[NotebookNode, int]:
+    """Split every markdown cell that contains multiple headings into one cell per heading.
+
+    Non-markdown cells are passed through unchanged.
+
+    Args:
+        nb_obj: The notebook to process (modified in place).
+        toc_header: The TOC section header line; passed through to ``split_cell``.
+
+    Returns:
+        A tuple of ``(notebook, cells_split)`` where ``cells_split`` is the
+        number of cells that were split.
+    """
+    new_cells: list[NotebookNode] = []
+    cells_split = 0
+
+    for cell in nb_obj.cells:
+        if cell.cell_type != "markdown":
+            new_cells.append(cell)
+            continue
+
+        segments = split_cell(cell.source, toc_header)
+        if len(segments) == 1:
+            new_cells.append(cell)
+        else:
+            cells_split += 1
+            for seg in segments:
+                new_cells.append(nbformat.v4.new_markdown_cell(seg))
+
+    nb_obj.cells = new_cells
+    return nb_obj, cells_split
+
+
+def build_toc(
+    nb_path: pathlib.Path,
+    placeholder: str = "[TOC]",
+    toc_header: str = "# Table of Contents",
+    split_cells: bool = False,
+) -> tuple[NotebookNode, bool, bool, int]:
+    """Read a notebook, generate a TOC, and insert it at the placeholder cell.
+
+    Args:
+        nb_path: Path to the notebook file.
+        placeholder: Cell source prefix that marks the TOC insertion point.
+        toc_header: Markdown heading used as the TOC section title.
+        split_cells: When True, split multi-heading cells before generating
+            the TOC so that every heading gets its own cell.
+
+    Returns:
+        A tuple of ``(notebook, toc_replaced, has_headings, cells_split)``
+        where ``toc_replaced`` is True if the placeholder was found and
+        replaced, ``has_headings`` is True if any headings were found, and
+        ``cells_split`` is the number of cells split (0 when split_cells
+        is False).
+    """
     nb_obj: NotebookNode = nbformat.read(nb_path, nbformat.NO_CONVERT)
+
+    cells_split = 0
+    if split_cells:
+        nb_obj, cells_split = split_multi_heading_cells(nb_obj, toc_header)
+
     md_cells = extract_markdown_cells(nb_obj)
+    toc_tree = extract_toc(md_cells, toc_header)
+    has_headings = bool(toc_tree)
 
-    # Build tree
-    toc_tree = extract_toc(md_cells)
-
-    # Build toc representation
     toc_repr = markdown_toc(toc_tree)
-
-    # Insert it a the location of a placeholder
-    toc_header = "# Table of Contents"
+    toc_replaced = False
 
     for cell in nb_obj.cells:
         if cell.source.startswith((placeholder, toc_header)):
             cell.source = f"{toc_header}\n{toc_repr}"
             cell.cell_type = "markdown"
+            toc_replaced = True
+            break
 
-    return nb_obj
+    return nb_obj, toc_replaced, has_headings, cells_split
 
 
-def main():
-    """CLI entry point"""
-    parser = ap.ArgumentParser(
-        description="Build a table of contents for an IPython notebook"
-    )
-    parser.add_argument("notebook", type=str, help="Path to the notebook to process")
-    parser.add_argument(
-        "--output", "-o", type=str, default=None, help="Path to the output notebook"
-    )
-    parser.add_argument(
-        "--force",
-        "-f",
-        action="store_true",
-        default=False,
-        help="Force overwrite of original notebook",
-    )
-    args = parser.parse_args()
+@app.command(help=APP_HELP)
+def main(
+    notebook: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Path to the Jupyter notebook (.ipynb) to process.",
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ],
+    output: Annotated[
+        pathlib.Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output path for the processed notebook. Defaults to `<notebook>.toc.ipynb`.",
+            rich_help_panel="Output",
+        ),
+    ] = None,
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            "-f",
+            help="Overwrite the **original** notebook in-place instead of writing a new file.",
+            rich_help_panel="Output",
+        ),
+    ] = False,
+    placeholder: Annotated[
+        str,
+        typer.Option(
+            "--placeholder",
+            "-p",
+            help=r"Placeholder text in a cell to replace with the generated TOC.",
+            rich_help_panel="TOC Options",
+        ),
+    ] = "[TOC]",
+    header: Annotated[
+        str,
+        typer.Option(
+            "--header",
+            help="Markdown heading to use as the TOC section header.",
+            rich_help_panel="TOC Options",
+        ),
+    ] = "# Table of Contents",
+    split_cells: Annotated[
+        bool,
+        typer.Option(
+            "--split-cells",
+            "-s",
+            help="Split markdown cells that contain multiple headings into one cell per heading.",
+            rich_help_panel="TOC Options",
+        ),
+    ] = False,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Print debug information during processing.",
+            rich_help_panel="Misc",
+        ),
+    ] = False,
+    version: Annotated[  # noqa: ARG001
+        bool,
+        typer.Option(
+            "--version",
+            help="Show the version and exit.",
+            callback=_version_callback,
+            is_eager=True,
+            rich_help_panel="Misc",
+        ),
+    ] = False,
+) -> None:
+    if force and output is not None:
+        err_console.print(
+            "[red]Error:[/red] --output and --force are mutually exclusive."
+        )
+        raise typer.Exit(1)
 
-    if not (input_nb := pathlib.Path(args.notebook)).exists():
-        raise FileNotFoundError(input_nb)
-
-    if args.output is None:
-        output_nb = input_nb.with_suffix(".toc.ipynb")
+    if force:
+        output_nb = notebook
+    elif output is not None:
+        if output.suffix != ".ipynb":
+            output = output.with_suffix(output.suffix + ".ipynb")
+        output_nb = output
     else:
-        output_nb = pathlib.Path(args.output)
+        output_nb = notebook.with_suffix(".toc.ipynb")
+
+    output_nb.parent.mkdir(parents=True, exist_ok=True)
+
+    if verbose:
+        console.print(f"[dim]Processing[/dim] [cyan]{notebook}[/cyan] …")
+
+    try:
+        toc_notebook, toc_replaced, has_headings, cells_split = build_toc(
+            notebook, placeholder, header, split_cells
+        )
+    except Exception:
+        err_console.print_exception()
+        raise typer.Exit(1) from None
+
+    if not has_headings:
+        err_console.print(
+            f"[yellow]Warning:[/yellow] No headings found in [cyan]{notebook}[/cyan]."
+        )
+
+    if not toc_replaced:
+        err_console.print(
+            "[yellow]Warning:[/yellow] No placeholder or TOC cell found — skipping output."
+        )
+        raise typer.Exit(0)
 
     with output_nb.open("w", encoding="utf-8") as file:
-        nbformat.write(build_toc(input_nb), file)
+        nbformat.write(toc_notebook, file)
 
-    if args.force:
-        input_nb.unlink()
-        output_nb.rename(input_nb)
+    if split_cells and cells_split:
+        console.print(f"[dim]Split {cells_split} cell(s) with multiple headings.[/dim]")
+
+    if force:
+        console.print(f"[green]Updated in-place:[/green] {notebook}")
+    else:
+        console.print(f"[green]TOC written to:[/green] {output_nb}")
 
 
 if __name__ == "__main__":
-    main()
+    app()
