@@ -29,8 +29,49 @@ def test_read_in_dataframe(input_arg, function_to_test):
     # Read in the data
     happiness_df = reference_read_in_dataframe(path_to_happiness)
 
+    result = function_to_test(path_to_happiness)
+    assert isinstance(result, pd.DataFrame), (
+        "Your function should return a pd.DataFrame, but it returned None. Did you forget the return statement?"
+    )
     # Check if the two DataFrames are equal
-    assert happiness_df.equals(function_to_test(path_to_happiness))
+    assert happiness_df.equals(result)
+
+
+def reference_explore_dataset(happiness_df: pd.DataFrame) -> dict:
+    n_rows, n_columns = happiness_df.shape
+    n_countries = happiness_df["Country name"].nunique()
+    n_duplicates = int(happiness_df.duplicated().sum())
+    column_with_most_nans = happiness_df.isna().sum().idxmax()
+    happiest_2023 = (
+        happiness_df[happiness_df["year"] == 2023]
+        .nlargest(1, "Life Ladder")["Country name"]
+        .iloc[0]
+    )
+    return {
+        "n_rows": n_rows,
+        "n_columns": n_columns,
+        "n_countries": n_countries,
+        "n_duplicates": n_duplicates,
+        "column_with_most_nans": column_with_most_nans,
+        "happiest_country_2023": happiest_2023,
+    }
+
+
+@pytest.mark.parametrize("input_arg", input_args)
+def test_explore_dataset(input_arg, function_to_test):
+    happiness_df = reference_read_in_dataframe(
+        "data/data_exploration/World-happiness-report-updated_2024.csv"
+    )
+    ref = reference_explore_dataset(happiness_df)
+    sol = function_to_test(happiness_df)
+    assert isinstance(sol, dict), (
+        "Your function should return a dict, but it returned None. Did you forget the return statement?"
+    )
+    for key in ref:
+        assert key in sol, f"Missing key '{key}' in the returned dictionary"
+        assert sol[key] == ref[key], (
+            f"Value for '{key}' is {sol[key]}, expected {ref[key]}"
+        )
 
 
 def reference_clean_dataset(happiness_df: pd.DataFrame) -> pd.DataFrame:
@@ -71,6 +112,12 @@ def test_clean_dataset(input_arg, function_to_test):
 
     clean_ref = reference_clean_dataset(hapiness_df)
     clean_sol = function_to_test(hapiness_df)
+    assert isinstance(clean_sol, pd.DataFrame), (
+        "Your function should return a pd.DataFrame, but it returned None. Did you forget the return statement?"
+    )
+    assert "Country name" in clean_sol.columns and "year" in clean_sol.columns, (
+        "The output should contain 'Country name' and 'year' columns"
+    )
     clean_ref_sorted = clean_ref.sort_values(by=["Country name", "year"]).reset_index(
         drop=True
     )
@@ -126,8 +173,14 @@ def test_add_regional_indicator(input_arg, function_to_test):
     clean_ref = reference_add_regional_indicator(cleaned_happiness_df, region_df)
     clean_sol = function_to_test(cleaned_happiness_df, region_df)
 
-    # Check if the two DataFrames are equal
-    assert clean_ref.equals(clean_sol)
+    assert isinstance(clean_sol, pd.DataFrame), (
+        "Your function should return a pd.DataFrame, but it returned None. Did you forget the return statement?"
+    )
+    # Sort both DataFrames to ensure order-independent comparison
+    sort_cols = ["Country name", "year"]
+    clean_ref_sorted = clean_ref.sort_values(by=sort_cols).reset_index(drop=True)
+    clean_sol_sorted = clean_sol.sort_values(by=sort_cols).reset_index(drop=True)
+    assert clean_ref_sorted.equals(clean_sol_sorted)
 
 
 # solution_frames_with_category
@@ -237,8 +290,26 @@ def test_frames_with_category(input_arg, function_to_test):
         bubble_size_column,
     )
 
-    # Check if the two DataFrames are equal
-    assert clean_ref == clean_sol
+    assert isinstance(clean_sol, dict), (
+        "Your function should return a dict, but it returned None. Did you forget the return statement?"
+    )
+    assert "data" in clean_sol and "name" in clean_sol, (
+        "The returned dict should have 'data' and 'name' keys"
+    )
+    assert clean_ref["name"] == clean_sol["name"], (
+        f"Frame name mismatch: expected '{clean_ref['name']}', got '{clean_sol['name']}'"
+    )
+    # Compare traces regardless of category order
+    ref_traces = sorted(clean_ref["data"], key=lambda t: t["name"])
+    sol_traces = sorted(clean_sol["data"], key=lambda t: t["name"])
+    assert len(ref_traces) == len(sol_traces), (
+        f"Expected {len(ref_traces)} traces, got {len(sol_traces)}"
+    )
+    for ref_t, sol_t in zip(ref_traces, sol_traces, strict=True):
+        assert ref_t["name"] == sol_t["name"], (
+            f"Trace name mismatch: expected '{ref_t['name']}', got '{sol_t['name']}'"
+        )
+        assert ref_t == sol_t, f"Trace data mismatch for category '{ref_t['name']}'"
 
     from plotly.offline import iplot
 
