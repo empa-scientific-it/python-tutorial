@@ -7,7 +7,7 @@ from threading import Timer
 import ipywidgets as widgets
 import markdown2 as md
 import openai
-from IPython.display import Code, display, display_html
+from IPython.display import display, display_html
 from openai.types.chat import (
     ChatCompletionMessage,
     ChatCompletionMessageParam,
@@ -44,19 +44,11 @@ class ExplanationStep(BaseModel):
     content: str
 
 
-class CodeSnippet(BaseModel):
-    """A code snippet with optional description"""
-
-    code: str
-    description: str | None
-
-
 class Explanation(BaseModel):
-    """A structured explanation with steps, code snippets, and hints"""
+    """A structured explanation with steps and hints."""
 
     summary: str
     steps: list[ExplanationStep]
-    code_snippets: list[CodeSnippet]
     hints: list[str]
 
 
@@ -208,7 +200,10 @@ class OpenAIWrapper:
             "Follow these guidelines strictly:\n"
             "- Offer hints, even for trivial errors.\n"
             "- Take into account the number of attempts made by providing increasingly detailed hints after a failed attempt.\n"
-            "- Do not provide verbatim solutions, only guidance.\n"
+            "- Never write the solution: do not write the corrected function, and do not write code that solves "
+            "the exercise or any part of it, no matter how many attempts were made. Only give guidance.\n"
+            "- You may refer to a specific line of the user's code, or name a built-in function, method or "
+            "keyword that could help, using inline code formatting. Do not write code blocks.\n"
             f"- Respond in {self.language}.\n"
             "- Any text or string must be written in Markdown."
         )
@@ -627,22 +622,6 @@ class AIExplanation:
                 steps_widgets.append(step_accordion)
 
             widgets_list.extend(steps_widgets)
-
-            # Add code snippets using Code widgets
-            if explanation.code_snippets:
-                for i, snippet in enumerate(explanation.code_snippets, start=1):
-                    snippet_output = widgets.Output()
-                    snippet_description = widgets.HTML(to_html(snippet.description))
-                    snippet_output.append_display_data(snippet_description)
-
-                    snippet_code = Code(language="python", data=snippet.code)
-                    snippet_output.append_display_data(snippet_code)
-
-                    snippet_accordion = widgets.Accordion(
-                        children=[snippet_output], titles=(f"Code Snippet #{i}",)
-                    )
-
-                    widgets_list.append(snippet_accordion)
 
             # Add hints as bullet points
             if explanation.hints:
