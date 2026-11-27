@@ -45,10 +45,7 @@ class ExplanationStep(BaseModel):
 
 
 class Explanation(BaseModel):
-    """A structured explanation with steps and hints
-
-    There is deliberately no field for code: with structured outputs every field
-    is always filled in, and a code field ended up containing the exercise solution.
+    """A structured explanation with steps and hints.
     """
 
     summary: str
