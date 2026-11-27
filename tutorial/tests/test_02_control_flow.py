@@ -246,7 +246,8 @@ def is_for_else_used(function) -> bool:
         "12.34",  # With decimal point
         "    ",  # All spaces
         "-123",  # With negative sign
-        "١٢٣",  # Non-ASCII digits (should return False)
+        # No non-ASCII digits (e.g. "١٢٣"): both `char in "0123456789"` and
+        # `char.isdigit()` are accepted, and they disagree on those inputs
     ],
 )
 def test_is_pure_number(text: str, function_to_test) -> None:

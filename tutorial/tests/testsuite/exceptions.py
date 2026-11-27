@@ -29,6 +29,23 @@ class PytestInternalError(Exception):
         super().__init__("Pytest internal error")
 
 
+class ShadowedBuiltinError(Exception):
+    """Custom exception raised when a cell fails because a built-in type was overwritten"""
+
+    def __init__(self, names: list[str], original: BaseException) -> None:
+        quoted = ", ".join(f"`{name}`" for name in names)
+        first = names[0]
+        what = "built-in" if len(names) == 1 else "built-ins"
+        variable = "variable" if len(names) == 1 else "variables"
+        super().__init__(
+            f"You have overwritten the {what} {quoted} with your own {variable} "
+            f"(e.g. `{first} = ...`), so type hints like `{first}[int]` no longer work.\n"
+            f"Run `del {', '.join(names)}` in a new cell, or restart the kernel, "
+            f"and use a different variable name (e.g. `my_{first}`).\n\n"
+            f"Original error: {type(original).__name__}: {original}"
+        )
+
+
 class OpenAIWrapperError(Exception):
     """Base exception for OpenAI validation errors"""
 

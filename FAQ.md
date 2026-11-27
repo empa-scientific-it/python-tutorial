@@ -57,6 +57,18 @@ To avoid breaking the solution testing mechanism, **do not rename** the function
 To run the cell and test your solution, select it and press `Shift + Enter`  or the `Run cell` command of Jupyter. The output will tell you whether your solution is correct. If it is not, you will receive an error message along with the output of the failed tests.
 
 
+## Why do all my solutions suddenly fail with `TypeError: list indices must be integers or slices, not type`?
+
+You have probably used a built-in name such as `list`, `dict`, `set`, `tuple` or `str` as a variable name somewhere in the notebook, for example:
+
+```python
+list = [1, 2, 3]
+```
+
+All the cells of a notebook share the same variables, so from that moment on `list` is no longer the built-in type but your own list. Type hints like `list[int]` then stop working in **every** cell that is run afterwards (with Python 3.13 or older).
+
+To fix it, run `del list` in a new cell (or restart the kernel), and use another name for your variable, e.g. `my_list` or `numbers`.
+
 ## I have another question. Where should I ask?
 
 For any other question you might have about the workshop, feel free to post a message in the `discussions` on GitHub.
