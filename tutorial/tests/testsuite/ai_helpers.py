@@ -45,8 +45,7 @@ class ExplanationStep(BaseModel):
 
 
 class Explanation(BaseModel):
-    """A structured explanation with steps and hints.
-    """
+    """A structured explanation with steps and hints."""
 
     summary: str
     steps: list[ExplanationStep]
