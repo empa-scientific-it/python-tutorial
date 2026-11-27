@@ -9,6 +9,7 @@ from typing import Any, ClassVar
 
 import ipywidgets
 import pytest
+from _pytest.outcomes import Failed
 from IPython.display import Code
 from IPython.display import display as ipython_display
 from ipywidgets import HTML
@@ -275,8 +276,15 @@ class TestCaseResult:
                 status_text = "Failed"
             case TestOutcome.TEST_ERROR:
                 status_class = "test-error"
-                icon = "🚨"
-                status_text = "Syntax Error"
+                if isinstance(self.exception, SyntaxError):
+                    icon = "🚨"
+                    status_text = "Syntax Error"
+                else:
+                    icon = "⚠️"
+                    exc_name = (
+                        type(self.exception).__name__ if self.exception else "Error"
+                    )
+                    status_text = f"Runtime Error ({exc_name})"
             case _:
                 status_class = "test-error"
                 icon = "⚠️"
@@ -768,6 +776,7 @@ class ResultCollector:
                 TestOutcome.FAIL
                 if exc.errisinstance(AssertionError)
                 or exc.errisinstance(pytest.fail.Exception)
+                or exc.errisinstance(Failed)
                 else TestOutcome.TEST_ERROR
             )
             self.tests[report.nodeid] = TestCaseResult(

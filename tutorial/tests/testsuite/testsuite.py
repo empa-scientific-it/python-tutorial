@@ -34,7 +34,6 @@ from .helpers import (
     IPytestOutcome,
     IPytestResult,
     ResultCollector,
-    TestOutcome,
     TestResultOutput,
 )
 
@@ -66,20 +65,6 @@ def run_pytest_for_function(
                 test_results=list(result_collector.tests.values()),
             )
         case pytest.ExitCode.TESTS_FAILED:
-            if any(
-                test.outcome == TestOutcome.TEST_ERROR
-                for test in result_collector.tests.values()
-            ):
-                return IPytestResult(
-                    function=function,
-                    status=IPytestOutcome.PYTEST_ERROR,
-                    exceptions=[
-                        test.exception
-                        for test in result_collector.tests.values()
-                        if test.exception
-                    ],
-                )
-
             return IPytestResult(
                 function=function,
                 status=IPytestOutcome.FINISHED,
