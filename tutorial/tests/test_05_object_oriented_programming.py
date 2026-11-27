@@ -15,12 +15,12 @@ class SubAssertionError(AssertionError):
 
 # NOTE:
 # When testing the classes returned by the solutions function in the Examples 1-4
-# we often need to check if a class method is implemented and it's using the right attributes.
+# we often need to check if a method is implemented and it's using the right attributes.
 # One way to check both is to check if the class's method has the __closure__ attribute.
 # Why?
 #   1. If __method__ is not implemented, Python will fetch object.__method__ instead, which obviously is not a closure
 #       `hasattr(solution_result.__method__, "__closure__")` will return False.
-#   2. If __method__ is implemented, but it's not using the class attributes, it will be a closure
+#   2. If __method__ is implemented, but it's not using the instance attributes, it will be a closure
 #       `solution_result.__method__.__closure__ is None` will return False.
 # Reference: https://github.com/empa-scientific-it/python-tutorial/pull/249#discussion_r1836867387
 
@@ -53,7 +53,7 @@ def validate_oop_person(solution_result):
         raise SubAssertionError from None
     assert len(attrs) == 2, "The class should have 2 attributes."
     assert "first_name" in attrs and "last_name" in attrs, (
-        "The class attributes should be 'first_name' and 'last_name'."
+        "The attributes should be 'first_name' and 'last_name'."
     )
 
 
@@ -100,9 +100,9 @@ def validate_oop_fullname(solution_result):
         if callable(getattr(solution_result, attr)) and not attr.startswith("__")
     ]
     assert len(methods) == 1, "The class should have 1 method."
-    assert "full_name" in methods, "The class method should be called 'full_name'."
+    assert "full_name" in methods, "The method should be called 'full_name'."
     assert solution_result.full_name.__closure__ is None, (
-        "The full_name() method should be using the class attributes."
+        "The full_name() method should be using the instance attributes."
     )
 
 
@@ -150,7 +150,7 @@ def validate_oop_str_method(solution_result):
         "Make sure that the class is properly implementing the __str__() method."
     )
     assert solution_result.__str__.__closure__ is None, (
-        "The __str__() method should be using the class attributes."
+        "The __str__() method should be using the instance attributes."
     )
 
 
@@ -159,7 +159,7 @@ def validate_oop_repr_method(solution_result):
         "Make sure that the class is properly implementing the __repr__() method."
     )
     assert solution_result.__repr__.__closure__ is None, (
-        "The __repr__() method should be using the class attributes."
+        "The __repr__() method should be using the instance attributes."
     )
 
 
@@ -229,7 +229,7 @@ def validate_oop_compare_persons(solution_result):
         raise SubAssertionError from None
     assert len(attrs) == 2, "The class should have 2 attributes."
     assert "first_name" in attrs and "last_name" in attrs, (
-        "The class attributes should be 'first_name' and 'last_name'."
+        "The attributes should be 'first_name' and 'last_name'."
     )
     assert hasattr(solution_result.__eq__, "__closure__"), (
         "Make sure that the class is properly implementing the __eq__() method."
@@ -293,12 +293,12 @@ def validate_ice_cream_scoop(solution_result):
     except TypeError:
         raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
-    assert "flavor" in attrs, "The class attribute should be 'flavor'."
+    assert "flavor" in attrs, "The attribute should be 'flavor'."
     assert hasattr(solution_result.__str__, "__closure__"), (
         "Make sure that the class is properly implementing the __str__() method."
     )
     assert solution_result.__str__.__closure__ is None, (
-        "The __str__() method should be using the class attributes."
+        "The __str__() method should be using the instance attributes."
     )
     # check the __str__ result
     pattern = r"^Ice cream scoop with flavor '(.+)'$"
@@ -379,7 +379,7 @@ def validate_ice_cream_bowl(solution_result):
         "Make sure that the Bowl class is properly implementing the __str__() method."
     )
     assert solution_result.__str__.__closure__ is None, (
-        "The __str__() method should be using the class attributes."
+        "The __str__() method should be using the instance attributes."
     )
     methods = [
         attr
@@ -387,16 +387,16 @@ def validate_ice_cream_bowl(solution_result):
         if callable(getattr(solution_result, attr)) and not attr.startswith("__")
     ]
     assert len(methods) == 1, "The class should have 1 custom method."
-    assert "add_scoops" in methods, "The class method should be called 'add_scoops'."
+    assert "add_scoops" in methods, "The method should be called 'add_scoops'."
     # Check the class attributes
     try:
         attrs = list(vars(solution_result))
     except TypeError:
         raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
-    assert "scoops" in attrs, "The class attribute should be 'scoops'."
+    assert "scoops" in attrs, "The attribute should be 'scoops'."
     assert isinstance(solution_result.scoops, list | set | tuple), (
-        "The class attribute 'scoops' should be a datatype that acts as a container."
+        "The attribute 'scoops' should be a datatype that acts as a container."
     )
     for scoop in solution_result.scoops:
         assert not isinstance(
@@ -488,9 +488,9 @@ def validate_ice_cream_shop(solution_result):
     except TypeError:
         raise SubAssertionError from None
     assert len(attrs) == 1, "The class should have 1 attribute."
-    assert "flavors" in attrs, "The class attribute should be 'flavors'."
+    assert "flavors" in attrs, "The attribute should be 'flavors'."
     assert isinstance(solution_result.flavors, list | set | tuple), (
-        "The class attribute 'flavors' should be a datatype that acts as a container."
+        "The attribute 'flavors' should be a datatype that acts as a container."
     )
 
 
