@@ -1,6 +1,6 @@
 import copy
 import math
-from collections.abc import Callable, Hashable, Iterable
+from collections.abc import Callable, Hashable
 from typing import Any
 
 import pytest
@@ -204,16 +204,16 @@ def test_remove_every_second_element_from_list(my_list, function_to_test):
     )
 
 
-def reference_return_first_and_last_element_from_list(my_list: list) -> tuple:
-    return my_list[0], my_list[-1]
+def reference_return_first_and_last_element_from_list(my_list: list) -> list:
+    return [my_list[0], my_list[-1]]
 
 
 @pytest.mark.parametrize("my_list", LISTS)
 def test_return_first_and_last_element_from_list(my_list, function_to_test):
-    # If result is a tuple, transform to list
     result = function_to_test(my_list)
-    if isinstance(result, list):
-        result = tuple(result)
+    # Also accept a tuple, for students who already know about tuples
+    if isinstance(result, tuple):
+        result = list(result)
     assert result == reference_return_first_and_last_element_from_list(my_list)
 
 
@@ -456,8 +456,8 @@ def test_string_word_split(my_string, function_to_test):
     assert function_to_test(my_string) == reference_string_word_split(my_string)
 
 
-def reference_string_join_commas(my_string: Iterable[str]) -> str:
-    return ",".join(my_string)
+def reference_string_join_commas(my_list: list[str]) -> str:
+    return ",".join(my_list)
 
 
 @pytest.mark.parametrize("my_string", STRINGS)
@@ -477,44 +477,48 @@ def test_string_split_lines(function_to_test):
     assert function_to_test(my_string) == reference_string_split_lines(my_string)
 
 
-INT_SETS = [set(), {1, 2, 3}, {3, -1, 0, 4, 42, 1002}]
+def reference_append_to_copy(my_list: list, item) -> list:
+    new_list = my_list.copy()
+    new_list.append(item)
+    return new_list
 
 
-def reference_sets_of_even_and_odd(my_set: set[int]) -> tuple[set[int]]:
-    even_set = my_set.copy()
-    odd_set = my_set.copy()
-    for n in my_set:
-        if n % 2 == 0:
-            odd_set.remove(n)
-        else:
-            even_set.remove(n)
-    return even_set, odd_set
+@pytest.mark.parametrize(
+    "my_list, item",
+    [
+        ([], 1),
+        ([1, 2, 3], 4),
+        (["a", "b"], "c"),
+        ([1.5, None, "x"], [0]),
+    ],
+)
+def test_append_to_copy(my_list, item, function_to_test):
+    original = my_list.copy()
+    result = function_to_test(my_list, item)
+
+    assert result == reference_append_to_copy(original, item)
+    assert my_list == original, "The input list must not be modified"
+    assert result is not my_list, "The function must return a new list"
 
 
-@pytest.mark.parametrize("my_set", INT_SETS)
-def test_sets_of_even_and_odd(my_set, function_to_test):
-    sol_set = my_set.copy()
-    ref_set = my_set.copy()
-    sol_even_set, sol_odd_set = function_to_test(sol_set)
-    ref_even_set, ref_odd_set = reference_sets_of_even_and_odd(ref_set)
-
-    assert sol_even_set == ref_even_set
-    assert sol_odd_set == ref_odd_set
+def reference_tuple_replace_element(my_tuple: tuple, index: int, value) -> tuple:
+    new_list = list(my_tuple)
+    new_list[index] = value
+    return tuple(new_list)
 
 
-INT_TUPLES = [(), (1, 2, 3), (3, -1, 0, 4, 42, 1002)]
+@pytest.mark.parametrize(
+    "my_tuple, index, value",
+    [
+        ((1, 2, 3), 0, 10),
+        ((1, 2, 3), 1, 42),
+        ((1, 2, 3), 2, -1),
+        (("a", "b"), 1, "z"),
+        ((True,), 0, False),
+    ],
+)
+def test_tuple_replace_element(my_tuple, index, value, function_to_test):
+    result = function_to_test(my_tuple, index, value)
 
-
-def reference_tuple_increased_by_one(my_tuple: tuple[int]) -> tuple[int]:
-    increase = []
-    for n in my_tuple:
-        increase.append(n + 1)
-    return tuple(increase)
-
-
-@pytest.mark.parametrize("my_tuple", INT_TUPLES)
-def test_tuple_increased_by_one(my_tuple, function_to_test):
-    new_tuple = function_to_test(my_tuple)
-    ref_tuple = reference_tuple_increased_by_one(my_tuple)
-
-    assert new_tuple == ref_tuple
+    assert isinstance(result, tuple), "The function must return a tuple"
+    assert result == reference_tuple_replace_element(my_tuple, index, value)
