@@ -154,6 +154,33 @@ def test_filter_by_position(numbers: list[int], function_to_test) -> None:
     assert function_to_test(numbers) == reference_filter_by_position(numbers)
 
 
+INT_SETS = [set(), {1, 2, 3}, {3, -1, 0, 4, 42, 1002}]
+
+
+def reference_sets_of_even_and_odd(
+    my_set: set[int],
+) -> tuple[set[int], set[int]]:
+    even_set = my_set.copy()
+    odd_set = my_set.copy()
+    for n in my_set:
+        if n % 2 == 0:
+            odd_set.remove(n)
+        else:
+            even_set.remove(n)
+    return even_set, odd_set
+
+
+@pytest.mark.parametrize("my_set", INT_SETS)
+def test_sets_of_even_and_odd(my_set, function_to_test):
+    sol_set = my_set.copy()
+    ref_set = my_set.copy()
+    sol_even_set, sol_odd_set = function_to_test(sol_set)
+    ref_even_set, ref_odd_set = reference_sets_of_even_and_odd(ref_set)
+
+    assert sol_even_set == ref_even_set
+    assert sol_odd_set == ref_odd_set
+
+
 #
 # Exercise: breaking out of loops
 #
