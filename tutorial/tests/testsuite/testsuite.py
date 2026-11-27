@@ -1,11 +1,13 @@
 """A module to define the `%%ipytest` cell magic"""
 
 import ast
+import builtins
 import dataclasses
 import inspect
 import io
 import os
 import pathlib
+import re
 from collections import defaultdict
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from queue import Queue
@@ -25,6 +27,7 @@ from .exceptions import (
     InstanceNotFoundError,
     OpenAIWrapperError,
     PytestInternalError,
+    ShadowedBuiltinError,
     TestModuleNotFoundError,
 )
 from .helpers import (
@@ -36,6 +39,23 @@ from .helpers import (
     ResultCollector,
     TestResultOutput,
 )
+
+BUILTIN_GENERIC_TYPES = ("list", "dict", "set", "tuple", "type", "str")
+
+
+def find_shadowed_builtins(cell: str, namespace: dict) -> list[str]:
+    """Return the built-in types that are overwritten in `namespace` and used as `name[...]` in `cell`
+
+    A typical example is a student writing `list = [1, 2, 3]` in some cell:
+    from then on, every type hint like `list[int]` fails when the function is defined.
+    """
+    return [
+        name
+        for name in BUILTIN_GENERIC_TYPES
+        if name in namespace
+        and namespace[name] is not getattr(builtins, name)
+        and re.search(rf"(?<![\w.]){name}\s*\[", cell)
+    ]
 
 
 def run_pytest_for_function(
@@ -206,6 +226,10 @@ class TestMagic(Magics):
             result = self.shell.run_cell(self.cell, silent=True)  # type: ignore
             result.raise_error()
         except Exception as err:
+            if not isinstance(err, SyntaxError) and (
+                shadowed := find_shadowed_builtins(self.cell, self.shell.user_ns)  # type: ignore
+            ):
+                err = ShadowedBuiltinError(shadowed, err)
             return [
                 IPytestResult(
                     status=IPytestOutcome.COMPILE_ERROR,
