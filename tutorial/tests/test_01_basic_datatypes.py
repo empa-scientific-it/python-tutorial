@@ -1,6 +1,6 @@
 import copy
 import math
-from collections.abc import Callable, Hashable, Iterable
+from collections.abc import Callable, Hashable
 from typing import Any
 
 import pytest
@@ -204,16 +204,16 @@ def test_remove_every_second_element_from_list(my_list, function_to_test):
     )
 
 
-def reference_return_first_and_last_element_from_list(my_list: list) -> tuple:
-    return my_list[0], my_list[-1]
+def reference_return_first_and_last_element_from_list(my_list: list) -> list:
+    return [my_list[0], my_list[-1]]
 
 
 @pytest.mark.parametrize("my_list", LISTS)
 def test_return_first_and_last_element_from_list(my_list, function_to_test):
-    # If result is a tuple, transform to list
     result = function_to_test(my_list)
-    if isinstance(result, list):
-        result = tuple(result)
+    # Also accept a tuple, for students who already know about tuples
+    if isinstance(result, tuple):
+        result = list(result)
     assert result == reference_return_first_and_last_element_from_list(my_list)
 
 
@@ -456,8 +456,8 @@ def test_string_word_split(my_string, function_to_test):
     assert function_to_test(my_string) == reference_string_word_split(my_string)
 
 
-def reference_string_join_commas(my_string: Iterable[str]) -> str:
-    return ",".join(my_string)
+def reference_string_join_commas(my_list: list[str]) -> str:
+    return ",".join(my_list)
 
 
 @pytest.mark.parametrize("my_string", STRINGS)
